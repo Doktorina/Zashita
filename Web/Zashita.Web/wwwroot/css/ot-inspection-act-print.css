@@ -1,0 +1,180 @@
+.ot-act-page,
+.ot-act-page [contenteditable="true"] {
+  font-family: "Times New Roman", Times, serif;
+  font-size: 11pt;
+  line-height: 1.25;
+  color: #000;
+}
+
+.ot-act-page {
+  width: 190mm;
+  min-height: 277mm;
+  margin: 0 auto 8mm;
+  padding: 10mm 12mm 12mm;
+  box-sizing: border-box;
+  page-break-after: always;
+}
+
+.ot-act-sign-page {
+  page-break-after: auto;
+}
+
+.ot-act-header {
+  display: grid;
+  grid-template-columns: 1fr 1.05fr;
+  gap: 8mm;
+  align-items: start;
+  margin-bottom: 6mm;
+}
+
+.ot-act-brand {
+  min-width: 0;
+}
+
+.ot-act-logo {
+  display: inline-block;
+  font-weight: 700;
+  font-size: 18pt;
+  letter-spacing: 0.04em;
+  color: #1f4f8f;
+  margin-bottom: 2mm;
+}
+
+.ot-act-org {
+  font-size: 10pt;
+  font-weight: 700;
+  margin-bottom: 2mm;
+}
+
+.ot-act-dept {
+  font-size: 10pt;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.ot-act-doc-title {
+  font-size: 11pt;
+  font-weight: 700;
+  text-align: center;
+  padding-top: 4mm;
+}
+
+.ot-act-meta,
+.ot-act-violations,
+.ot-act-sign-table {
+  width: 100%;
+  border-collapse: collapse;
+  table-layout: fixed;
+}
+
+.ot-act-meta th,
+.ot-act-meta td,
+.ot-act-violations th,
+.ot-act-violations td,
+.ot-act-sign-table th,
+.ot-act-sign-table td {
+  border: 1px solid #000;
+  padding: 3px 5px;
+  vertical-align: top;
+  word-wrap: break-word;
+}
+
+.ot-act-meta th,
+.ot-act-violations th,
+.ot-act-sign-table th {
+  font-weight: 700;
+  text-align: center;
+  font-size: 9pt;
+}
+
+.ot-act-meta td,
+.ot-act-violations td {
+  font-size: 10pt;
+}
+
+.ot-act-meta {
+  margin-bottom: 5mm;
+}
+
+.ot-act-meta th:nth-child(1),
+.ot-act-meta td:nth-child(1) { width: 11%; }
+.ot-act-meta th:nth-child(2),
+.ot-act-meta td:nth-child(2) { width: 11%; }
+.ot-act-meta th:nth-child(3),
+.ot-act-meta td:nth-child(3) { width: 28%; }
+.ot-act-meta th:nth-child(4),
+.ot-act-meta td:nth-child(4) { width: 25%; }
+.ot-act-meta th:nth-child(5),
+.ot-act-meta td:nth-child(5) { width: 25%; }
+
+.ot-act-intro {
+  text-align: justify;
+  margin: 0 0 4mm;
+  font-size: 10.5pt;
+}
+
+.ot-act-violations .ot-act-col-no {
+  width: 5%;
+  text-align: center;
+}
+
+.ot-act-violations th:nth-child(2),
+.ot-act-violations td:nth-child(2) { width: 30%; }
+.ot-act-violations th:nth-child(3),
+.ot-act-violations td:nth-child(3) { width: 28%; }
+.ot-act-violations th:nth-child(4),
+.ot-act-violations td:nth-child(4) { width: 17%; }
+.ot-act-violations th:nth-child(5),
+.ot-act-violations td:nth-child(5) { width: 20%; }
+
+.ot-act-multiline {
+  min-height: 4em;
+  white-space: normal;
+}
+
+.ot-act-footer {
+  margin-top: 6mm;
+}
+
+.ot-act-attachment,
+.ot-act-issued {
+  margin: 0 0 3mm;
+  font-size: 10.5pt;
+}
+
+.ot-act-sign-page {
+  padding-top: 18mm;
+}
+
+.ot-act-sign-table th,
+.ot-act-sign-table td {
+  height: 14mm;
+}
+
+.ot-act-sign-table th {
+  font-weight: 400;
+  font-size: 9pt;
+}
+
+@media print {
+  @page {
+    size: A4 portrait;
+    margin: 8mm;
+  }
+
+  body {
+    margin: 0;
+    background: #fff;
+  }
+
+  .ot-act-page {
+    margin: 0;
+    padding: 0;
+    width: auto;
+    min-height: auto;
+  }
+
+  .ot-act-preview-print-btn {
+    display: none !important;
+  }
+}

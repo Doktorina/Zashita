@@ -1,0 +1,140 @@
+@page "/Sout/ImportCards"
+@model Zashita.Web.Pages.Sout.ImportCardsModel
+@{
+    ViewData["Title"] = "Импорт карт СОУТ из Word";
+    ViewData["Subtitle"] = Model.Organization;
+}
+
+<div class="panel ppe-panel">
+  <p class="hint">
+    Загрузите <b>один или несколько</b> .docx с картами специальной оценки
+    (как «КАРТА № 172 специальной оценки условий труда»).
+    Система читает профессию, код ОК, численность, СНИЛС, оборудование, итоговый класс и дату.
+    <b>Пустые</b> карты (заготовки из штата) заполняются; если в файле несколько карт на одну профессию —
+    для лишних создаются <b>новые</b> строки. Совпадение по № карты обновляет ту же карту.
+    РМ только из штата (класс «2» по умолчанию, без даты СОУТ) считаются пустыми.
+  </p>
+
+  @if (!string.IsNullOrWhiteSpace(Model.Message))
+  {
+    <p class="@(Model.IsError ? "form-error" : "text-success")">@Model.Message</p>
+  }
+
+  <div class="ppe-toolbar" style="margin-bottom:14px">
+    <a class="btn btn-outline btn-sm" asp-page="/Sout/Workplaces" asp-route-view="cards">Карты СОУТ</a>
+    <a class="btn btn-outline btn-sm" asp-page="/Sout/Import">Архив результатов (XTM/PDF)</a>
+  </div>
+
+  <form method="post" asp-page-handler="Upload" enctype="multipart/form-data" class="ppe-form">
+    <label class="ppe-field">
+      <span>Файлы .docx (можно несколько)</span>
+      <input type="file"
+             name="uploadFiles"
+             accept=".docx,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+             class="ppe-input"
+             multiple />
+    </label>
+    <label class="ppe-field" style="display:flex;align-items:center;gap:8px">
+      <input type="hidden" name="autoApply" value="false" />
+      <input type="checkbox" name="autoApply" value="true" checked />
+      <span>сразу записать в карты (без превью)</span>
+    </label>
+    <label class="ppe-field" style="display:flex;align-items:center;gap:8px">
+      <input type="hidden" name="overwriteExisting" value="false" />
+      <input type="checkbox" name="overwriteExisting" value="true" />
+      <span>перезаписать уже заполненные (есть дата СОУТ / № карты / оборудование)</span>
+    </label>
+    <div class="ppe-actions">
+      <button type="submit" class="btn btn-primary">Загрузить и вставить</button>
+    </div>
+  </form>
+
+  @if (Model.Draft is { Items.Count: > 0 })
+  {
+    <hr style="margin:22px 0" />
+    <h3 class="ppe-step-title">Превью: @Model.Draft.Items.Count карт из «@Model.Draft.SourceFileName»</h3>
+
+    <form method="post" asp-page-handler="Apply">
+      <input type="hidden" name="draftId" value="@Model.Draft.Id" />
+
+      <table class="data-grid">
+        <thead>
+          <tr>
+            <th></th>
+            <th>Карта / организация</th>
+            <th>Профессия / ОК / класс</th>
+            <th>Численность</th>
+            <th>Рабочее место</th>
+            <th>Перезаписать</th>
+          </tr>
+        </thead>
+        <tbody>
+        @foreach (var item in Model.Draft.Items)
+        {
+          var card = item.Card;
+          <tr>
+            <td>
+              <input type="checkbox" name="selected" value="@item.ItemKey" @(item.Selected ? "checked" : null) />
+            </td>
+            <td>
+              № @(string.IsNullOrWhiteSpace(card.CardNumber) ? "—" : card.CardNumber)
+              <div class="hint">@(string.IsNullOrWhiteSpace(card.Organization) ? "—" : card.Organization)</div>
+              @if (card.PreparedDate is not null)
+              {
+                <div class="hint">@card.PreparedDate.Value.ToString("dd.MM.yyyy")</div>
+              }
+            </td>
+            <td>
+              <div>@(string.IsNullOrWhiteSpace(card.Profession) ? "—" : card.Profession)</div>
+              <div class="hint">ОК @(string.IsNullOrWhiteSpace(card.OkCode) ? "—" : card.OkCode)
+                · класс @(string.IsNullOrWhiteSpace(card.ConditionsClass) ? "—" : card.ConditionsClass)</div>
+              @if (!string.IsNullOrWhiteSpace(item.MatchNote))
+              {
+                <div class="hint">@item.MatchNote</div>
+              }
+            </td>
+            <td>
+              @card.WorkerCount
+              <div class="hint">ж @card.WorkersWomen · &lt;18 @card.WorkersUnder18</div>
+            </td>
+            <td>
+              <select name="wp_@item.ItemKey" class="ppe-input" style="min-width:260px">
+                <option value="">— создать / не выбрано —</option>
+                @foreach (var opt in Model.WorkplaceOptions)
+                {
+                  if (string.Equals(opt.Value, item.MatchedWorkplaceId, StringComparison.OrdinalIgnoreCase))
+                  {
+                    <option value="@opt.Value" selected>@opt.Text</option>
+                  }
+                  else
+                  {
+                    <option value="@opt.Value">@opt.Text</option>
+                  }
+                }
+              </select>
+              @if (item.HasExistingData)
+              {
+                <div class="hint">уже есть данные СОУТ</div>
+              }
+            </td>
+            <td>
+              @if (item.HasExistingData)
+              {
+                <input type="checkbox" name="overwrite" value="@item.ItemKey" />
+              }
+              else
+              {
+                <span class="hint">—</span>
+              }
+            </td>
+          </tr>
+        }
+        </tbody>
+      </table>
+
+      <div class="ppe-actions" style="margin-top:14px">
+        <button type="submit" class="btn btn-primary">Записать в карты</button>
+      </div>
+    </form>
+  }
+</div>

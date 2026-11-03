@@ -1,0 +1,164 @@
+@page "/Training/Programs"
+@model Zashita.Web.Pages.Training.ProgramsModel
+@{
+    ViewData["Title"] = "Программы (курсы)";
+    ViewData["Subtitle"] = "Программы обучения, инструктажа, проверки знаний, стажировок";
+}
+
+@if (!string.IsNullOrWhiteSpace(Model.Message))
+{
+  <p class="text-success">@Model.Message</p>
+}
+<p class="hint ppe-no-print">Справочник заполняется только вручную. После удаления строк обязательно нажмите «Сохранить» — при сохранении стандарта обучения сюда ничего не добавляется.</p>
+
+<div class="panel ppe-panel">
+  <div class="ppe-toolbar">
+    <button type="button" class="btn btn-outline btn-sm" id="program-add-row-btn">Создать</button>
+    <button type="button" class="btn btn-outline btn-sm" id="program-add-group-btn">Создать группу</button>
+    <button type="button" class="btn btn-outline btn-sm" id="program-move-group-btn" title="Перенести выделенные строки в другую группу">Переместить в группу…</button>
+    <button type="button" class="btn btn-outline btn-sm" id="program-bulk-edit-btn">Изменить выделенные...</button>
+    @if (Model.SelectedPrintProgram is not null)
+    {
+      <span class="hint ppe-print-selected" id="program-selected-hint">Для печати: @Model.SelectedPrintProgram.Name</span>
+    }
+    else
+    {
+      <span class="hint ppe-print-selected" id="program-selected-hint"></span>
+    }
+    <details class="ppe-print-menu" id="program-print-menu">
+      <summary class="btn btn-outline btn-sm">Печать ▾</summary>
+      <div class="ppe-print-dropdown">
+        @if (string.IsNullOrWhiteSpace(Model.ActivePrintId))
+        {
+          <span class="ppe-print-disabled">Выберите программу в списке, чтобы печатать.</span>
+        }
+        else
+        {
+          <a class="training-print-link" data-href-template="/Training/Programs/Preview?id={id}&amp;mode=order" href="/Training/Programs/Preview?id=@Uri.EscapeDataString(Model.ActivePrintId!)&amp;mode=order">Приказ об утверждении программы инструктажа</a>
+          <a class="training-print-link" data-href-template="/Training/Programs/Preview?id={id}&amp;mode=program" href="/Training/Programs/Preview?id=@Uri.EscapeDataString(Model.ActivePrintId!)&amp;mode=program">Программа</a>
+          <a class="training-print-link" data-href-template="/Training/Programs/Preview?id={id}&amp;mode=briefing" href="/Training/Programs/Preview?id=@Uri.EscapeDataString(Model.ActivePrintId!)&amp;mode=briefing">Программа инструктажа</a>
+          <a class="training-print-link" data-href-template="/Training/Programs/Preview?id={id}&amp;mode=detailed" href="/Training/Programs/Preview?id=@Uri.EscapeDataString(Model.ActivePrintId!)&amp;mode=detailed">Программа подробная</a>
+          <a class="training-print-link" data-href-template="/Training/Programs/Preview?id={id}&amp;mode=detailed-groups" href="/Training/Programs/Preview?id=@Uri.EscapeDataString(Model.ActivePrintId!)&amp;mode=detailed-groups">Программа подробная (с группами)</a>
+          <a class="training-print-link" data-href-template="/Training/Programs/Preview?id={id}&amp;mode=custom" href="/Training/Programs/Preview?id=@Uri.EscapeDataString(Model.ActivePrintId!)&amp;mode=custom">Настраиваемый комплект документов</a>
+        }
+      </div>
+    </details>
+  </div>
+
+  <form method="get" id="program-select-form">
+    <input type="hidden" name="printId" id="program-print-id" value="@Model.PrintId" />
+  </form>
+
+  <form method="post" asp-page-handler="Save">
+    <div class="ppe-actions ppe-actions-top">
+      <button type="submit" class="btn btn-primary">Сохранить</button>
+    </div>
+    <table class="data-grid ppe-edit-grid training-catalog-grid">
+      <thead>
+        <tr>
+          <th class="training-select-col"></th>
+          <th>Наименование</th>
+          <th>Раздел</th>
+          <th>Часов</th>
+          <th>Действия</th>
+        </tr>
+      </thead>
+      <tbody id="program-catalog-body">
+        @foreach (var item in Model.TreeItems)
+        {
+          var n = item.Node;
+          var isSelected = !string.IsNullOrWhiteSpace(Model.PrintId) && Model.PrintId == n.Id;
+          <tr class="training-catalog-row training-tree-row @(n.IsGroup ? "training-tree-folder training-tree-open" : "training-tree-file") @(isSelected ? "training-row-active" : "")"
+              data-id="@n.Id"
+              data-parent-id="@(n.ParentId ?? "")"
+              data-is-group="@n.IsGroup.ToString().ToLowerInvariant()"
+              data-depth="@item.Depth">
+            <td class="training-select-col">
+              <input type="checkbox" class="training-row-select" aria-label="Выделить" />
+            </td>
+            <td>
+              <input type="hidden" name="Id" value="@n.Id" />
+              <input type="hidden" name="ParentId" value="@n.ParentId" />
+              <input type="hidden" name="IsGroup" value="@n.IsGroup.ToString().ToLowerInvariant()" />
+              @await Html.PartialAsync("_TrainingTreeName", new TrainingTreeNameModel
+              {
+                Depth = item.Depth,
+                IsGroup = n.IsGroup,
+                Name = n.Name,
+                InputClass = n.IsGroup ? "ppe-input training-group-name" : "ppe-input training-item-name"
+              })
+            </td>
+            <td><input name="Section" value="@n.Section" class="ppe-input" /></td>
+            <td><input name="TotalHours" value="@n.TotalHours" class="ppe-input ppe-input-sm" /></td>
+            <td>
+              <div class="suot-action-bar">
+                <button type="button" class="suot-action" data-action="edit" title="Редактировать">✏️</button>
+                <button type="button" class="suot-action suot-action-danger" data-action="delete" title="Удалить">🗑</button>
+              </div>
+              <input type="hidden" name="Delete" value="false" class="training-delete-flag" />
+            </td>
+          </tr>
+        }
+        <tr id="program-add-row-template" class="training-tree-row training-tree-file" hidden data-id="" data-parent-id="" data-is-group="false" data-depth="0">
+          <td class="training-select-col"><input type="checkbox" class="training-row-select" aria-label="Выделить" /></td>
+          <td>
+            <input type="hidden" name="Id" value="" />
+            <input type="hidden" name="ParentId" value="" />
+            <input type="hidden" name="IsGroup" value="false" />
+            @await Html.PartialAsync("_TrainingTreeName", new TrainingTreeNameModel { Depth = 0, IsGroup = false, InputClass = "ppe-input training-item-name" })
+          </td>
+          <td><input name="Section" value="Охрана труда" class="ppe-input" /></td>
+          <td><input name="TotalHours" value="0" class="ppe-input ppe-input-sm" /></td>
+          <td>
+            <div class="suot-action-bar">
+              <button type="button" class="suot-action" data-action="edit" title="Редактировать">✏️</button>
+              <button type="button" class="suot-action suot-action-danger" data-action="delete" title="Удалить">🗑</button>
+            </div>
+            <input type="hidden" name="Delete" value="false" class="training-delete-flag" />
+          </td>
+        </tr>
+        <tr id="program-add-group-template" class="training-tree-row training-tree-folder" hidden data-id="" data-parent-id="" data-is-group="true" data-depth="0">
+          <td class="training-select-col"><input type="checkbox" class="training-row-select" aria-label="Выделить" /></td>
+          <td>
+            <input type="hidden" name="Id" value="" />
+            <input type="hidden" name="ParentId" value="" />
+            <input type="hidden" name="IsGroup" value="true" />
+            @await Html.PartialAsync("_TrainingTreeName", new TrainingTreeNameModel { Depth = 0, IsGroup = true, InputClass = "ppe-input training-group-name" })
+          </td>
+          <td><input name="Section" value="Охрана труда" class="ppe-input" /></td>
+          <td><input name="TotalHours" value="0" class="ppe-input ppe-input-sm" /></td>
+          <td>
+            <div class="suot-action-bar">
+              <button type="button" class="suot-action" data-action="edit" title="Редактировать">✏️</button>
+              <button type="button" class="suot-action suot-action-danger" data-action="delete" title="Удалить">🗑</button>
+            </div>
+            <input type="hidden" name="Delete" value="false" class="training-delete-flag" />
+          </td>
+        </tr>
+      </tbody>
+    </table>
+    
+  </form>
+</div>
+
+@section Scripts {
+  <script src="~/js/training-catalog.js" asp-append-version="true"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', function () {
+      initTrainingCatalog({
+        addRowBtnId: 'program-add-row-btn',
+        addGroupBtnId: 'program-add-group-btn',
+        moveToGroupBtnId: 'program-move-group-btn',
+        rowTemplateId: 'program-add-row-template',
+        groupTemplateId: 'program-add-group-template',
+        bulkEditBtnId: 'program-bulk-edit-btn',
+        printMenuId: 'program-print-menu',
+        printLinkSelector: '.training-print-link',
+        selectedHintId: 'program-selected-hint',
+        selectedInputId: 'program-print-id',
+        treeBodyId: 'program-catalog-body',
+        printSelectFormId: 'program-select-form'
+      });
+    });
+  </script>
+}

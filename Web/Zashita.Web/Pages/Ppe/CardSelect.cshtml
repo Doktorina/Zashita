@@ -1,0 +1,39 @@
+@page "/Ppe/CardSelect"
+@model Zashita.Web.Pages.Ppe.CardSelectModel
+@using Zashita.Core.Ppe
+@{
+    ViewData["Title"] = PpeCardTypes.CardHubMenuTitle;
+    ViewData["Subtitle"] = "Выберите тип карточки для оформления.";
+    ViewData["ActiveModule"] = "спецодежда-и-сиз";
+    ViewData["IsModulePage"] = true;
+}
+
+<div class="panel ppe-panel">
+  <h2 class="ppe-step-title">Тип карточки</h2>
+  <form method="post" class="ppe-card-select">
+    @foreach (var type in Model.CardTypes)
+    {
+      <button type="submit" name="documentName" value="@type" class="ppe-card-type-btn">
+        <span class="ppe-card-type-title">@type</span>
+        <span class="ppe-muted">
+          @if (type == PpeCardTypes.PersonalSiz)
+          {
+            @:Личная карточка выдачи средств индивидуальной защиты
+          }
+          else if (type == PpeCardTypes.PersonalDsiz)
+          {
+            @:Личная карточка выдачи дерматологических СИЗ и смывающих средств
+          }
+          else
+          {
+            @:Карточка учёта дежурных СИЗ с выбором позиций из номенклатуры
+          }
+        </span>
+      </button>
+    }
+  </form>
+  <div class="ppe-actions">
+    <a class="btn btn-outline" asp-page="/Ppe/Status">Обеспечение спецодеждой, СИЗ</a>
+    <a class="btn btn-outline" asp-page="/Ppe/SavedCards">Сохранённые карточки</a>
+  </div>
+</div>

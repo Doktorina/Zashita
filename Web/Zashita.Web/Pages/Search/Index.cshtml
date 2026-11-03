@@ -1,0 +1,33 @@
+@page
+@model Zashita.Web.Pages.Search.IndexModel
+@{
+    ViewData["Title"] = "Поиск";
+    ViewData["Subtitle"] = "Поиск по разделам и данным.";
+    ViewData["ShowToolbar"] = false;
+}
+
+<div class="panel">
+    <h2 class="panel-title">Результаты</h2>
+    @if (string.IsNullOrWhiteSpace(Model.Query))
+    {
+        <p class="hint">Введите запрос в поле поиска вверху страницы.</p>
+    }
+    else if (Model.Results.Count == 0)
+    {
+        <p class="hint">По запросу «@Model.Query» ничего не найдено.</p>
+    }
+    else
+    {
+        <ul class="module-links">
+            @foreach (var result in Model.Results)
+            {
+                <li>
+                    <a href="@result.Url">
+                        <strong>@result.Title</strong>
+                        <span class="search-hit-hint">@result.Hint</span>
+                    </a>
+                </li>
+            }
+        </ul>
+    }
+</div>

@@ -1,0 +1,133 @@
+@page "/Med/WorkTypes/Edit"
+@model Zashita.Web.Pages.Med.WorkTypes.EditModel
+@{
+    var r = Model.Record;
+    ViewData["Title"] = Model.IsNew
+        ? (r.IsGroup ? "Группа видов работ (создание)" : "Вид работ (создание)")
+        : (r.IsGroup ? r.Name : "Вид работ");
+    ViewData["Subtitle"] = Model.Organization;
+}
+
+@section Styles {
+  <link rel="stylesheet" href="~/css/med-catalog-edit.css" asp-append-version="true" />
+}
+
+@if (!string.IsNullOrWhiteSpace(Model.Message))
+{
+  <p class="@(Model.IsError ? "form-error" : "text-success")">@Model.Message</p>
+}
+
+<div class="panel ppe-panel med-catalog-edit" id="med-worktype-edit">
+  <form method="post" asp-page="/Med/WorkTypes/Edit">
+    <input type="hidden" name="recordId" value="@r.Id" />
+    <input type="hidden" asp-for="Id" />
+    <input type="hidden" name="isGroup" value="@r.IsGroup.ToString().ToLowerInvariant()" />
+
+    <div class="sout-assignment-toolbar">
+      <div class="sout-assignment-toolbar-left">
+        <a class="btn btn-outline btn-sm" asp-page="/Med/WorkTypes">←</a>
+        <button type="submit" formaction="?handler=SaveAndClose" class="btn btn-primary btn-sm">Записать и закрыть</button>
+        <button type="submit" formaction="?handler=Save" class="btn btn-outline btn-sm">Записать</button>
+      </div>
+    </div>
+
+    @if (!r.IsGroup)
+    {
+      <div class="sout-assignment-tabs med-catalog-edit-tabs" role="tablist">
+        <button type="button" class="sout-assignment-tab sout-assignment-tab-active" data-tab="main">Основное</button>
+        <button type="button" class="sout-assignment-tab med-catalog-edit-tab-disabled" disabled>Меры управления риском (Источник опасности)</button>
+        <button type="button" class="sout-assignment-tab med-catalog-edit-tab-disabled" disabled>Присоединенные файлы</button>
+        <button type="button" class="sout-assignment-tab med-catalog-edit-tab-disabled" disabled>Рабочие места</button>
+      </div>
+
+      <div class="sout-assignment-tab-panel sout-assignment-tab-panel-active" data-tab-panel="main">
+        <div class="med-catalog-edit-top">
+          <label class="ppe-field med-catalog-edit-name">
+            <span>Наименование</span>
+            <input name="name" value="@r.Name" class="ppe-input @(Model.IsError ? "ppe-input-invalid" : "")" required autofocus />
+          </label>
+          <label class="ppe-field med-catalog-edit-code">
+            <span>Код</span>
+            <input name="code" value="@(string.IsNullOrWhiteSpace(r.Code) ? "<Авто>" : r.Code)" class="ppe-input" readonly />
+          </label>
+        </div>
+        <div class="med-catalog-edit-grid">
+          <label class="ppe-field">
+            <span>Входит в группу</span>
+            <select name="parentId" class="ppe-input">
+              <option value="">—</option>
+              @foreach (var group in Model.GroupOptions.Where(g => g.Id != r.Id))
+              {
+                if (string.Equals(r.ParentId, group.Id, StringComparison.Ordinal))
+                {
+                  <option value="@group.Id" selected>@group.Name</option>
+                }
+                else
+                {
+                  <option value="@group.Id">@group.Name</option>
+                }
+              }
+            </select>
+          </label>
+          <label class="ppe-field">
+            <span>Номер п/п</span>
+            <input name="itemNumber" value="@r.ItemNumber" class="ppe-input" />
+          </label>
+        </div>
+        <label class="ppe-field">
+          <span>Описание</span>
+          <textarea name="description" class="ppe-input med-catalog-textarea" rows="4">@r.Description</textarea>
+        </label>
+        <label class="ppe-field">
+          <span>Набор факторов и видов работ</span>
+          <input name="factorSetName" value="@r.FactorSetName" class="ppe-input" list="med-worktype-factor-sets" />
+        </label>
+      </div>
+    }
+    else
+    {
+      <div class="med-catalog-edit-top">
+        <label class="ppe-field med-catalog-edit-name">
+          <span>Наименование</span>
+          <input name="name" value="@r.Name" class="ppe-input @(Model.IsError ? "ppe-input-invalid" : "")" required autofocus />
+        </label>
+        <label class="ppe-field med-catalog-edit-code">
+          <span>Код</span>
+          <input name="code" value="@(string.IsNullOrWhiteSpace(r.Code) ? "<Авто>" : r.Code)" class="ppe-input" readonly />
+        </label>
+      </div>
+      <label class="ppe-field">
+        <span>Входит в группу</span>
+        <select name="parentId" class="ppe-input">
+          <option value="">—</option>
+          @foreach (var group in Model.GroupOptions.Where(g => g.Id != r.Id))
+          {
+            if (string.Equals(r.ParentId, group.Id, StringComparison.Ordinal))
+            {
+              <option value="@group.Id" selected>@group.Name</option>
+            }
+            else
+            {
+              <option value="@group.Id">@group.Name</option>
+            }
+          }
+        </select>
+      </label>
+      <input type="hidden" name="itemNumber" value="@r.ItemNumber" />
+      <input type="hidden" name="description" value="@r.Description" />
+      <input type="hidden" name="factorSetName" value="@r.FactorSetName" />
+    }
+
+    <datalist id="med-worktype-factor-sets">
+      @foreach (var option in Model.FactorSetOptions)
+      {
+        <option value="@option"></option>
+      }
+    </datalist>
+  </form>
+</div>
+
+@section Scripts {
+  <script src="~/js/med-catalog-edit.js" asp-append-version="true"></script>
+  <script>document.addEventListener('DOMContentLoaded', function () { initMedCatalogEdit('med-worktype-edit'); });</script>
+}

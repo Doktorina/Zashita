@@ -1,0 +1,178 @@
+﻿@page "/Med/Restrictions/Edit"
+@using Zashita.Core.Med
+@model Zashita.Web.Pages.Med.Restrictions.EditModel
+@{
+    ViewData["Title"] = Model.IsNew ? "Ограничения физ. лиц. Новый" : "Ограничения физ. лиц";
+    ViewData["Subtitle"] = Model.Organization;
+    var doc = Model.Document;
+}
+
+<div class="panel ppe-panel sout-assignment-doc">
+  <form method="post" asp-page="/Med/Restrictions/Edit">
+    <input type="hidden" asp-for="Id" />
+
+    <div class="sout-assignment-toolbar">
+      <div class="sout-assignment-toolbar-left">
+        <a class="btn btn-outline btn-sm" asp-page="/Med/Restrictions">←</a>
+        <button type="submit" formaction="?handler=PostAndClose" class="btn btn-primary btn-sm">Провести и закрыть</button>
+        <button type="submit" formaction="?handler=Save" class="btn btn-outline btn-sm">Записать</button>
+        <button type="submit" formaction="?handler=Post" class="btn btn-outline btn-sm">Провести</button>
+        @if (!Model.IsNew)
+        {
+          <a class="btn btn-outline btn-sm" asp-page="/Med/Restrictions/Preview" asp-route-id="@doc.Id">Приказ об отстранении от работы</a>
+        }
+      </div>
+      <div class="sout-assignment-toolbar-right">
+        <span class="hint sout-assignment-status">@(doc.IsPosted ? "Проведён" : "Новый *")</span>
+      </div>
+    </div>
+
+    <div class="sout-assignment-header">
+      <div class="sout-assignment-header-col">
+        <label class="ppe-field">
+          <span>Физ. лицо</span>
+          <input name="employeeName" value="@doc.EmployeeName" class="ppe-input" list="med-restriction-employees" required />
+        </label>
+        <label class="ppe-field">
+          <span>Профессия / должность</span>
+          <input name="profession" value="@doc.Profession" class="ppe-input" placeholder="из штата" />
+        </label>
+        <label class="ppe-field">
+          <span>Отстранить с</span>
+          <input type="date" name="suspensionFrom" value="@((doc.SuspensionFrom ?? doc.Date).ToString("yyyy-MM-dd"))" class="ppe-input" />
+        </label>
+        <label class="ppe-field">
+          <span>Мед. учреждение</span>
+          <input name="medicalInstitution" value="@doc.MedicalInstitution" class="ppe-input" />
+        </label>
+        <label class="ppe-field">
+          <span>Основание</span>
+          <input name="basis" value="@doc.Basis" class="ppe-input" />
+        </label>
+      </div>
+      <div class="sout-assignment-header-col">
+        <label class="ppe-field">
+          <span>Номер</span>
+          <input name="number" value="@(string.IsNullOrWhiteSpace(doc.Number) ? "<Авто>" : doc.Number)" class="ppe-input" />
+        </label>
+        <label class="ppe-field">
+          <span>от</span>
+          <input type="datetime-local" name="date" value="@doc.Date.ToString("yyyy-MM-ddTHH:mm:ss")" class="ppe-input" step="1" />
+        </label>
+        <label class="ppe-field">
+          <span>Город</span>
+          <input name="city" value="@doc.City" class="ppe-input" />
+        </label>
+        <label class="ppe-field">
+          <span>Организация</span>
+          <input name="organization" value="@Model.Organization" class="ppe-input" readonly />
+        </label>
+      </div>
+    </div>
+
+    <datalist id="med-restriction-employees">
+      @foreach (var employee in Model.EmployeeNames)
+      {
+        <option value="@employee"></option>
+      }
+    </datalist>
+
+    <div class="med-restriction-tabs">
+      <h3 class="ppe-subtitle">Ограничения</h3>
+      <table class="data-grid ppe-edit-grid">
+        <thead>
+          <tr>
+            <th>№</th>
+            <th>Фактор / вид работ</th>
+            <th>Номер пункта</th>
+            <th>Присутствие</th>
+            <th>Дата пересмотра</th>
+            <th>Комментарий</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody id="med-restriction-lines-body">
+          @for (var i = 0; i < Math.Max(doc.Lines.Count, 1); i++)
+          {
+            var line = i < doc.Lines.Count ? doc.Lines[i] : new MedRestrictionLine();
+            <tr class="med-restriction-line-row">
+              <td>@(i + 1)</td>
+              <td>
+                <input type="hidden" name="lineId" value="@line.Id" />
+                <input name="factorOrWorkType" value="@line.FactorOrWorkType" class="ppe-input" />
+              </td>
+              <td><input name="itemNumber" value="@line.ItemNumber" class="ppe-input" /></td>
+              <td>
+                <input type="hidden" name="isPresent" value="false" />
+                <input type="checkbox" name="isPresent" value="true" @(line.IsPresent ? "checked" : null) />
+              </td>
+              <td><input type="date" name="reviewDate" value="@line.ReviewDate?.ToString("yyyy-MM-dd")" class="ppe-input" /></td>
+              <td><input name="lineComment" value="@line.Comment" class="ppe-input" /></td>
+              <td><button type="button" class="btn btn-outline btn-sm med-remove-line-btn">×</button></td>
+            </tr>
+          }
+        </tbody>
+      </table>
+      <div class="ppe-actions">
+        <button type="button" class="btn btn-outline btn-sm" id="med-add-line-btn">Добавить</button>
+        <button type="button" class="btn btn-outline btn-sm" id="med-clear-lines-btn">Очистить</button>
+      </div>
+    </div>
+
+    <label class="ppe-field">
+      <span>Заболевания</span>
+      <textarea name="diseases" class="ppe-input" rows="3">@doc.Diseases</textarea>
+    </label>
+    <label class="ppe-field">
+      <span>Дополнительно</span>
+      <textarea name="additionalInfo" class="ppe-input" rows="3">@doc.AdditionalInfo</textarea>
+    </label>
+
+    <div class="ppe-actions">
+      @if (!Model.IsNew)
+      {
+        <button type="submit" formaction="?handler=Delete" class="btn btn-outline" onclick="return confirm('Удалить документ?');">Удалить</button>
+      }
+      <a class="btn btn-outline" asp-page="/Med/Restrictions">К списку</a>
+    </div>
+  </form>
+</div>
+
+<template id="med-restriction-line-template">
+  <tr class="med-restriction-line-row">
+    <td></td>
+    <td>
+      <input type="hidden" name="lineId" value="" />
+      <input name="factorOrWorkType" value="" class="ppe-input" />
+    </td>
+    <td><input name="itemNumber" value="" class="ppe-input" /></td>
+    <td>
+      <input type="hidden" name="isPresent" value="false" />
+      <input type="checkbox" name="isPresent" value="true" />
+    </td>
+    <td><input type="date" name="reviewDate" value="" class="ppe-input" /></td>
+    <td><input name="lineComment" value="" class="ppe-input" /></td>
+    <td><button type="button" class="btn btn-outline btn-sm med-remove-line-btn">×</button></td>
+  </tr>
+</template>
+
+@section Scripts {
+  <script src="~/js/med-person-list-edit.js" asp-append-version="true"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', function () {
+      var clearBtn = document.getElementById('med-clear-lines-btn');
+      var body = document.getElementById('med-restriction-lines-body');
+      if (clearBtn && body) {
+        clearBtn.addEventListener('click', function () {
+          body.querySelectorAll('input').forEach(function (input) {
+            if (input.type === 'checkbox') {
+              input.checked = false;
+            } else if (input.type !== 'hidden') {
+              input.value = '';
+            }
+          });
+        });
+      }
+    });
+  </script>
+}

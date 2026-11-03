@@ -1,0 +1,8 @@
+@page "/Training/Status"
+@model Zashita.Web.Pages.Training.StatusModel
+@{
+    ViewData["Title"] = "Отчет по обучению";
+    ViewData["Subtitle"] = Model.Organization;
+}
+
+<partial name="_TrainingStatusReport" model="Model" />

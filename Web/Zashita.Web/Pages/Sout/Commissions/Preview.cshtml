@@ -1,0 +1,225 @@
+﻿@page "/Sout/Commissions/Preview"
+@model Zashita.Web.Pages.Sout.Commissions.PreviewModel
+@{
+    ViewData["Title"] = Model.NotFound ? "Не найдено" : " ";
+    var historyTitle = Model.NotFound ? "Не найдено" : Model.Title;
+    Layout = null;
+}
+
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>@ViewData["Title"]</title>
+    <partial name="_SiteIconLinks" />
+<link rel="stylesheet" href="/css/risks-preparation.css" asp-append-version="true" />
+  <style>
+    * { box-sizing: border-box; }
+    html, body {
+      margin: 0;
+      padding: 0;
+      background: #c5c5c5;
+      font-family: "Times New Roman", Times, serif;
+      color: #000;
+    }
+    .risks-preview-toolbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 8px 12px;
+      background: #ece9d8;
+      border-bottom: 1px solid #a0a0a0;
+      font-family: "Segoe UI", Tahoma, sans-serif;
+      position: sticky;
+      top: 0;
+      z-index: 20;
+    }
+    .btn {
+      display: inline-block;
+      padding: 6px 12px;
+      border: 1px solid #888;
+      background: #fff;
+      cursor: pointer;
+      text-decoration: none;
+      color: #222;
+      font-size: 13px;
+      border-radius: 3px;
+    }
+    .btn-primary { background: #2f6b3a; color: #fff; border-color: #245530; }
+    .risks-preview-stage {
+      padding: 20px;
+      display: block;
+      overflow: auto;
+    }
+    .risks-a4-page {
+      background: #fff;
+      margin: 0 auto 24px;
+      box-shadow: 0 2px 14px rgba(0,0,0,.25);
+      color: #000;
+    }
+    .risks-a4-portrait {
+      width: 210mm;
+      min-height: 297mm;
+      padding: 20mm 22mm;
+    }
+    .risks-a4-page .risks-order-sheet,
+    .risks-a4-page .sout-commission-order-sheet {
+      width: 100% !important;
+      max-width: none !important;
+      margin: 0 !important;
+      padding: 0 !important;
+      box-shadow: none !important;
+      min-height: 0 !important;
+    }
+    .risks-page-break {
+      height: 0;
+      margin: 0;
+      padding: 0;
+      border: none;
+      page-break-before: always;
+      break-before: page;
+    }
+    .sout-commission-schedule thead th {
+      background: #fff !important;
+      color: #000 !important;
+      font-weight: 700;
+      text-align: center;
+    }
+  </style>
+  <style>
+    @@media print {
+      @@page {
+        size: A4 portrait;
+        margin: 20mm;
+      }
+      html, body {
+        background: #fff !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        width: auto !important;
+      }
+      .ppe-no-print,
+      .risks-preview-toolbar,
+      .risks-print-edit-hint {
+        display: none !important;
+      }
+      .risks-preview-stage {
+        padding: 0 !important;
+        margin: 0 !important;
+        overflow: visible !important;
+      }
+      .risks-a4-page {
+        width: auto !important;
+        min-height: auto !important;
+        max-width: none !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        box-shadow: none !important;
+      }
+      .risks-order-sheet,
+      .sout-commission-order-sheet {
+        width: 100% !important;
+        max-width: none !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        box-shadow: none !important;
+      }
+      .sout-commission-appendix {
+        width: 100% !important;
+        max-width: none !important;
+        margin: 0 !important;
+        padding: 10mm 0 0 !important;
+        box-shadow: none !important;
+      }
+      .sout-commission-appendix-ref {
+        margin-top: 4mm !important;
+      }
+      .risks-page-break {
+        page-break-before: always !important;
+        break-before: page !important;
+        height: 0 !important;
+        margin: 0 !important;
+        padding: 0 !important;
+      }
+      .sout-commission-schedule thead th {
+        background: #fff !important;
+        color: #000 !important;
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+      }
+      .sout-commission-schedule th,
+      .sout-commission-schedule td {
+        border: 1px solid #000 !important;
+      }
+    }
+  </style>
+</head>
+<body>
+@if (Model.NotFound)
+{
+  <div style="padding:24px;font-family:Segoe UI,sans-serif">
+    <p>Комиссия не найдена. Выберите комиссию из списка.</p>
+    <a class="btn" href="/Sout/Commissions/SelectCommission">Выбрать комиссию</a>
+    <a class="btn" href="/Sout/Commissions">К списку комиссий</a>
+  </div>
+}
+else
+{
+  <div class="risks-preview-toolbar ppe-no-print">
+    <div>
+      <button type="button" class="btn btn-primary btn-sm" id="sout-commission-print-btn">Печать</button>
+      <button type="button" class="btn btn-outline btn-sm" id="risks-doc-word-btn">Word</button>
+      <button type="button" class="btn btn-outline btn-sm" id="sout-commission-save-btn">Записать</button>
+      <a class="btn btn-outline btn-sm" href="/Sout/Commissions/SelectCommission">Сменить комиссию</a>
+      <a class="btn btn-outline btn-sm" href="/Sout/Commissions/Edit?id=@Uri.EscapeDataString(Model.Id!)">К карточке</a>
+      <span class="hint" style="margin-left:8px;font-size:12px;color:#555">Правка: клик по тексту, затем «Записать».</span>
+    </div>
+    <a class="btn btn-outline btn-sm" href="/Sout/Commissions">К списку</a>
+  </div>
+  @if (!string.IsNullOrWhiteSpace(Model.Message))
+  {
+    <p class="ppe-no-print" style="margin:8px 12px;font-family:Segoe UI,sans-serif;color:#1b5e20">@Model.Message</p>
+  }
+  <form method="post" asp-page="/Sout/Commissions/Preview" asp-page-handler="Save" id="sout-commission-save-form" class="ppe-no-print">
+    <input type="hidden" name="id" value="@Model.Id" />
+    <div id="sout-commission-overrides"></div>
+  </form>
+  <div class="risks-preview-stage">
+    <div class="risks-a4-page risks-a4-portrait" id="sout-commission-print-area">
+      @Html.Raw(Model.PreviewHtml)
+    </div>
+  </div>
+  <script src="/js/print-history.js" asp-append-version="true"></script>
+  <script src="/js/risks-doc-list.js" asp-append-version="true"></script>
+  <script src="~/js/risks-doc-export.js" asp-append-version="true"></script>
+  <script>
+    document.getElementById('sout-commission-print-btn')?.addEventListener('click', function () {
+      window.print();
+      if (typeof window.zashitaRecordPrint === 'function') {
+        window.zashitaRecordPrint({
+          category: 'sout',
+          title: @Json.Serialize(historyTitle),
+          summary: 'Приказ о создании комиссии СОУТ',
+          thenPrint: false
+        });
+      }
+    });
+    initRisksPreparationPreview({
+      saveBtnId: 'sout-commission-save-btn',
+      saveFormId: 'sout-commission-save-form',
+      overridesContainerId: 'sout-commission-overrides',
+      printAreaId: 'sout-commission-print-area'
+    });
+    if (window.zashitaRisksDocExport) {
+      window.zashitaRisksDocExport.bind({
+        sourceSelector: '#sout-commission-print-area',
+        fileName: @Json.Serialize(historyTitle),
+        landscape: false
+      });
+    }
+  </script>
+}
+</body>
+</html>

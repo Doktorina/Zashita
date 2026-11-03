@@ -1,0 +1,439 @@
+.risks-report-links {
+  display: grid;
+  gap: 14px;
+}
+
+.risks-report-link a {
+  font-weight: 600;
+}
+
+.risks-report-link-disabled {
+  color: #888;
+  font-weight: 600;
+}
+
+.risks-report-filters {
+  background: #fff8e1;
+  border: 1px solid #e8d9a0;
+  border-radius: 4px;
+  padding: 12px 14px;
+  margin-bottom: 12px;
+}
+
+.risks-report-filters-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px 16px;
+  margin-bottom: 10px;
+}
+
+.risks-report-toolbar {
+  margin-top: 4px;
+}
+
+.risks-report-table-wrap {
+  overflow: auto;
+  border: 1px solid var(--border, #ddd);
+  border-radius: 4px;
+}
+
+.risks-report-grid {
+  min-width: 1400px;
+  font-size: 12px;
+}
+
+.risks-report-grid thead th {
+  background: #f0f0f0;
+  white-space: nowrap;
+  vertical-align: bottom;
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.risks-report-grid td {
+  vertical-align: middle;
+}
+
+.risks-report-num-col {
+  text-align: right;
+  white-space: nowrap;
+}
+
+.risks-report-tree-label {
+  border: none;
+  background: transparent;
+  padding: 0;
+  min-width: 0;
+  pointer-events: none;
+  box-shadow: none;
+  color: inherit;
+  font: inherit;
+}
+
+.risks-report-row-highlight {
+  background: #fde8e8;
+}
+
+.risks-row-alert {
+  background: #fde8e8;
+}
+
+.risks-row-warn {
+  background: #fff6db;
+}
+
+.risks-report-hint {
+  margin: 12px 0 0;
+}
+
+@media print {
+  .risks-report-filters,
+  .risks-report-toolbar,
+  .ppe-print-menu,
+  .sidebar,
+  .page-head {
+    display: none !important;
+  }
+
+  .risks-report-table-wrap {
+    overflow: visible;
+    border: none;
+  }
+}
+
+@media (max-width: 900px) {
+  .risks-report-filters-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.risks-hazard-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  margin: 8px 0 12px;
+}
+
+.risks-legend-item::before {
+  content: "";
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  margin-right: 6px;
+  vertical-align: middle;
+}
+
+.traffic-dot-green::before { background: #1a8f4a; }
+.traffic-dot-yellow::before { background: #c98a00; }
+.traffic-dot-red::before { background: #c0392b; }
+.traffic-dot-orange::before { background: #c45c12; }
+
+.risks-hazard-grid {
+  width: 100% !important;
+  min-width: 100% !important;
+  max-width: none !important;
+  table-layout: fixed;
+}
+
+.risks-hazard-panel .training-status-wrap,
+.risks-hazard-panel form.training-status-wrap {
+  width: 100%;
+  max-width: none;
+  box-sizing: border-box;
+}
+
+.risks-hazard-grid th.col-tree,
+.risks-hazard-grid td.col-tree {
+  width: 28%;
+}
+
+.risks-hazard-grid thead th:nth-child(2),
+.risks-hazard-grid tbody td:nth-child(2) { width: 9%; }
+
+.risks-hazard-grid thead th:nth-child(3),
+.risks-hazard-grid tbody td:nth-child(3) { width: 18%; }
+
+.risks-hazard-grid thead th:nth-child(4),
+.risks-hazard-grid tbody td:nth-child(4) { width: 9%; }
+
+.risks-hazard-grid thead th:nth-child(5),
+.risks-hazard-grid tbody td:nth-child(5) { width: 10%; }
+
+.risks-hazard-grid thead th:nth-child(6),
+.risks-hazard-grid tbody td:nth-child(6) { width: 9%; }
+
+.risks-hazard-grid thead th:nth-child(7),
+.risks-hazard-grid tbody td:nth-child(7) { width: 9%; }
+
+.risks-hazard-grid thead th:nth-child(8),
+.risks-hazard-grid tbody td:nth-child(8) { width: 8%; }
+
+.risks-hazard-grid th,
+.risks-hazard-grid td {
+  word-wrap: break-word;
+  overflow-wrap: anywhere;
+}
+
+.risks-tree-group-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 12px;
+}
+
+.risks-tree-toggle {
+  border: 1px solid var(--line-200, #ccc);
+  background: #fff;
+  border-radius: 4px;
+  width: 1.6rem;
+  height: 1.6rem;
+  padding: 0;
+  line-height: 1;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.risks-tree-toggle:hover {
+  background: #f3f3f3;
+}
+
+.risks-tree-group-label {
+  font-size: 0.95rem;
+}
+
+.risks-prof-meta {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 4px 8px;
+  align-items: center;
+}
+
+.risks-prof-group td {
+  background: color-mix(in srgb, #4a90e2 8%, #fff);
+}
+
+.risks-prof-card-fields {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 8px 14px;
+  margin-left: auto;
+}
+
+.risks-prof-card-field {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 7rem;
+}
+
+.risks-prof-card-field span {
+  font-size: 0.72rem;
+  color: #666;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.risks-prof-card-field .ppe-input {
+  min-width: 7rem;
+  padding: 4px 8px;
+  font-size: 0.88rem;
+}
+
+.risks-prof-card-status {
+  align-self: center;
+  white-space: nowrap;
+}
+
+.risks-status-badge {
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.risks-prof-group.traffic-red td {
+  background: rgba(192, 57, 43, 0.08);
+}
+
+.risks-opr-staff-grid .risks-opr-person-row td {
+  vertical-align: middle;
+}
+
+.risks-opr-staff-grid .risks-opr-person-row .col-tree {
+  padding-left: 2.4rem;
+  font-weight: 500;
+}
+
+.risks-opr-staff-grid thead th {
+  white-space: nowrap;
+}
+
+@media (max-width: 1100px) {
+  .risks-prof-card-fields {
+    margin-left: 0;
+    width: 100%;
+  }
+}
+
+@media print {
+  .risks-tree-toggle { display: none; }
+  .training-tree-hidden { display: table-row !important; }
+}
+
+
+/* Карта оценки рисков */
+.risk-map-header-fields {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(12rem, 20rem));
+  gap: 10px 16px;
+  margin-bottom: 12px;
+  max-width: 44rem;
+}
+
+.risk-map-grid .risk-map-measures,
+.hazard-catalog-grid .hazard-measures {
+  width: 100%;
+  min-width: 14rem;
+  min-height: 4.5rem;
+  resize: vertical;
+  white-space: pre-wrap;
+  line-height: 1.35;
+}
+
+.risk-map-score {
+  text-align: center;
+  font-weight: 700;
+  max-width: 4.5rem;
+}
+
+.risk-matrix-section {
+  margin-top: 24px;
+  padding-top: 12px;
+  border-top: 1px solid var(--line-200, #e2e2e2);
+}
+
+.risk-matrix-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12px;
+  margin-bottom: 8px;
+}
+
+.risk-matrix-table th,
+.risk-matrix-table td {
+  border: 1px solid #c8c8c8;
+  padding: 6px 8px;
+  text-align: center;
+  vertical-align: middle;
+}
+
+.risk-matrix-corner {
+  width: 14rem;
+  background: #f5f5f5;
+  position: relative;
+  min-height: 4.5rem;
+}
+
+.risk-matrix-corner-sev,
+.risk-matrix-corner-prob {
+  display: block;
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 1.25;
+}
+
+.risk-matrix-corner-sev {
+  text-align: left;
+  margin-bottom: 6px;
+}
+
+.risk-matrix-corner-prob {
+  text-align: right;
+}
+
+.risk-matrix-axis {
+  background: #fafafa;
+  font-weight: 500;
+  max-width: 9rem;
+}
+
+.risk-matrix-row-head {
+  text-align: left !important;
+}
+
+.risk-matrix-weight {
+  font-weight: 700;
+  font-size: 13px;
+}
+
+.risk-matrix-label {
+  font-size: 10px;
+  line-height: 1.2;
+  font-weight: 400;
+  margin-top: 2px;
+}
+
+.risk-classify-table td:first-child {
+  text-align: center;
+  font-weight: 700;
+  width: 5.5rem;
+}
+
+.risk-zone-low {
+  background: #c6efce !important;
+}
+
+.risk-zone-mid {
+  background: #ffc000 !important;
+}
+
+.risk-zone-high {
+  background: #ff0000 !important;
+}
+
+.risk-map-combo {
+  position: relative;
+  min-width: 12rem;
+}
+
+.risk-map-combo-menu {
+  position: absolute;
+  z-index: 30;
+  left: 0;
+  right: 0;
+  top: calc(100% + 2px);
+  max-height: 16rem;
+  overflow: auto;
+  background: #fff;
+  border: 1px solid #c8c8c8;
+  border-radius: 6px;
+  box-shadow: 0 8px 20px rgba(0,0,0,.12);
+}
+
+.risk-map-combo-item {
+  display: block;
+  width: 100%;
+  text-align: left;
+  border: none;
+  background: #fff;
+  padding: 6px 8px;
+  cursor: pointer;
+  font: inherit;
+}
+
+.risk-map-combo-item:hover {
+  background: #eef6f0;
+}
+
+.risk-map-combo-empty {
+  padding: 8px;
+  color: #666;
+  font-size: 12px;
+}
+
+@media (max-width: 900px) {
+  .risk-map-header-fields {
+    grid-template-columns: 1fr;
+  }
+}
+

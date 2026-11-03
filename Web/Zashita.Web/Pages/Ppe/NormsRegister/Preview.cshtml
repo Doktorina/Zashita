@@ -1,0 +1,63 @@
+﻿@page "/Ppe/NormsRegister/Preview"
+@model Zashita.Web.Pages.Ppe.NormsRegister.PreviewModel
+@{
+    Layout = null;
+    ViewData["Title"] = "Нормы выдачи СИЗ";
+}
+
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>@ViewData["Title"]</title>
+    <partial name="_SiteIconLinks" />
+<link rel="stylesheet" href="/css/zashita.css" asp-append-version="true" />
+  <link rel="stylesheet" href="/css/sout-preparation.css" asp-append-version="true" />
+  <link rel="stylesheet" href="/css/ppe-doc-print.css" asp-append-version="true" />
+  <link rel="stylesheet" href="/css/ppe-norms-register-print.css" asp-append-version="true" />
+</head>
+<body class="sout-preview-page">
+  <div class="sout-preview-shell">
+    <div class="sout-preview-toolbar ppe-no-print">
+      <div class="sout-preview-toolbar-left">
+        <button type="button" class="btn btn-primary btn-sm" onclick="zashitaRecordPrint({ category: 'ppe', title: document.title, summary: 'Печать' })">Печать</button>
+        <button type="button" class="btn btn-outline btn-sm" id="ppe-norms-preview-save-btn">Записать</button>
+        <span class="hint">Можно менять текст в ячейках и шапке перед печатью.</span>
+      </div>
+      <div class="sout-preview-toolbar-right">
+        <a class="btn btn-outline btn-sm" href="/Ppe/NormsRegister?filterOrg=@Uri.EscapeDataString(Model.FilterOrg ?? "")">К списку</a>
+      </div>
+    </div>
+
+    @if (!string.IsNullOrWhiteSpace(Model.Message))
+    {
+      <p class="sout-preview-message ppe-no-print">@Model.Message</p>
+    }
+
+    <form method="post" asp-page="/Ppe/NormsRegister/Preview" asp-page-handler="Save" id="ppe-norms-preview-save-form" class="ppe-no-print">
+      <input type="hidden" name="filterOrg" value="@Model.FilterOrg" />
+      <div id="ppe-norms-preview-overrides"></div>
+    </form>
+
+    <div class="sout-preview-doc-wrap" id="ppe-norms-preview-print-area">
+      <div class="sout-eq-doc ppe-norms-print-sheet">
+        @Html.Raw(Model.PreviewHtml)
+      </div>
+    </div>
+  </div>
+
+  <script src="~/js/med-doc-list.js" asp-append-version="true"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', function () {
+      initMedPreparationPreview({
+        saveBtnId: 'ppe-norms-preview-save-btn',
+        saveFormId: 'ppe-norms-preview-save-form',
+        overridesContainerId: 'ppe-norms-preview-overrides',
+        printAreaId: 'ppe-norms-preview-print-area'
+      });
+    });
+  </script>
+  <script src="/js/print-history.js"></script>
+</body>
+</html>

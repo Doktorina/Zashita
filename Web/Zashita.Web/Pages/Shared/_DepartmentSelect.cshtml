@@ -1,0 +1,36 @@
+@model Zashita.Web.Pages.Shared.DepartmentSelectModel
+@{
+    var name = string.IsNullOrWhiteSpace(Model.Name) ? "Department" : Model.Name;
+    var value = Model.Value?.Trim() ?? string.Empty;
+    var emptyLabel = string.IsNullOrWhiteSpace(Model.EmptyLabel) ? "— не указано —" : Model.EmptyLabel;
+    var options = Model.Options ?? Array.Empty<string>();
+    var hasCurrent = value.Length > 0 &&
+                     !options.Any(o => string.Equals(o, value, StringComparison.OrdinalIgnoreCase));
+}
+<label class="@(Model.CssClass ?? "ppe-field")">
+  <span>
+    @(Model.Label ?? "Подразделение")
+    @if (Model.Optional)
+    {
+      <span class="hint">(необязательно)</span>
+    }
+  </span>
+  <select name="@name" class="@Model.InputClass" @(Model.Required ? "required" : null) @(Model.AutoSubmit ? "onchange=\"this.form.submit()\"" : null)>
+    <option value="">@emptyLabel</option>
+    @if (hasCurrent)
+    {
+      <option value="@value" selected>@value</option>
+    }
+    @foreach (var dep in options)
+    {
+      if (string.Equals(dep, value, StringComparison.OrdinalIgnoreCase))
+      {
+        <option value="@dep" selected>@dep</option>
+      }
+      else
+      {
+        <option value="@dep">@dep</option>
+      }
+    }
+  </select>
+</label>

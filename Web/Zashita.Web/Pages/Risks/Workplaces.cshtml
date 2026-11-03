@@ -1,0 +1,557 @@
+@page "/Risks/Workplaces"
+@using Zashita.Core.Risks
+@using Zashita.Web.Pages.Training
+@model Zashita.Web.Pages.Risks.WorkplacesModel
+@{
+    ViewData["Title"] = Model.IsAssessmentView ? "Карта оценки рисков" : "Рабочие места";
+    ViewData["Subtitle"] = Model.Organization;
+    var printDisabled = string.IsNullOrWhiteSpace(Model.PrintId);
+}
+
+@if (Model.IsAssessmentView)
+{
+  <p class="hint">
+    Список рабочих мест модуля <b>Риски</b> — отдельный от спецоценки. Перечень подгружается из штата 1С <b>автоматически</b>.
+    Оценка ведётся <b>по объектам</b>: состав карт на каждом объекте свой
+    (создание и удаление на одном объекте не меняет другие). Новые объекты получают снимок карт из «оценки по организации».
+    Уже сделанные оценки без привязки к объекту — вкладка «Оценка рисков по организации».
+  </p>
+}
+else
+{
+  <p class="hint">Перечень РМ модуля <b>Риски</b> хранится отдельно от СОУТ и подгружается из штата 1С <b>автоматически</b> при открытии страницы (только работающие; уволенные профессии не добавляются). Уже введённые карты рисков не удаляются.</p>
+}
+
+@section Styles {
+  <link rel="stylesheet" href="~/css/risks-preparation.css" asp-append-version="true" />
+}
+
+@if (!string.IsNullOrWhiteSpace(Model.Message))
+{
+  <p class="text-success">@Model.Message</p>
+}
+
+<div class="sout-workplaces-layout">
+  <div class="panel ppe-panel sout-workplaces-main risks-doc-panel">
+    <div class="ppe-toolbar sout-toolbar">
+      <button type="button" class="btn btn-outline btn-sm" id="risks-workplace-add-row-btn">Создать</button>
+      <button type="button" class="btn btn-outline btn-sm" id="risks-workplace-add-group-btn">Создать группу</button>
+      <button type="button" class="btn btn-outline btn-sm" id="risks-workplace-move-btn" title="Перенести выделенные строки в другую группу">Переместить в группу…</button>
+      <a class="btn btn-outline btn-sm"
+         asp-page="/Risks/ImportCards"
+         title="Загрузить Word (.docx) с картами и вставить данные в рабочие места — по той же логике, что и раньше">
+        Импорт из файла
+      </a>
+      <span class="hint ppe-print-selected" id="risks-workplaces-selected-hint">
+        @(Model.SelectedPrintWorkplace is not null ? $"Для печати: {Model.SelectedPrintWorkplace.Name}" : "")
+      </span>
+      <details class="ppe-print-menu risks-print-menu-open" id="risks-workplaces-print-menu">
+        <summary class="btn btn-outline btn-sm">Печать ▾</summary>
+        <div class="ppe-print-dropdown">
+          <a class="risks-print-link @(printDisabled ? "training-print-disabled" : "")"
+             data-href-template="/Risks/Workplaces/Preview?id={id}&amp;mode=identification&amp;objectId=@Uri.EscapeDataString(Model.SelectedObjectId)"
+             href="@(printDisabled ? "#" : $"/Risks/Workplaces/Preview?id={Uri.EscapeDataString(Model.PrintId!)}&mode=identification&objectId={Uri.EscapeDataString(Model.SelectedObjectId)}")"
+             @(printDisabled ? "aria-disabled=true tabindex=-1" : "")>
+            Карта идентификации опасностей и оценки рисков
+          </a>
+          <a class="risks-print-link @(printDisabled ? "training-print-disabled" : "")"
+             data-href-template="/Risks/Workplaces/Preview?id={id}&amp;mode=identification-measures&amp;objectId=@Uri.EscapeDataString(Model.SelectedObjectId)"
+             href="@(printDisabled ? "#" : $"/Risks/Workplaces/Preview?id={Uri.EscapeDataString(Model.PrintId!)}&mode=identification-measures&objectId={Uri.EscapeDataString(Model.SelectedObjectId)}")"
+             @(printDisabled ? "aria-disabled=true tabindex=-1" : "")>
+            Карта идентификации (с мерами)
+          </a>
+          <a class="risks-print-link @(printDisabled ? "training-print-disabled" : "")"
+             data-href-template="/Risks/Workplaces/Preview?id={id}&amp;mode=assessment&amp;objectId=@Uri.EscapeDataString(Model.SelectedObjectId)"
+             href="@(printDisabled ? "#" : $"/Risks/Workplaces/Preview?id={Uri.EscapeDataString(Model.PrintId!)}&mode=assessment&objectId={Uri.EscapeDataString(Model.SelectedObjectId)}")"
+             @(printDisabled ? "aria-disabled=true tabindex=-1" : "")>
+            Карта оценки рисков
+          </a>
+          <a class="risks-print-link @(printDisabled ? "training-print-disabled" : "")"
+             data-href-template="/Risks/Workplaces/Preview?id={id}&amp;mode=ppe-duty"
+             href="@(printDisabled ? "#" : $"/Risks/Workplaces/Preview?id={Uri.EscapeDataString(Model.PrintId!)}&mode=ppe-duty")"
+             @(printDisabled ? "aria-disabled=true tabindex=-1" : "")>
+            Карточка учета выдачи дежурных СИЗ
+          </a>
+          <a class="risks-print-link @(printDisabled ? "training-print-disabled" : "")"
+             data-href-template="/Risks/Workplaces/Preview?id={id}&amp;mode=chronometry"
+             href="@(printDisabled ? "#" : $"/Risks/Workplaces/Preview?id={Uri.EscapeDataString(Model.PrintId!)}&mode=chronometry")"
+             @(printDisabled ? "aria-disabled=true tabindex=-1" : "")>
+            Хронометраж рабочего времени
+          </a>
+          @if (printDisabled)
+          {
+            <span class="ppe-print-disabled">Выберите рабочее место (не папку)</span>
+          }
+        </div>
+      </details>
+      @if (!printDisabled)
+      {
+        <button type="button" class="btn btn-outline btn-sm" id="risks-wp-quick-word"
+                data-risks-export="word"
+                data-risks-export-url="/Risks/Workplaces/Preview?id=@Uri.EscapeDataString(Model.PrintId!)&amp;mode=assessment&amp;objectId=@Uri.EscapeDataString(Model.SelectedObjectId)"
+                title="Скачать карту оценки (Word)">Word</button>
+      }
+    </div>
+
+    <form method="get" class="sout-workplaces-filters" id="risks-workplaces-filter-form">
+      @if (Model.IsAssessmentView)
+      {
+        <input type="hidden" name="view" value="assessment" />
+        <input type="hidden" name="objectId" value="@Model.SelectedObjectId" />
+      }
+      <input type="hidden" name="printId" id="risks-workplaces-print-id" value="@Model.PrintId" />
+      <label class="training-assistant-wizard-check">
+        <input type="hidden" name="usedOnly" value="false" />
+        <input type="checkbox" name="usedOnly" value="true" @(Model.UsedOnly ? "checked" : null) />
+        <span>Используемые</span>
+      </label>
+      @if (!string.IsNullOrWhiteSpace(Model.DepartmentId))
+      {
+        <input type="hidden" name="departmentId" value="@Model.DepartmentId" />
+      }
+      <label class="sout-workplaces-search">
+        <span class="visually-hidden">Поиск</span>
+        <input type="search" name="q" value="@Model.Q" class="ppe-input" placeholder="Поиск (Ctrl+F)" autocomplete="off" />
+      </label>
+    </form>
+
+    @if (Model.IsAssessmentView)
+    {
+      <div class="risks-objects-bar" style="margin:0 0 14px;display:flex;flex-wrap:wrap;gap:8px;align-items:center">
+        <p class="hint" style="margin:0">
+          Объект: <b>@Model.SelectedObjectDisplayName</b>.
+          Переключение — в панели сверху. Состав карт на объекте независим.
+        </p>
+        @if (Model.CanManageSelectedObject)
+        {
+          <form method="post" asp-page-handler="RenameObject" style="display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:0">
+            <input type="hidden" name="objectId" value="@Model.SelectedObjectId" />
+            <input type="text"
+                   name="objectName"
+                   class="ppe-input"
+                   value="@(Model.SelectedObject?.Name ?? "")"
+                   placeholder="Название объекта"
+                   maxlength="200"
+                   required
+                   style="min-width:220px"
+                   title="Изменить название объекта" />
+            <input type="text"
+                   name="officialName"
+                   class="ppe-input"
+                   value="@(Model.SelectedObject?.OfficialName ?? "")"
+                   placeholder="Официальное название"
+                   maxlength="500"
+                   style="min-width:260px"
+                   title="Полное название объекта, как в договоре" />
+            <button type="submit" class="btn btn-outline btn-sm">Переименовать</button>
+          </form>
+          <form method="post"
+                asp-page-handler="DeleteObject"
+                style="margin:0"
+                onsubmit="return confirm('Удалить объект «@(Model.SelectedObject?.Name)» из списка? Данные карт по объекту останутся в файле.');">
+            <input type="hidden" name="objectId" value="@Model.SelectedObjectId" />
+            <button type="submit" class="btn btn-outline btn-sm" title="Убрать объект из списка">Удалить объект</button>
+          </form>
+        }
+      </div>
+    }
+
+    <form method="post" asp-page-handler="Save">
+      @if (Model.IsAssessmentView)
+      {
+        <input type="hidden" name="View" value="assessment" />
+        <input type="hidden" name="ObjectId" value="@Model.SelectedObjectId" />
+      }
+      <div class="training-status-wrap">
+      <div class="ppe-actions ppe-actions-top training-status-save-bar report-save-bar">
+        <button type="submit" class="btn btn-primary">Сохранить</button>
+      </div>
+      @if (Model.IsAssessmentView)
+      {
+        <div class="sout-cards-traffic-legend hint" style="margin:0 0 10px;display:flex;flex-wrap:wrap;gap:14px;align-items:center">
+          <span class="risks-legend-item traffic-dot-green">Проведена</span>
+          <span class="risks-legend-item traffic-dot-red">Не проведена / просрочена</span>
+          <span class="risks-legend-item traffic-dot-blue">Истекает</span>
+          <span>Пометку можно задать вручную в колонке «Статус» и сохранить.</span>
+        </div>
+      }
+    <table class="data-grid ppe-edit-grid training-catalog-grid training-sticky-head-grid report-sticky-head-grid sout-workplaces-grid@(Model.IsAssessmentView ? " sout-workplaces-cards" : "")">
+        <thead>
+          <tr>
+            <th class="training-select-col"></th>
+            <th>Наименование</th>
+            @if (Model.IsAssessmentView)
+            {
+              <th>Номер карты</th>
+            }
+            else
+            {
+              <th>Номер рабочего места</th>
+            }
+            @if (!Model.IsAssessmentView)
+            {
+              <th>Номер основного рабочего места</th>
+              <th>Профессия</th>
+            }
+            <th class="training-assistant-num-col">Количество работников</th>
+            @if (Model.IsAssessmentView)
+            {
+              <th>Дата оценки</th>
+              <th title="Авто по дате оценки или ручная пометка">Статус</th>
+            }
+            <th>Действия</th>
+          </tr>
+        </thead>
+        <tbody id="risks-workplaces-body">
+          @foreach (var item in Model.TreeItems)
+          {
+            var node = item.Node;
+            var isSelected = !node.IsGroup && !string.IsNullOrWhiteSpace(Model.PrintId) && Model.PrintId == node.Id;
+            var cardsTraffic = Model.IsAssessmentView && !node.IsGroup
+                ? RiskAssessmentStatusBuilder.ResolveCardsTraffic(node)
+                : string.Empty;
+            var cardsTrafficClass = cardsTraffic switch
+            {
+                "green" => "traffic-green",
+                "red" => "traffic-red",
+                "blue" => "traffic-blue",
+                _ => ""
+            };
+            var autoTraffic = Model.IsAssessmentView && !node.IsGroup
+                ? RiskAssessmentStatusBuilder.ResolveAutoCardsTraffic(node)
+                : string.Empty;
+            var mark = RiskAssessmentStatusBuilder.NormalizeTrafficMark(node.RiskTrafficMark);
+            <tr class="training-catalog-row training-tree-row sout-workplace-row risks-workplace-row @(node.IsGroup ? "training-tree-folder training-tree-open" : "training-tree-file") @(isSelected ? "training-row-active" : "") @(Model.IsAssessmentView && !node.IsGroup ? "risks-assessment-openable" : "") @cardsTrafficClass"
+                data-id="@node.Id"
+                data-parent-id="@(node.ParentId ?? "")"
+                data-is-group="@node.IsGroup.ToString().ToLowerInvariant()"
+                data-depth="@item.Depth"
+                data-department="@node.Department"
+                data-name="@node.Name"
+                data-auto-traffic="@autoTraffic"
+                @if (Model.IsAssessmentView && !node.IsGroup)
+                {
+                  var assessmentHref = $"/Risks/Workplaces/Assessment?id={Uri.EscapeDataString(node.Id)}&objectId={Uri.EscapeDataString(Model.SelectedObjectId)}";
+                  <text>data-assessment-href="@assessmentHref"</text>
+                }>
+              <td class="training-select-col">
+                <input type="checkbox" class="training-row-select" aria-label="Выделить" />
+              </td>
+              <td>
+                <input type="hidden" name="Id" value="@node.Id" />
+                <input type="hidden" name="ParentId" value="@node.ParentId" />
+                <input type="hidden" name="IsGroup" value="@node.IsGroup.ToString().ToLowerInvariant()" />
+                <input type="hidden" name="Department" value="@node.Department" class="sout-department-input" />
+                @await Html.PartialAsync("/Pages/Training/_TrainingTreeName.cshtml", new TrainingTreeNameModel
+                {
+                  Depth = item.Depth,
+                  IsGroup = node.IsGroup,
+                  Name = node.Name,
+                  InputClass = node.IsGroup ? "ppe-input training-group-name" : "ppe-input training-item-name"
+                })
+              </td>
+              <td>
+                @if (Model.IsAssessmentView)
+                {
+                  <input type="hidden" name="WorkplaceNumber" value="@(node.IsGroup ? "" : node.WorkplaceNumber)" />
+                  @if (!node.IsGroup)
+                  {
+                    <input name="RiskCardNumber" value="@node.RiskCardNumber" class="ppe-input" placeholder="№ карты" title="Номер карты оценки рисков" />
+                  }
+                  else
+                  {
+                    <input type="hidden" name="RiskCardNumber" value="" />
+                  }
+                  <input type="hidden" name="MainWorkplaceNumber" value="@(node.IsGroup ? "" : node.MainWorkplaceNumber)" />
+                  <input type="hidden" name="ConditionsClass" value="@node.ConditionsClass" />
+                  <input type="hidden" name="Profession" value="@(node.IsGroup ? "" : node.Profession)" />
+                }
+                else if (!node.IsGroup)
+                {
+                  <input name="WorkplaceNumber" value="@node.WorkplaceNumber" class="ppe-input" />
+                }
+                else
+                {
+                  <input type="hidden" name="WorkplaceNumber" value="" />
+                }
+              </td>
+              @if (!Model.IsAssessmentView)
+              {
+                <td>
+                  @if (!node.IsGroup)
+                  {
+                    <input name="MainWorkplaceNumber" value="@node.MainWorkplaceNumber" class="ppe-input" />
+                  }
+                  else
+                  {
+                    <input type="hidden" name="MainWorkplaceNumber" value="" />
+                  }
+                </td>
+                <td>
+                  <input type="hidden" name="ConditionsClass" value="@node.ConditionsClass" />
+                  @if (!node.IsGroup)
+                  {
+                    <input name="Profession" value="@node.Profession" class="ppe-input" />
+                  }
+                  else
+                  {
+                    <input type="hidden" name="Profession" value="" />
+                  }
+                </td>
+              }
+              <td>
+                @if (!node.IsGroup)
+                {
+                  <input name="WorkerCount" value="@node.WorkerCount" type="number" min="0" class="ppe-input ppe-input-sm" />
+                }
+                else
+                {
+                  <input type="hidden" name="WorkerCount" value="0" />
+                }
+                <input type="hidden" name="PlanYear" value="@node.PlanYear" />
+              </td>
+              @if (Model.IsAssessmentView)
+              {
+                <td>
+                  @if (!node.IsGroup)
+                  {
+                    @(node.RiskAssessmentDate?.ToString("dd.MM.yyyy") ?? "—")
+                  }
+                </td>
+                <td>
+                  @if (!node.IsGroup)
+                  {
+                    <select name="RiskTrafficMark"
+                            class="ppe-input ppe-input-sm risks-traffic-mark"
+                            title="Авто — по дате оценки; или задайте пометку вручную">
+                      @if (string.IsNullOrEmpty(mark))
+                      {
+                        <option value="" selected>Авто (@RiskAssessmentStatusBuilder.CardsTrafficLabel(autoTraffic))</option>
+                      }
+                      else
+                      {
+                        <option value="">Авто (@RiskAssessmentStatusBuilder.CardsTrafficLabel(autoTraffic))</option>
+                      }
+                      @if (mark == "green")
+                      {
+                        <option value="green" selected>Проведена</option>
+                      }
+                      else
+                      {
+                        <option value="green">Проведена</option>
+                      }
+                      @if (mark == "red")
+                      {
+                        <option value="red" selected>Не проведена / просрочена</option>
+                      }
+                      else
+                      {
+                        <option value="red">Не проведена / просрочена</option>
+                      }
+                      @if (mark == "blue")
+                      {
+                        <option value="blue" selected>Истекает</option>
+                      }
+                      else
+                      {
+                        <option value="blue">Истекает</option>
+                      }
+                    </select>
+                  }
+                  else
+                  {
+                    <input type="hidden" name="RiskTrafficMark" value="" />
+                  }
+                </td>
+              }
+              <td>
+                @if (!node.IsGroup)
+                {
+                  <input type="hidden" name="IsUsed" value="@(node.IsUsed ? "true" : "false")" class="sout-is-used-input" />
+                  <label class="sout-used-check" title="Используется">
+                    <input type="checkbox" class="sout-is-used-toggle" @(node.IsUsed ? "checked" : null) />
+                  </label>
+                }
+                else
+                {
+                  <input type="hidden" name="IsUsed" value="true" />
+                }
+                <div class="suot-action-bar">
+                  @if (Model.IsAssessmentView && !node.IsGroup)
+                  {
+                    <a class="btn btn-outline btn-sm"
+                       asp-page="/Risks/Workplaces/Assessment"
+                       asp-route-id="@node.Id"
+                       asp-route-objectId="@Model.SelectedObjectId"
+                       title="Карта идентификации опасностей и оценки рисков">Открыть</a>
+                  }
+                  <button type="button" class="suot-action suot-action-danger" data-action="delete" title="Удалить">🗑</button>
+                </div>
+                <input type="hidden" name="Delete" value="false" class="training-delete-flag" />
+              </td>
+            </tr>
+          }
+
+          <tr id="risks-workplace-row-template" class="training-tree-row training-tree-file sout-workplace-row risks-workplace-row@(Model.IsAssessmentView ? " traffic-red" : "")" hidden
+              data-id="" data-parent-id="" data-is-group="false" data-depth="0" data-department="" data-name="" data-auto-traffic="red">
+            <td class="training-select-col"><input type="checkbox" class="training-row-select" aria-label="Выделить" /></td>
+            <td>
+              <input type="hidden" name="Id" value="" />
+              <input type="hidden" name="ParentId" value="" />
+              <input type="hidden" name="IsGroup" value="false" />
+              <input type="hidden" name="Department" value="" class="sout-department-input" />
+              @await Html.PartialAsync("/Pages/Training/_TrainingTreeName.cshtml", new TrainingTreeNameModel { Depth = 0, IsGroup = false, InputClass = "ppe-input training-item-name" })
+            </td>
+            <td>
+              @if (Model.IsAssessmentView)
+              {
+                <input type="hidden" name="WorkplaceNumber" value="" />
+                <input name="RiskCardNumber" value="" class="ppe-input" placeholder="№ карты" title="Номер карты оценки рисков" />
+                <input type="hidden" name="MainWorkplaceNumber" value="" />
+                <input type="hidden" name="ConditionsClass" value="" />
+                <input type="hidden" name="Profession" value="" />
+              }
+              else
+              {
+                <input name="WorkplaceNumber" value="" class="ppe-input" />
+              }
+            </td>
+            @if (!Model.IsAssessmentView)
+            {
+              <td><input name="MainWorkplaceNumber" value="" class="ppe-input" /></td>
+              <td>
+                <input type="hidden" name="ConditionsClass" value="" />
+                <input name="Profession" value="" class="ppe-input" />
+              </td>
+            }
+            <td>
+              <input name="WorkerCount" value="0" type="number" min="0" class="ppe-input ppe-input-sm" />
+              <input type="hidden" name="PlanYear" value="" />
+            </td>
+            @if (Model.IsAssessmentView)
+            {
+              <td>—</td>
+              <td>
+                <select name="RiskTrafficMark" class="ppe-input ppe-input-sm risks-traffic-mark" title="Авто — по дате оценки; или задайте пометку вручную">
+                  <option value="" selected>Авто (Не проведена / просрочена)</option>
+                  <option value="green">Проведена</option>
+                  <option value="red">Не проведена / просрочена</option>
+                  <option value="blue">Истекает</option>
+                </select>
+              </td>
+            }
+            <td>
+              <input type="hidden" name="IsUsed" value="true" class="sout-is-used-input" />
+              <label class="sout-used-check" title="Используется">
+                <input type="checkbox" class="sout-is-used-toggle" checked />
+              </label>
+              <div class="suot-action-bar">
+                <button type="button" class="suot-action suot-action-danger" data-action="delete" title="Удалить">🗑</button>
+              </div>
+              <input type="hidden" name="Delete" value="false" class="training-delete-flag" />
+            </td>
+          </tr>
+
+          <tr id="risks-workplace-group-template" class="training-tree-row training-tree-folder sout-workplace-row risks-workplace-row" hidden
+              data-id="" data-parent-id="" data-is-group="true" data-depth="0" data-department="" data-name="">
+            <td class="training-select-col"><input type="checkbox" class="training-row-select" aria-label="Выделить" /></td>
+            <td>
+              <input type="hidden" name="Id" value="" />
+              <input type="hidden" name="ParentId" value="" />
+              <input type="hidden" name="IsGroup" value="true" />
+              <input type="hidden" name="Department" value="" class="sout-department-input" />
+              @await Html.PartialAsync("/Pages/Training/_TrainingTreeName.cshtml", new TrainingTreeNameModel { Depth = 0, IsGroup = true, InputClass = "ppe-input training-group-name" })
+            </td>
+            <td>
+              <input type="hidden" name="WorkplaceNumber" value="" />
+              @if (Model.IsAssessmentView)
+              {
+                <input type="hidden" name="RiskCardNumber" value="" />
+                <input type="hidden" name="MainWorkplaceNumber" value="" />
+                <input type="hidden" name="ConditionsClass" value="" />
+                <input type="hidden" name="Profession" value="" />
+              }
+            </td>
+            @if (!Model.IsAssessmentView)
+            {
+              <td><input type="hidden" name="MainWorkplaceNumber" value="" /></td>
+              <td>
+                <input type="hidden" name="ConditionsClass" value="" />
+                <input type="hidden" name="Profession" value="" />
+              </td>
+            }
+            <td>
+              <input type="hidden" name="WorkerCount" value="0" />
+              <input type="hidden" name="PlanYear" value="" />
+            </td>
+            @if (Model.IsAssessmentView)
+            {
+              <td></td>
+              <td><input type="hidden" name="RiskTrafficMark" value="" /></td>
+            }
+            <td>
+              <input type="hidden" name="IsUsed" value="true" />
+              <div class="suot-action-bar">
+                <button type="button" class="suot-action suot-action-danger" data-action="delete" title="Удалить">🗑</button>
+              </div>
+              <input type="hidden" name="Delete" value="false" class="training-delete-flag" />
+            </td>
+          </tr>
+        </tbody>
+      </table>
+      </div>
+    </form>
+  </div>
+
+  <datalist id="sout-conditions-classes">
+    @foreach (var item in Model.ConditionsClassOptions)
+    {
+      <option value="@item"></option>
+    }
+  </datalist>
+
+  <div class="panel ppe-panel sout-workplaces-departments">
+    <h3 class="ppe-subtitle">Подразделения</h3>
+    <ul class="sout-department-tree" id="risks-department-tree">
+      <li>
+        <a class="sout-department-link @(string.IsNullOrWhiteSpace(Model.DepartmentId) ? "sout-department-active" : "")"
+           href="#"
+           data-department-id="">Подразделения</a>
+      </li>
+      @foreach (var group in Model.DepartmentGroups)
+      {
+        <li>
+          <a class="sout-department-link @(Model.DepartmentId == group.Id ? "sout-department-active" : "")"
+             href="#"
+             data-department-id="@group.Id">@group.Name</a>
+        </li>
+      }
+    </ul>
+  </div>
+</div>
+
+@section Scripts {
+  <script src="~/js/training-catalog.js" asp-append-version="true"></script>
+  <script src="~/js/sout-workplaces.js" asp-append-version="true"></script>
+  <script src="~/js/risks-workplaces.js" asp-append-version="true"></script>
+  <script src="~/js/risks-doc-export.js" asp-append-version="true"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', function () {
+      initTrainingCatalog({
+        addRowBtnId: 'risks-workplace-add-row-btn',
+        addGroupBtnId: 'risks-workplace-add-group-btn',
+        rowTemplateId: 'risks-workplace-row-template',
+        groupTemplateId: 'risks-workplace-group-template',
+        moveToGroupBtnId: 'risks-workplace-move-btn',
+        treeBodyId: 'risks-workplaces-body'
+      });
+      initSoutWorkplaces({
+        filterFormId: 'risks-workplaces-filter-form',
+        treeBodyId: 'risks-workplaces-body',
+        departmentTreeId: 'risks-department-tree',
+        departmentId: '@(Model.DepartmentId ?? "")'
+      });
+      initRisksWorkplaces();
+    });
+  </script>
+}

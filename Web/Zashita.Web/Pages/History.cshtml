@@ -1,0 +1,102 @@
+@page "/History"
+@model Zashita.Web.Pages.HistoryModel
+@{
+    ViewData["Title"] = "История печати";
+    ViewData["SectionTitle"] = "История печати";
+    var type = Model.Type ?? "all";
+}
+
+<div class="panel ppe-panel">
+  <form method="get" class="ppe-filter-bar ppe-saved-filters">
+    <label>
+      Поиск
+      <input name="q" value="@Model.Q" class="ppe-input" placeholder="документ, организация, сотрудник…" />
+    </label>
+    <label>
+      С
+      <input type="date" name="from" value="@(Model.From?.ToString("yyyy-MM-dd"))" class="ppe-input ppe-input-sm" />
+    </label>
+    <label>
+      по
+      <input type="date" name="to" value="@(Model.To?.ToString("yyyy-MM-dd"))" class="ppe-input ppe-input-sm" />
+    </label>
+    <label>
+      Организация
+      <select name="org" class="ppe-input">
+        <option value="">Все</option>
+        @foreach (var org in Model.Organizations)
+        {
+          <option value="@org" selected="@(org == Model.Org)">@org</option>
+        }
+      </select>
+    </label>
+    <label>
+      Тип
+      <select name="type" class="ppe-input">
+        <option value="all" selected="@(type == "all")">Все</option>
+        <option value="ppe" selected="@(type == "ppe")">СИЗ / ДСИЗ</option>
+        <option value="journal" selected="@(type == "journal")">Журналы</option>
+        <option value="med" selected="@(type == "med")">Медосмотры</option>
+        <option value="risks" selected="@(type == "risks")">Риски</option>
+        <option value="sout" selected="@(type == "sout")">СОУТ</option>
+        <option value="training" selected="@(type == "training")">Обучение</option>
+      </select>
+    </label>
+    <button type="submit" class="btn btn-outline">Найти</button>
+  </form>
+
+  @if (Model.Items.Count == 0)
+  {
+    <p class="hint">Записей пока нет. После печати карточек СИЗ или журналов инструктажей они появятся здесь.</p>
+  }
+  else
+  {
+    <table class="data-grid">
+      <thead>
+        <tr>
+          <th>Дата</th>
+          <th>Тип</th>
+          <th>Документ</th>
+          <th>Организация</th>
+          <th>Детали</th>
+          <th>Сводка</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        @foreach (var row in Model.Items)
+        {
+          <tr>
+            <td>@row.At.ToString("dd.MM.yyyy HH:mm")</td>
+            <td>
+              <span class="badge @(row.CategoryKind == "ppe" ? "badge-soon" : "badge-warn")">@row.Category</span>
+            </td>
+            <td>@row.Title</td>
+            <td>@row.Organization</td>
+            <td>@row.Detail</td>
+            <td>@row.Summary</td>
+            <td class="ppe-row-actions">
+              @if (!string.IsNullOrWhiteSpace(row.OpenUrl))
+              {
+                <a class="btn btn-sm btn-primary" href="@row.OpenUrl">Открыть</a>
+              }
+              @if (!string.IsNullOrWhiteSpace(row.DeleteId))
+              {
+                <form method="post" asp-page-handler="Delete" class="inline-form">
+                  <input type="hidden" name="id" value="@row.DeleteId" />
+                  <input type="hidden" name="source" value="@row.DeleteSource" />
+                  <input type="hidden" name="q" value="@Model.Q" />
+                  <input type="hidden" name="from" value="@(Model.From?.ToString("yyyy-MM-dd"))" />
+                  <input type="hidden" name="to" value="@(Model.To?.ToString("yyyy-MM-dd"))" />
+                  <input type="hidden" name="org" value="@Model.Org" />
+                  <input type="hidden" name="type" value="@type" />
+                  <button type="submit" class="org-del-btn" onclick="return confirm('Удалить запись из истории печати?');">Удалить</button>
+                </form>
+              }
+            </td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  }
+</div>

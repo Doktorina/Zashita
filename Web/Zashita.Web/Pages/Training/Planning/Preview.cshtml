@@ -1,0 +1,189 @@
+@page "/Training/Planning/Preview"
+@model Zashita.Web.Pages.Training.Planning.PreviewModel
+@{
+    Layout = null;
+    ViewData["Title"] = Model.NotFound ? "Не найдено" : " ";
+    var historyTitle = Model.NotFound ? "Не найдено" : Model.Title;
+}
+
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>@ViewData["Title"]</title>
+    <partial name="_SiteIconLinks" />
+<link rel="stylesheet" href="/css/training-application-print.css" asp-append-version="true" />
+  <style>
+    * { box-sizing: border-box; }
+    html, body {
+      margin: 0;
+      padding: 0;
+      background: #c5c5c5;
+      font-family: "Times New Roman", Times, serif;
+      color: #000;
+    }
+    .training-preview-toolbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 8px 12px;
+      background: #ece9d8;
+      border-bottom: 1px solid #a0a0a0;
+      font-family: "Segoe UI", Tahoma, sans-serif;
+      position: sticky;
+      top: 0;
+      z-index: 20;
+    }
+    .training-preview-toolbar-left,
+    .training-preview-toolbar-right {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+    .btn {
+      display: inline-block;
+      padding: 6px 12px;
+      border: 1px solid #888;
+      background: #fff;
+      cursor: pointer;
+      text-decoration: none;
+      color: #222;
+      font-size: 13px;
+      border-radius: 3px;
+    }
+    .btn-primary { background: #2f6b3a; color: #fff; border-color: #245530; }
+    .hint { font-size: 12px; color: #444; }
+    .training-preview-stage {
+      padding: 20px;
+      overflow: auto;
+    }
+    .training-a4-page {
+      width: 297mm;
+      min-height: 210mm;
+      margin: 0 auto 24px;
+      padding: 12mm 14mm;
+      background: #fff;
+      box-shadow: 0 2px 14px rgba(0,0,0,.25);
+    }
+    .training-a4-page .training-app-doc {
+      max-width: none;
+      margin: 0;
+    }
+    @@media print {
+      @@page { size: A4 landscape; margin: 12mm; }
+      html, body { background: #fff !important; margin: 0 !important; padding: 0 !important; }
+      .ppe-no-print,
+      .training-preview-toolbar,
+      .training-preview-message,
+      #training-preview-save-form,
+      .training-app-edit-hint { display: none !important; }
+      .training-preview-stage { padding: 0 !important; }
+      .training-a4-page {
+        width: auto !important;
+        min-height: auto !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        box-shadow: none !important;
+      }
+    }
+  </style>
+</head>
+<body class="training-preview-mode-@Model.Mode">
+@if (Model.NotFound)
+{
+  <div style="padding:2rem;font-family:Segoe UI,sans-serif">
+    <p>Заявка не найдена. Выберите строку в списке планирования и повторите печать.</p>
+    <a class="btn" href="/Training/Applications">К списку заявок</a>
+  </div>
+}
+else
+{
+  <div class="training-preview-toolbar ppe-no-print">
+    <div class="training-preview-toolbar-left">
+      <button type="button" class="btn btn-primary" id="training-preview-print-btn">Печать</button>
+      <button type="button" class="btn" id="training-preview-save-btn">Записать</button>
+      <a class="btn"
+         download="@Model.DownloadFileName"
+         href="/Training/Applications?handler=Download&amp;id=@Model.Id&amp;mode=@Model.Mode">Сохранить как документ</a>
+      <span class="hint">@Model.Title — правьте поля, затем «Записать»</span>
+    </div>
+    <div class="training-preview-toolbar-right">
+      <a class="btn" asp-page="/Training/Applications" asp-route-editId="@Model.Id">К заявке</a>
+      <a class="btn" href="/Training/Applications">К списку</a>
+    </div>
+  </div>
+
+  @if (!string.IsNullOrWhiteSpace(Model.Message))
+  {
+    <p class="training-preview-message ppe-no-print">@Model.Message</p>
+  }
+
+  <form method="post" asp-page="/Training/Planning/Preview" asp-page-handler="Save" id="training-preview-save-form" class="ppe-no-print">
+    <input type="hidden" name="id" value="@Model.Id" />
+    <input type="hidden" name="mode" value="@Model.Mode" />
+    <div id="training-preview-overrides"></div>
+  </form>
+
+  <div class="training-preview-stage">
+    <div class="training-a4-page" id="training-preview-print-area">
+      @Html.Raw(Model.PreviewHtml)
+    </div>
+  </div>
+
+  <script src="/js/print-history.js" asp-append-version="true"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', function () {
+      var saveBtn = document.getElementById('training-preview-save-btn');
+      var saveForm = document.getElementById('training-preview-save-form');
+      var overridesBox = document.getElementById('training-preview-overrides');
+      var printArea = document.getElementById('training-preview-print-area');
+
+      function collectOverrides() {
+        if (!overridesBox || !printArea) return;
+        overridesBox.innerHTML = '';
+        printArea.querySelectorAll('[data-override-key]').forEach(function (el) {
+          var key = el.getAttribute('data-override-key');
+          if (!key) return;
+          var inputKey = document.createElement('input');
+          inputKey.type = 'hidden';
+          inputKey.name = 'overrideKey';
+          inputKey.value = key;
+          var inputVal = document.createElement('input');
+          inputVal.type = 'hidden';
+          inputVal.name = 'overrideValue';
+          inputVal.value = (el.innerText || '').replace(/\u00a0/g, ' ').trim();
+          overridesBox.appendChild(inputKey);
+          overridesBox.appendChild(inputVal);
+        });
+      }
+
+      if (saveBtn && saveForm) {
+        saveBtn.addEventListener('click', function () {
+          collectOverrides();
+          if (typeof saveForm.requestSubmit === 'function') saveForm.requestSubmit();
+          else saveForm.submit();
+        });
+      }
+
+      var printBtn = document.getElementById('training-preview-print-btn');
+      if (printBtn) {
+        printBtn.addEventListener('click', function () {
+          if (typeof zashitaRecordPrint === 'function') {
+            zashitaRecordPrint({
+              category: 'training',
+              title: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(historyTitle)),
+              summary: 'Печать'
+            });
+          } else {
+            window.print();
+          }
+        });
+      }
+    });
+  </script>
+}
+</body>
+</html>

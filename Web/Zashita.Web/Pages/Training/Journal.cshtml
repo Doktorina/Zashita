@@ -1,0 +1,288 @@
+@page "/Training/Journal"
+@model Zashita.Web.Pages.Training.JournalModel
+@using Zashita.Core.Training.Journals
+@{
+    ViewData["Title"] = Model.Definition?.Title ?? "Журнал";
+    var reasonRequired = Model.ReasonRequired;
+}
+
+@section Styles {
+  <link rel="stylesheet" href="~/css/training-journal.css" asp-append-version="true" />
+}
+
+@if (!string.IsNullOrWhiteSpace(Model.Message))
+{
+  <p class="@(Model.IsError ? "form-error" : "text-success")">@Model.Message</p>
+}
+
+@if (Model.Definition is null)
+{
+  <div class="panel ppe-panel">
+    <p class="hint">Откройте журнал из раздела <a asp-page="/Training/Reports">журналов по обучению</a>.</p>
+  </div>
+}
+else
+{
+  <div class="panel ppe-panel">
+    <p class="hint">@Model.Definition.Description</p>
+
+    <div class="ppe-toolbar sout-toolbar journal-top-actions" id="journal-actions-once">
+      <button type="button" class="btn btn-outline btn-sm" onclick="if (history.length > 1) history.back(); else location.href='/Training/Reports';">← Назад</button>
+      <button type="submit" form="journal-save-form" class="btn btn-primary btn-sm">Сохранить</button>
+      <button type="submit" form="journal-save-form" formaction="?handler=SaveAndPrint" class="btn btn-outline btn-sm"
+              title="Предпечать: открыть бланк перед печатью">Предпечать</button>
+      <button type="submit" form="journal-save-form" formaction="?handler=SaveAndExport" class="btn btn-outline btn-sm">Скачать DOC</button>
+    </div>
+
+    <form method="post" asp-page-handler="Generate" class="journal-filters" id="journal-generate-form">
+      <input type="hidden" name="Title" value="@Model.Title" />
+      <div class="journal-filter-grid">
+        <label class="ppe-field">
+          <span>Период записей с</span>
+          <input type="date" name="DateFrom" value="@Model.DateFrom.ToString("yyyy-MM-dd")" class="ppe-input" />
+        </label>
+        <label class="ppe-field">
+          <span>Период записей по</span>
+          <input type="date" name="DateTo" value="@Model.DateTo.ToString("yyyy-MM-dd")" class="ppe-input" />
+        </label>
+        <label class="ppe-field">
+          <span>Титул: начат</span>
+          <input type="date" name="TitleStarted" value="@((Model.TitleStarted ?? Model.DateFrom).ToString("yyyy-MM-dd"))" class="ppe-input" />
+        </label>
+        <label class="ppe-field">
+          <span>Титул: окончен</span>
+          <input type="date" name="TitleEnded" value="@((Model.TitleEnded ?? Model.DateTo).ToString("yyyy-MM-dd"))" class="ppe-input" />
+        </label>
+        <label class="ppe-field">
+          <span>Подразделение</span>
+          <select name="Department" class="ppe-input">
+            <option value="">— не указано —</option>
+            @foreach (var dep in Model.DepartmentOptions)
+            {
+              if (string.Equals(dep, Model.Department, StringComparison.OrdinalIgnoreCase))
+              {
+                <option value="@dep" selected>@dep</option>
+              }
+              else
+              {
+                <option value="@dep">@dep</option>
+              }
+            }
+          </select>
+        </label>
+        <label class="ppe-field">
+          <span>Рабочее место</span>
+          <input type="text" name="Workplace" value="@Model.Workplace" class="ppe-input" />
+        </label>
+        <label class="ppe-field">
+          <span>Вид инструктажа</span>
+          <select name="BriefingType" id="journal-briefing-type" class="ppe-input">
+            <option value="">— не выбран —</option>
+            @foreach (var type in Model.BriefingTypeOptions)
+            {
+              if (string.Equals(type, Model.BriefingType, StringComparison.OrdinalIgnoreCase))
+              {
+                <option value="@type" selected>@type</option>
+              }
+              else
+              {
+                <option value="@type">@type</option>
+              }
+            }
+          </select>
+        </label>
+        <label class="ppe-field">
+          <span>Инструктирующий (для всех строк)</span>
+          <input type="text" name="DefaultInstructor" value="@Model.DefaultInstructor" class="ppe-input"
+                 list="journal-instructor-list" placeholder="ФИО и должность" autocomplete="off" />
+        </label>
+        <label class="ppe-field">
+          <span>Локальный акт</span>
+          <input type="text" name="LocalActName" value="@Model.LocalActName" class="ppe-input"
+                 list="journal-local-act-list" placeholder="Инструкция / программа" autocomplete="off" />
+        </label>
+        <label class="ppe-field">
+          <span>Начать нумерацию с</span>
+          <input type="number" name="StartRowNumber" value="@Math.Max(1, Model.StartRowNumber)" class="ppe-input" min="1" />
+        </label>
+        <label class="ppe-field">
+          <span>Пустых строк</span>
+          <input type="number" name="EmptyRowCount" value="@Model.EmptyRowCount" class="ppe-input" min="0" max="500"
+                 title="Сколько пустых строк дописать в конец журнала" />
+        </label>
+      </div>
+      <p class="hint">Организация берётся из шапки сайта. «Период записей» — фильтр дат в таблице; «Титул: начат/окончен» — даты на титульном листе.</p>
+      <p class="hint journal-reason-hint @(reasonRequired ? "" : "is-hidden")" id="journal-reason-hint">
+        Для внепланового и целевого инструктажа заполните колонку «Причины» в таблице.
+      </p>
+      <div class="ppe-check-row">
+        <label><input type="checkbox" name="StrictDepartment" value="true" @(Model.StrictDepartment ? "checked" : null) /> Строгое совпадение подразделения</label>
+        <label><input type="checkbox" name="ShowTitlePage" value="true" @(Model.ShowTitlePage ? "checked" : null) /> Титульный лист при печати</label>
+        <label><input type="checkbox" name="PadEmptyRowsToPageEnd" value="true" @(Model.PadEmptyRowsToPageEnd ? "checked" : null) /> Пустые строки до конца страницы</label>
+      </div>
+      <div class="ppe-actions">
+        <button type="submit" class="btn btn-primary">Сформировать записи</button>
+      </div>
+    </form>
+
+    <datalist id="journal-instructor-list">
+      @foreach (var name in Model.InstructorSuggestions)
+      {
+        <option value="@name"></option>
+      }
+    </datalist>
+    <datalist id="journal-local-act-list">
+      @foreach (var act in Model.LocalActSuggestions)
+      {
+        <option value="@act"></option>
+      }
+    </datalist>
+  </div>
+
+  <div class="panel ppe-panel">
+    <form method="post" asp-page-handler="Save" id="journal-save-form">
+      <input type="hidden" name="Title" value="@Model.Title" />
+      <input type="hidden" name="DateFrom" value="@Model.DateFrom.ToString("yyyy-MM-dd")" />
+      <input type="hidden" name="DateTo" value="@Model.DateTo.ToString("yyyy-MM-dd")" />
+      <input type="hidden" name="TitleStarted" value="@((Model.TitleStarted ?? Model.DateFrom).ToString("yyyy-MM-dd"))" />
+      <input type="hidden" name="TitleEnded" value="@((Model.TitleEnded ?? Model.DateTo).ToString("yyyy-MM-dd"))" />
+      <input type="hidden" name="Organization" value="@Model.SessionOrganization" />
+      <input type="hidden" name="Department" value="@Model.Department" />
+      <input type="hidden" name="Workplace" value="@Model.Workplace" />
+      <input type="hidden" name="BriefingType" value="@Model.BriefingType" />
+      <input type="hidden" name="DefaultInstructor" value="@Model.DefaultInstructor" />
+      <input type="hidden" name="LocalActName" value="@Model.LocalActName" />
+      <input type="hidden" name="StartRowNumber" value="@Model.StartRowNumber" />
+      <input type="hidden" name="EmptyRowCount" value="@Model.EmptyRowCount" />
+      @if (Model.StrictDepartment)
+      {
+        <input type="hidden" name="StrictDepartment" value="true" />
+      }
+      @if (Model.ShowTitlePage)
+      {
+        <input type="hidden" name="ShowTitlePage" value="true" />
+      }
+      @if (Model.PadEmptyRowsToPageEnd)
+      {
+        <input type="hidden" name="PadEmptyRowsToPageEnd" value="true" />
+      }
+
+      <div class="journal-table-wrap">
+        <table class="data-grid journal-edit-grid" id="journal-edit-grid"
+               data-reason-required="@(reasonRequired ? "1" : "0")">
+          <thead>
+            <tr>
+              @foreach (var col in Model.Columns)
+              {
+                var reasonCol = col.Key == "briefingReason";
+                <th class="@(reasonCol && !reasonRequired ? "journal-col-muted" : null)">@col.Title</th>
+              }
+            </tr>
+          </thead>
+          <tbody>
+            @for (var i = 0; i < Model.Entries.Count; i++)
+            {
+              var entry = Model.Entries[i];
+              <tr>
+                @foreach (var col in Model.Columns)
+                {
+                  <td class="@(col.Key == "briefingReason" && !reasonRequired ? "journal-col-muted" : null)">
+                    @if (col.ReadOnly)
+                    {
+                      <span>—</span>
+                    }
+                    else if (col.Key == "rowNumber")
+                    {
+                      <input type="number" name="Entries[@i].RowNumber" value="@entry.RowNumber" class="ppe-input journal-cell-input" />
+                    }
+                    else if (col.IsDate)
+                    {
+                      var dateValue = col.Key switch
+                      {
+                        "briefingDate" => entry.BriefingDate,
+                        "birthDate" => entry.BirthDate,
+                        "practiceDate" => entry.PracticeDate ?? entry.TheoryDate ?? entry.BriefingDate,
+                        "previousAssignmentDate" => entry.PreviousAssignmentDate,
+                        _ => (DateTime?)null
+                      };
+                      <input type="date" name="Entries[@i].@(PropertyName(col.Key))" value="@(dateValue?.ToString("yyyy-MM-dd"))" class="ppe-input journal-cell-input" />
+                    }
+                    else if (col.Key == "briefingType")
+                    {
+                      <select name="Entries[@i].BriefingType" class="ppe-input journal-cell-input journal-row-briefing-type">
+                        <option value="">—</option>
+                        @foreach (var type in Model.BriefingTypeOptions)
+                        {
+                          if (string.Equals(type, entry.BriefingType, StringComparison.OrdinalIgnoreCase))
+                          {
+                            <option value="@type" selected>@type</option>
+                          }
+                          else
+                          {
+                            <option value="@type">@type</option>
+                          }
+                        }
+                      </select>
+                    }
+                    else if (col.Key == "briefingReason")
+                    {
+                      var reasonValue = string.IsNullOrWhiteSpace(entry.BriefingReason)
+                        ? (TrainingBriefingTypes.RequiresReason(entry.BriefingType) ? "" : "—")
+                        : entry.BriefingReason;
+                      <input type="text" name="Entries[@i].BriefingReason" value="@reasonValue"
+                             class="ppe-input journal-cell-input journal-row-briefing-reason"
+                             @(TrainingBriefingTypes.RequiresReason(entry.BriefingType) ? null : "readonly") />
+                    }
+                    else if (col.Key == "instructorName" || col.Key == "practiceInstructor")
+                    {
+                      <input type="text" name="Entries[@i].InstructorName" value="@entry.InstructorName"
+                             class="ppe-input journal-cell-input" list="journal-instructor-list" autocomplete="off" />
+                    }
+                    else if (col.Key == "localActName")
+                    {
+                      var actValue = string.IsNullOrWhiteSpace(entry.LocalActName) ? entry.Workplace : entry.LocalActName;
+                      <input type="text" name="Entries[@i].LocalActName" value="@actValue"
+                             class="ppe-input journal-cell-input" list="journal-local-act-list" autocomplete="off" />
+                    }
+                    else
+                    {
+                      var textValue = col.Key switch
+                      {
+                        "employeeName" => entry.EmployeeName,
+                        "profession" => entry.Profession,
+                        "department" => entry.Department,
+                        "workplace" => entry.Workplace,
+                        "legalEntity" => entry.LegalEntity,
+                        _ => ""
+                      };
+                      <input type="text" name="Entries[@i].@(PropertyName(col.Key))" value="@textValue" class="ppe-input journal-cell-input" />
+                    }
+                  </td>
+                }
+                <td class="journal-hidden-fields" style="display:none">
+                  <input type="hidden" name="Entries[@i].Organization" value="@entry.Organization" />
+                  <input type="hidden" name="Entries[@i].Workplace" value="@entry.Workplace" />
+                  <input type="hidden" name="Entries[@i].TheoryDate" value="@entry.TheoryDate?.ToString("yyyy-MM-dd")" />
+                  <input type="hidden" name="Entries[@i].PracticeDate" value="@entry.PracticeDate?.ToString("yyyy-MM-dd")" />
+                  <input type="hidden" name="Entries[@i].InstructorQualification" value="@entry.InstructorQualification" />
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    </form>
+  </div>
+}
+
+@section Scripts {
+  <script src="~/js/training-journal.js" asp-append-version="true"></script>
+}
+
+@functions {
+  private static string PropertyName(string key) => key switch
+  {
+    "practiceInstructor" => "InstructorName",
+    _ => char.ToUpperInvariant(key[0]) + key[1..]
+  };
+}

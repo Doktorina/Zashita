@@ -1,0 +1,211 @@
+@model Zashita.Web.Pages.Training.TrainingProgramRowsPartialModel
+@using Zashita.Core.Training
+@{
+  var saveRowIndex = Model.SaveIndex.Value;
+}
+@foreach (var line in Model.Lines)
+{
+  if (line.Row is not { } row)
+  {
+    continue;
+  }
+
+  var cls = row.Traffic switch
+  {
+    "green" => "traffic-green",
+    "yellow" => "traffic-yellow",
+    "red" => "traffic-red",
+    "pink" => "traffic-pink",
+    "blue" => "traffic-blue",
+    "orange" => "traffic-orange",
+    "grey" or "gray" => "traffic-grey",
+    _ => ""
+  };
+  var isNotTraining = string.Equals(row.Traffic, "grey", StringComparison.OrdinalIgnoreCase)
+      || string.Equals(row.Traffic, "gray", StringComparison.OrdinalIgnoreCase)
+      || string.Equals(row.Status, "Не обучаем", StringComparison.OrdinalIgnoreCase);
+  var dateIso = "";
+  if (!string.IsNullOrWhiteSpace(row.TrainingDate)
+      && DateTime.TryParseExact(row.TrainingDate, "dd.MM.yyyy",
+          System.Globalization.CultureInfo.GetCultureInfo("ru-RU"),
+          System.Globalization.DateTimeStyles.None, out var parsed))
+  {
+    dateIso = parsed.ToString("yyyy-MM-dd");
+  }
+
+  var movementValue = string.IsNullOrWhiteSpace(row.ProtocolMovement) ? "—" : row.ProtocolMovement;
+  var updValue = string.IsNullOrWhiteSpace(row.UpdStatus) ? "—" : row.UpdStatus;
+  var styles = row.CellStyles ?? new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+  styles.TryGetValue("program", out var programStyle);
+  styles.TryGetValue("protocol", out var protocolStyle);
+  styles.TryGetValue("comment", out var commentStyle);
+  var stylesJson = styles.Count == 0
+      ? "{}"
+      : System.Text.Json.JsonSerializer.Serialize(styles);
+
+  <tr class="@cls training-tree-row training-tree-file training-tree-data"
+      data-id="@line.Id"
+      data-parent-id="@(line.ParentId ?? "")"
+      data-is-group="false"
+      data-depth="@line.Level">
+    <td class="col-tree">
+      <div class="training-tree-name training-tree-program-name">
+        <span class="training-tree-toggle-spacer" aria-hidden="true"></span>
+        @if (!string.IsNullOrWhiteSpace(row.Program))
+        {
+          <span class="training-tree-label js-format-cell" data-format-key="program" tabindex="0" style="@(programStyle ?? "")">● @row.Program</span>
+        }
+        else
+        {
+          <span class="training-tree-label">нет программ — выберите стандарт</span>
+        }
+      </div>
+      @if (!string.IsNullOrWhiteSpace(row.Program))
+      {
+        <input form="training-status-save" type="hidden" name="conductId[@saveRowIndex]" value="@row.ConductId" />
+        <input form="training-status-save" type="hidden" name="organization[@saveRowIndex]" value="@row.Organization" />
+        <input form="training-status-save" type="hidden" name="department[@saveRowIndex]" value="@row.Department" />
+        <input form="training-status-save" type="hidden" name="profession[@saveRowIndex]" value="@row.Profession" />
+        <input form="training-status-save" type="hidden" name="person[@saveRowIndex]" value="@row.Person" />
+        <input form="training-status-save" type="hidden" name="program[@saveRowIndex]" value="@row.Program" />
+        <input form="training-status-save" type="hidden" name="cellStyles[@saveRowIndex]" class="js-cell-styles" value="@stylesJson" />
+      }
+    </td>
+    <td>
+      @if (!string.IsNullOrWhiteSpace(row.Program)
+           && TrainingProgramCatalog.AllowsManualPeriodicityInReport(row.Program))
+      {
+        var periodValue = TrainingProgramCatalog.IsBlankPeriodicityMarker(row.Periodicity)
+            ? string.Empty
+            : row.Periodicity.Trim();
+        var periodOpts = TrainingProgramCatalog.PeriodicityOptionsFor(periodValue);
+        <select form="training-status-save"
+                name="periodicity[@saveRowIndex]"
+                class="ppe-input"
+                style="min-width:7.5rem"
+                title="Периодичность профобучения">
+          @if (string.IsNullOrWhiteSpace(periodValue))
+          {
+            <option value="" selected>—</option>
+          }
+          else
+          {
+            <option value="">—</option>
+          }
+          @foreach (var opt in periodOpts)
+          {
+            if (string.Equals(periodValue, opt, StringComparison.OrdinalIgnoreCase))
+            {
+              <option value="@opt" selected>@opt</option>
+            }
+            else
+            {
+              <option value="@opt">@opt</option>
+            }
+          }
+        </select>
+      }
+      else
+      {
+        @(string.IsNullOrWhiteSpace(row.Periodicity) || TrainingProgramCatalog.IsBlankPeriodicityMarker(row.Periodicity)
+            ? "—"
+            : row.Periodicity)
+      }
+    </td>
+    <td>
+      @if (!string.IsNullOrWhiteSpace(row.Program))
+      {
+        <textarea form="training-status-save"
+                  name="certificateNumber[@saveRowIndex]"
+                  class="ppe-input training-status-textarea js-auto-textarea js-format-cell"
+                  data-format-key="protocol"
+                  rows="2"
+                  placeholder="№ протокола"
+                  autocomplete="off"
+                  style="@(protocolStyle ?? "")">@row.CertificateNumber</textarea>
+      }
+    </td>
+    <td>
+      @if (!string.IsNullOrWhiteSpace(row.Program))
+      {
+        <input form="training-status-save" type="date" name="trainingDate[@saveRowIndex]" value="@dateIso" class="ppe-input" style="min-width:9rem" />
+      }
+    </td>
+    <td>@(row.NextTrainingDate ?? "—")</td>
+    <td>
+      @if (!string.IsNullOrWhiteSpace(row.Program))
+      {
+        <select form="training-status-save" name="protocolMovement[@saveRowIndex]" class="ppe-input" style="min-width:8rem">
+          @foreach (var opt in Model.ProtocolMovementOptions)
+          {
+            if (string.Equals(movementValue, opt, StringComparison.OrdinalIgnoreCase))
+            {
+              <option value="@opt" selected>@opt</option>
+            }
+            else
+            {
+              <option value="@opt">@opt</option>
+            }
+          }
+        </select>
+      }
+    </td>
+    <td>
+      @if (!string.IsNullOrWhiteSpace(row.Program))
+      {
+        <select form="training-status-save" name="updStatus[@saveRowIndex]" class="ppe-input" style="min-width:7rem">
+          @foreach (var opt in Model.UpdStatusOptions)
+          {
+            if (string.Equals(updValue, opt, StringComparison.OrdinalIgnoreCase))
+            {
+              <option value="@opt" selected>@opt</option>
+            }
+            else
+            {
+              <option value="@opt">@opt</option>
+            }
+          }
+        </select>
+      }
+    </td>
+    <td>
+      @if (!string.IsNullOrWhiteSpace(row.Program))
+      {
+        <textarea form="training-status-save"
+                  name="comment[@saveRowIndex]"
+                  class="ppe-input training-status-textarea js-auto-textarea js-format-cell"
+                  data-format-key="comment"
+                  rows="2"
+                  placeholder="заметка"
+                  autocomplete="off"
+                  style="@(commentStyle ?? "")">@row.Comment</textarea>
+      }
+    </td>
+    <td>
+      @if (!string.IsNullOrWhiteSpace(row.Program))
+      {
+        <div class="training-status-cell">
+          <span class="js-training-status-label">@row.Status</span>
+          <input form="training-status-save"
+                 type="hidden"
+                 name="notTraining[@saveRowIndex]"
+                 class="js-not-training"
+                 value="@(isNotTraining ? "1" : "0")" />
+          <button type="button"
+                  class="btn btn-outline btn-sm js-toggle-not-training@(isNotTraining ? " is-active" : "")"
+                  title="@(isNotTraining ? "Вернуть в обучение" : "Не обучаем по этой программе")">
+            @(isNotTraining ? "Обучаем" : "Не обучаем")
+          </button>
+        </div>
+        saveRowIndex++;
+      }
+      else
+      {
+        @row.Status
+      }
+    </td>
+  </tr>
+}
+@{
+  Model.SaveIndex.Value = saveRowIndex;
+}

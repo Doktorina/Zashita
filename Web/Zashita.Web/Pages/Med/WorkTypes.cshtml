@@ -1,0 +1,120 @@
+@page "/Med/WorkTypes"
+@using Zashita.Web.Pages.Training
+@model Zashita.Web.Pages.Med.WorkTypesModel
+@{
+    ViewData["Title"] = "Виды работ";
+    ViewData["Subtitle"] = Model.Organization;
+}
+
+@section Styles {
+  <link rel="stylesheet" href="~/css/med-person-list.css" asp-append-version="true" />
+}
+
+@if (!string.IsNullOrWhiteSpace(Model.Message))
+{
+  <p class="text-success">@Model.Message</p>
+}
+
+<div class="panel ppe-panel med-doc-panel">
+  <div class="ppe-toolbar sout-toolbar">
+    <a class="btn btn-primary btn-sm" asp-page="/Med/WorkTypes/Edit">Создать</a>
+    <a class="btn btn-outline btn-sm" asp-page="/Med/WorkTypes/Edit" asp-route-isGroup="true">Создать группу</a>
+    <details class="ppe-print-menu">
+      <summary class="btn btn-outline btn-sm">Заполнить ▾</summary>
+      <div class="ppe-print-dropdown">
+        <span class="hint" style="padding:0.5rem 0.75rem;display:block;">Заполнение из файла — в разработке</span>
+      </div>
+    </details>
+    <button type="button" class="btn btn-outline btn-sm" id="med-worktype-bulk-edit-btn">Изменить выделенные...</button>
+  </div>
+
+  <form method="get" class="sout-workplaces-filters" id="med-worktypes-filter-form">
+    <label class="sout-workplaces-search">
+      <span class="visually-hidden">Поиск</span>
+      <input type="search" name="q" value="@Model.Q" class="ppe-input" placeholder="Поиск (Ctrl+F)" autocomplete="off" />
+    </label>
+  </form>
+
+  <form method="post" asp-page-handler="Save">
+    <div class="ppe-actions ppe-actions-top"><button type="submit" class="btn btn-primary">Сохранить</button></div>
+    <table class="data-grid ppe-edit-grid training-catalog-grid sout-workplaces-grid">
+      <thead>
+        <tr>
+          <th class="training-select-col"></th>
+          <th>Наименование</th>
+          <th>Действия</th>
+        </tr>
+      </thead>
+      <tbody id="med-worktypes-body">
+        @foreach (var item in Model.TreeItems)
+        {
+          var node = item.Node;
+          <tr class="training-catalog-row training-tree-row sout-workplace-row med-worktype-row @(node.IsGroup ? "training-tree-folder training-tree-open" : "training-tree-file")"
+              data-id="@node.Id" data-parent-id="@(node.ParentId ?? "")" data-is-group="@node.IsGroup.ToString().ToLowerInvariant()" data-depth="@item.Depth" data-name="@node.Name">
+            <td class="training-select-col"><input type="checkbox" class="training-row-select" /></td>
+            <td>
+              <input type="hidden" name="Id" value="@node.Id" />
+              <input type="hidden" name="ParentId" value="@node.ParentId" />
+              <input type="hidden" name="IsGroup" value="@node.IsGroup.ToString().ToLowerInvariant()" />
+              @if (node.IsGroup)
+              {
+                @await Html.PartialAsync("/Pages/Training/_TrainingTreeName.cshtml", new TrainingTreeNameModel
+                {
+                  Depth = item.Depth,
+                  IsGroup = true,
+                  Name = node.Name,
+                  InputClass = "ppe-input training-group-name"
+                })
+              }
+              else
+              {
+                <div class="training-tree-name" style="--tree-depth:@item.Depth">
+                  <span class="training-tree-toggle-spacer" aria-hidden="true"></span>
+                  <span class="training-tree-icon training-tree-icon-file" aria-hidden="true">📄</span>
+                  <a asp-page="/Med/WorkTypes/Edit" asp-route-id="@node.Id" class="med-tree-edit-link">@node.Name</a>
+                  <input type="hidden" name="Name" value="@node.Name" />
+                </div>
+              }
+            </td>
+            <td>
+              <div class="suot-action-bar">
+                <a class="suot-action" asp-page="/Med/WorkTypes/Edit" asp-route-id="@node.Id" title="Редактировать">✏️</a>
+                <button type="button" class="btn btn-outline btn-sm training-delete-row-btn">Удалить</button>
+              </div>
+              <input type="hidden" name="Delete" value="false" class="training-delete-flag" />
+            </td>
+          </tr>
+        }
+        <tr id="med-worktype-row-template" class="training-tree-row training-tree-file sout-workplace-row med-worktype-row" hidden data-is-group="false" data-depth="0">
+          <td class="training-select-col"><input type="checkbox" class="training-row-select" /></td>
+          <td><input type="hidden" name="Id" value="" /><input type="hidden" name="ParentId" value="" /><input type="hidden" name="IsGroup" value="false" /><input name="Name" value="" class="ppe-input training-tree-name-input" /></td>
+          <td><button type="button" class="btn btn-outline btn-sm training-delete-row-btn">Удалить</button><input type="hidden" name="Delete" value="false" class="training-delete-flag" /></td>
+        </tr>
+        <tr id="med-worktype-group-template" class="training-tree-row training-tree-folder sout-workplace-row med-worktype-row" hidden data-is-group="true" data-depth="0">
+          <td class="training-select-col"><input type="checkbox" class="training-row-select" /></td>
+          <td><input type="hidden" name="Id" value="" /><input type="hidden" name="ParentId" value="" /><input type="hidden" name="IsGroup" value="true" /><input name="Name" value="" class="ppe-input training-tree-name-input" /></td>
+          <td><button type="button" class="btn btn-outline btn-sm training-delete-row-btn">Удалить</button><input type="hidden" name="Delete" value="false" class="training-delete-flag" /></td>
+        </tr>
+      </tbody>
+    </table>
+    
+  </form>
+</div>
+
+@section Scripts {
+  <script src="~/js/training-catalog.js" asp-append-version="true"></script>
+  <script src="~/js/sout-workplaces.js" asp-append-version="true"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', function () {
+      initTrainingCatalog({
+        addRowBtnId: null,
+        addGroupBtnId: null,
+        rowTemplateId: 'med-worktype-row-template',
+        groupTemplateId: 'med-worktype-group-template',
+        bulkEditBtnId: 'med-worktype-bulk-edit-btn',
+        treeBodyId: 'med-worktypes-body'
+      });
+      initSoutWorkplaces({ filterFormId: 'med-worktypes-filter-form' });
+    });
+  </script>
+}

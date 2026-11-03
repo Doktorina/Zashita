@@ -1,0 +1,1937 @@
+.risks-doc-panel {
+  overflow: visible;
+}
+
+/* Кнопка «← К документам» — отдельная строка сверху на всех экранах документов. */
+.risks-docs-back-row {
+  display: flex;
+  align-items: center;
+  margin: 0 0 10px;
+  padding: 0;
+}
+
+.risks-docs-back-row .btn {
+  flex: 0 0 auto;
+}
+
+.sout-workplaces-main.risks-doc-panel {
+  overflow: visible;
+}
+
+.risks-doc-panel .ppe-toolbar {
+  overflow: visible;
+  position: relative;
+  z-index: 5;
+}
+
+.ppe-print-menu .ppe-print-dropdown {
+  z-index: 100;
+  min-width: 420px;
+  max-width: 520px;
+}
+
+[data-theme='dark'] .ppe-print-dropdown {
+  background: var(--surface, #1a2a24);
+  border-color: var(--border, #3a4a44);
+  color: var(--text, #ecf5f1);
+}
+
+[data-theme='dark'] .ppe-print-dropdown a {
+  color: var(--text, #ecf5f1);
+}
+
+[data-theme='dark'] .ppe-print-dropdown a:hover {
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.risks-print-head {
+  margin-bottom: 1rem;
+}
+
+.risks-print-head h2 {
+  margin: 0 0 0.5rem;
+  font-size: 1.05rem;
+}
+
+.risks-print-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.risks-print-table th,
+.risks-print-table td {
+  border: 1px solid #ccc;
+  padding: 0.35rem 0.5rem;
+  vertical-align: top;
+}
+
+.risks-print-order-title {
+  text-align: center;
+  font-weight: 700;
+  margin: 1rem 0;
+}
+
+.risks-print-order-body p {
+  margin: 0.5rem 0;
+}
+
+.risks-preview-mode-order .risks-print-order-body {
+  max-width: none;
+  width: 100%;
+  margin: 0;
+}
+
+.risks-preview-mode-order .sout-preview-doc-wrap {
+  padding: 24px;
+  background: #c5c5c5;
+}
+
+.risks-preview-mode-order .risks-order-sheet {
+  max-width: none;
+  width: 100%;
+  margin: 0;
+}
+
+.risks-preview-mode-order .risks-order-city {
+  text-align: right;
+}
+
+.risks-print-approve {
+  display: flex;
+  justify-content: flex-end;
+  margin: 0 0 1.25rem;
+  min-height: 4.2rem;
+}
+
+.risks-print-approve-box {
+  width: 14rem;
+  text-align: center;
+  font-size: 0.95rem;
+  line-height: 1.35;
+}
+
+.risks-print-approve-label {
+  margin: 0 0 0.35rem;
+  font-weight: 700;
+  text-align: left;
+}
+
+.risks-print-approve-sign {
+  margin: 0;
+  min-height: 1.35rem;
+  border-bottom: 1px solid transparent;
+}
+
+.risks-print-approve-date {
+  margin: 0.45rem 0 0;
+}
+
+.risks-schedule-sheet {
+  width: 100%;
+  max-width: none;
+  margin: 0;
+  background: #fff;
+  color: #000;
+  padding: 0;
+  box-sizing: border-box;
+  font-family: "Times New Roman", Times, serif;
+  font-size: 14px;
+  box-shadow: none;
+}
+
+.risks-print-org-center {
+  text-align: center;
+  margin: 0.25rem 0 0.2rem;
+  font-weight: 400;
+  font-size: 1rem;
+}
+
+.risks-print-main-title {
+  text-align: center;
+  font-size: 1rem;
+  margin: 0.15rem 0 1.1rem;
+  font-weight: 700;
+  line-height: 1.25;
+}
+
+.risks-print-months {
+  width: 100%;
+  border-collapse: collapse;
+  table-layout: fixed;
+}
+
+.risks-print-months th,
+.risks-print-months td {
+  text-align: center;
+  font-size: 0.82rem;
+  padding: 0.2rem 0.12rem;
+  border: 1px solid #000;
+  vertical-align: middle;
+  background: #fff;
+  font-weight: 400;
+}
+
+.risks-print-months thead th {
+  font-weight: 400;
+  background: #fff;
+}
+
+.risks-th-num {
+  width: 3.2rem;
+}
+
+.risks-th-dept {
+  width: 22%;
+  text-align: center !important;
+  line-height: 1.2;
+}
+
+.risks-th-terms {
+  font-weight: 400;
+  padding: 0.35rem 0.2rem;
+}
+
+.risks-print-month-names th {
+  height: auto;
+  padding: 0.2rem 0.1rem;
+  vertical-align: middle;
+}
+
+.risks-month-label {
+  display: inline;
+  writing-mode: horizontal-tb;
+  transform: none;
+  white-space: nowrap;
+  font-size: 0.75rem;
+  line-height: 1.1;
+  padding: 0;
+}
+
+.risks-print-col-nums th {
+  font-weight: 400;
+  font-size: 0.75rem;
+  padding: 0.15rem 0.1rem;
+  background: #fff;
+}
+
+.risks-td-num {
+  width: 3.2rem;
+}
+
+.risks-print-dept {
+  text-align: left !important;
+  padding-left: 0.4rem !important;
+}
+
+.risks-print-month-cell {
+  cursor: pointer;
+  height: 1.6rem;
+  font-weight: 700;
+  font-size: 0.95rem;
+}
+
+.risks-print-month-cell:hover {
+  background: #f5f8fc;
+}
+
+.risks-print-note {
+  margin: 0.75rem 0;
+  font-size: 0.85rem;
+}
+
+.risks-print-footer-sign {
+  display: grid;
+  grid-template-columns: 1.2fr 1fr 1fr;
+  gap: 1.5rem;
+  align-items: end;
+  margin-top: 1.75rem;
+  font-size: 0.95rem;
+}
+
+.risks-print-footer-role {
+  text-align: left;
+  padding-bottom: 0.15rem;
+}
+
+.risks-print-footer-line {
+  text-align: center;
+  line-height: 1.15;
+}
+
+.risks-print-footer-hint {
+  font-size: 0.78rem;
+  margin-top: 0.1rem;
+}
+
+.risks-print-footer-name {
+  text-align: right;
+  margin: 0;
+  min-height: 1.35em;
+  padding-bottom: 0.15rem;
+}
+
+.risks-print-edit-hint {
+  margin-top: 1rem;
+  font-size: 0.85rem;
+  color: #456;
+  font-family: system-ui, sans-serif;
+}
+
+.risks-print-sign-line {
+  margin-top: 0.5rem;
+}
+
+.risks-print-export-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.risks-print-export-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+}
+
+.risks-export-group {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 6px;
+  border: 1px solid rgba(0, 0, 0, 0.12);
+  border-radius: 4px;
+  background: rgba(0, 0, 0, 0.02);
+}
+
+.risks-export-group-label {
+  margin-right: 2px;
+  white-space: nowrap;
+}
+
+.ppe-print-dropdown .risks-print-export-row {
+  padding: 4px 8px;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+}
+
+.ppe-print-dropdown .risks-print-export-row:last-child {
+  border-bottom: none;
+}
+
+.ppe-print-dropdown .risks-print-export-row .btn {
+  flex: 0 0 auto;
+  padding: 2px 8px;
+  font-size: 12px;
+}
+
+.ppe-print-dropdown .risks-print-export-row a {
+  display: inline;
+  padding: 4px 0;
+  flex: 1 1 auto;
+  min-width: 10rem;
+}
+
+  width: 210mm;
+  min-height: 297mm;
+  margin: 12px auto;
+  padding: 15mm 16mm;
+  background: #fff;
+  color: #111;
+  box-sizing: border-box;
+  box-shadow: 0 2px 14px rgba(0, 0, 0, 0.22);
+  font-family: "Times New Roman", Times, serif;
+  font-size: 12pt;
+  line-height: 1.35;
+}
+
+.risks-a4-sheet.risks-a4-landscape {
+  width: 297mm;
+  min-height: 210mm;
+  padding: 10mm 12mm;
+}
+
+/* ——— Перечень рабочих мест (workplaces-list) ——— */
+.risks-workplaces-sheet {
+  width: 100%;
+  max-width: none;
+  margin: 0;
+  background: #fff;
+  color: #111;
+  padding: 0;
+  box-sizing: border-box;
+  font-family: "Times New Roman", Times, serif;
+  font-size: 14px;
+  box-shadow: none;
+}
+
+.risks-a4-sheet .risks-workplaces-sheet,
+.risks-a4-sheet .risks-order-sheet {
+  padding: 0;
+  box-shadow: none;
+  min-height: 0;
+  width: 100%;
+  max-width: none;
+}
+
+.risks-wp-approve .risks-print-approve-box {
+  width: 16rem;
+  text-align: left;
+}
+
+.risks-wp-approve-role,
+.risks-wp-approve-org,
+.risks-wp-approve-sign {
+  margin: 0.12rem 0;
+  text-align: left;
+}
+
+.risks-wp-title {
+  text-align: center;
+  font-size: 1.15rem;
+  font-weight: 700;
+  margin: 0.5rem 0 0.25rem;
+  line-height: 1.25;
+  text-transform: none;
+}
+
+.risks-wp-title-sub {
+  font-size: 1.05rem;
+  font-weight: 700;
+}
+
+.risks-wp-order-ref {
+  text-align: center;
+  font-style: italic;
+  margin: 0.15rem 0 0.85rem;
+  font-size: 0.95rem;
+}
+
+.risks-wp-meta {
+  margin: 0.2rem 0;
+  font-size: 0.95rem;
+}
+
+.risks-wp-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 0.75rem;
+  table-layout: fixed;
+}
+
+.risks-wp-table th,
+.risks-wp-table td {
+  border: 1px solid #222;
+  padding: 0.35rem 0.4rem;
+  font-size: 0.82rem;
+  vertical-align: top;
+  text-align: left;
+  word-wrap: break-word;
+}
+
+.risks-wp-table thead th {
+  background: #2f6b3a;
+  color: #fff;
+  font-weight: 600;
+  text-align: center;
+  vertical-align: middle;
+}
+
+/* Только ячейки с классом — не сужать 2col/меры через nth-child */
+.risks-wp-col-n {
+  width: 2.4rem;
+  text-align: center;
+}
+
+.risks-wp-empty {
+  text-align: center;
+  color: #555;
+  font-style: italic;
+}
+
+.risks-wp-note {
+  margin: 0.75rem 0 1.25rem;
+  font-size: 0.82rem;
+  line-height: 1.35;
+}
+
+.risks-wp-sign-block {
+  margin-top: 0.5rem;
+}
+
+.risks-wp-sign-label {
+  margin-bottom: 0.65rem;
+  font-size: 0.95rem;
+}
+
+.risks-wp-sign-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 1.25rem;
+  align-items: end;
+}
+
+.risks-wp-sign-field {
+  margin: 0;
+  text-align: center;
+  min-height: 1.6em;
+  border-bottom: 1px solid #111;
+  text-decoration: none;
+  box-shadow: none;
+}
+
+.risks-wp-sign-hints {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 1.25rem;
+  margin-top: 0.2rem;
+  font-size: 0.78rem;
+  text-align: center;
+  color: #333;
+}
+
+/* ——— Приказ (order) ——— */
+.risks-order-sheet {
+  width: 100%;
+  max-width: none;
+  margin: 0;
+  background: #fff;
+  color: #000;
+  padding: 0;
+  box-sizing: border-box;
+  font-family: "Times New Roman", Times, serif;
+  font-size: 14px;
+  line-height: 1.45;
+  box-shadow: none;
+}
+
+.risks-order-org {
+  text-align: center;
+  margin: 0 0 1.25rem;
+  font-size: 1rem;
+}
+
+.risks-order-title {
+  text-align: center;
+  font-size: 1.35rem;
+  font-weight: 700;
+  margin: 0 0 1.1rem;
+  letter-spacing: 0.04em;
+}
+
+.risks-order-meta {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 1rem;
+  margin-bottom: 0.35rem;
+}
+
+.risks-order-meta-3 {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: baseline;
+  gap: 0.75rem 1.25rem;
+  margin-bottom: 1rem;
+}
+
+.risks-order-meta-3 .risks-order-date {
+  justify-self: start;
+}
+
+.risks-order-meta-3 .risks-order-number {
+  justify-self: center;
+  text-align: center;
+}
+
+.risks-order-meta-3 .risks-order-city {
+  justify-self: end;
+  text-align: right;
+  margin: 0;
+}
+
+.risks-order-date,
+.risks-order-number {
+  margin: 0;
+}
+
+.risks-order-city {
+  margin: 0 0 1rem;
+}
+
+.risks-order-subject {
+  margin: 0 0 0.85rem;
+  font-weight: 400;
+  text-align: center;
+}
+
+.risks-order-preamble {
+  margin: 0 0 1rem;
+  text-align: justify;
+}
+
+.risks-order-command {
+  text-align: center;
+  font-weight: 700;
+  margin: 1rem 0;
+}
+
+.risks-order-points {
+  margin: 0 0 1.25rem;
+  padding-left: 1.6rem;
+  list-style-position: outside;
+}
+
+.risks-order-points > li {
+  margin: 0.65rem 0;
+  padding-left: 0;
+  text-indent: 0;
+  text-align: justify;
+}
+
+.risks-order-sublist {
+  margin: 0.35rem 0 0.15rem;
+  padding-left: 1.35rem;
+  list-style: disc;
+  list-style-position: outside;
+}
+
+.risks-order-sublist > li {
+  margin: 0.25rem 0;
+  padding-left: 0;
+  text-indent: 0;
+  text-align: justify;
+}
+
+/* Линия перед подписью приказа (образец СОУТ) */
+.risks-order-sign-rule {
+  border: none;
+  border-top: 1px solid #000;
+  height: 0;
+  margin: 6mm 0 0;
+  padding: 0;
+  width: 100%;
+  display: block;
+}
+
+.risks-order-inline {
+  display: inline;
+  min-width: 8rem;
+  padding: 0 2px;
+}
+
+/* Образец приказа: полки только внутри .risks-order-sheet */
+.risks-order-sheet .risks-order-title.risks-order-filled,
+.risks-order-sheet .risks-order-title {
+  border-bottom: 2px solid #000;
+  padding-bottom: 2px;
+  display: block;
+  width: 100%;
+}
+
+.risks-order-sheet .risks-order-date.risks-order-filled,
+.risks-order-sheet .risks-order-city.risks-order-filled,
+.risks-order-sheet .risks-order-number.risks-order-filled {
+  border-bottom: 1px solid #000;
+  text-decoration: none;
+  padding-bottom: 1px;
+}
+
+.risks-order-sheet .risks-order-subject.risks-order-filled,
+.risks-order-sheet .risks-order-preamble.risks-order-filled {
+  border-bottom: none !important;
+  text-decoration: none !important;
+  padding-bottom: 0;
+}
+
+.risks-order-sheet .risks-order-date,
+.risks-order-sheet .risks-order-city {
+  border-bottom: 1px solid #000;
+  padding-bottom: 1px;
+  display: inline-block;
+  min-width: 8em;
+}
+
+.risks-order-sheet .risks-order-subject {
+  /* Как в образце: без полки под заголовком темы */
+  border-bottom: none;
+  padding-bottom: 0;
+  display: block;
+  width: 100%;
+}
+
+.risks-order-sheet .risks-order-preamble {
+  /* Как в образце: сплошной текст без серых/чёрных полок */
+  border-bottom: none;
+  padding-bottom: 0;
+  background: transparent;
+}
+
+.risks-order-sheet .risks-order-inline {
+  border-bottom: 1px solid #000;
+}
+
+.risks-order-sheet .risks-order-points,
+.risks-order-sheet .risks-order-points > li,
+.risks-order-sheet .risks-order-sublist > li,
+.risks-order-sheet .risks-order-points [contenteditable="true"],
+.risks-order-sheet .risks-order-sublist [contenteditable="true"],
+.risks-order-sheet .risks-order-preamble[contenteditable="true"],
+.risks-order-sheet .risks-order-subject[contenteditable="true"],
+.risks-order-sheet .risks-order-command {
+  background: transparent !important;
+  box-shadow: none !important;
+  border-bottom: none !important;
+  text-decoration: none !important;
+}
+
+.risks-order-sheet .risks-order-sign-rule {
+  border: none;
+  border-top: 1px solid #000;
+  height: 0;
+  margin: 8mm 0 6mm;
+  padding: 0;
+  width: 100%;
+}
+
+.risks-order-sheet .risks-order-sign-row2 {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  gap: 2rem;
+  width: 100%;
+  max-width: 100%;
+  margin-top: 0;
+  border-top: none;
+  box-sizing: border-box;
+}
+
+.risks-order-sheet .risks-order-sign-left,
+.risks-order-sheet .risks-order-sign-right {
+  margin: 0;
+  min-height: 1.2em;
+  min-width: 0;
+  width: fit-content;
+  max-width: 48%;
+  padding-bottom: 2px;
+  border-bottom: 1px solid #000;
+}
+
+/* Образец СОУТ: линия уже над блоком — без полок под должностью/ФИО */
+.risks-order-sheet .risks-order-sign-rule + .risks-order-sign-row2 .risks-order-sign-left,
+.risks-order-sheet .risks-order-sign-rule + .risks-order-sign-row2 .risks-order-sign-right {
+  border-bottom: none;
+  padding-bottom: 0;
+}
+
+.risks-order-letterhead-rule,
+.risks-order-letterhead-rule-double {
+  border: none;
+  border-top: 3px double #000;
+  height: 0;
+  margin: 2mm 0;
+  padding: 0;
+}
+
+.risks-order-acquainted {
+  margin: 0;
+  text-align: left;
+}
+
+[contenteditable="true"]:focus {
+  outline: 2px solid #4a90d9;
+  outline-offset: 1px;
+  background: #fffef5;
+}
+
+@media print {
+  .risks-print-edit-hint,
+  .ppe-no-print,
+  .sout-preview-toolbar,
+  .sout-preview-message,
+  #risks-preview-save-form {
+    display: none !important;
+  }
+
+  html,
+  body.sout-preview-page {
+    width: auto !important;
+    height: auto !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    background: #fff !important;
+  }
+
+  body.sout-preview-page .sout-preview-shell,
+  body.sout-preview-page .sout-preview-doc-wrap {
+    width: 100% !important;
+    max-width: none !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    min-height: 0 !important;
+    box-shadow: none !important;
+    background: #fff !important;
+  }
+
+  .risks-a4-sheet,
+  .risks-schedule-sheet,
+  .risks-workplaces-sheet,
+  .risks-order-sheet {
+    width: 100% !important;
+    max-width: none !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    box-shadow: none !important;
+    box-sizing: border-box !important;
+    min-height: 0 !important;
+    /* НЕ avoid — иначе Chrome сжимает лист в узкую полоску */
+    page-break-inside: auto !important;
+    break-inside: auto !important;
+  }
+
+  .risks-print-table,
+  .risks-print-months,
+  .risks-wp-table {
+    width: 100% !important;
+  }
+
+  .risks-print-table th,
+  .risks-print-table td,
+  .risks-print-months th,
+  .risks-print-months td,
+  .risks-wp-table th,
+  .risks-wp-table td {
+    border-color: #000 !important;
+  }
+
+  .risks-wp-table thead th {
+    background: #2f6b3a !important;
+    color: #fff !important;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  /* Шапка таблицы — только в начале документа, без повтора на каждой странице */
+  thead {
+    display: table-row-group !important;
+  }
+
+  .risks-print-table thead,
+  .risks-card-table thead,
+  .ppe-doc-table thead,
+  .risks-wp-table thead,
+  .risks-print-months thead,
+  .sout-eq-table thead,
+  .sout-wp-table thead,
+  .sout-info-table thead,
+  .sout-commission-schedule thead {
+    display: table-row-group !important;
+  }
+
+  .sout-info-table thead {
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
+  }
+
+  .sout-info-table thead tr,
+  .sout-info-table tbody tr {
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
+  }
+
+  .risks-print-month-cell:hover {
+    background: #fff !important;
+  }
+
+  /* месяцы — короткие горизонтальные подписи */
+  .risks-month-label {
+    writing-mode: horizontal-tb !important;
+    transform: none !important;
+    display: inline !important;
+  }
+
+  .risks-order-sheet {
+    font-size: 13px !important;
+    line-height: 1.4 !important;
+  }
+
+  .risks-schedule-sheet {
+    font-size: 10pt !important;
+  }
+
+  .risks-workplaces-sheet {
+    font-size: 12px !important;
+  }
+
+  .risks-wp-table th,
+  .risks-wp-table td {
+    padding: 0.28rem 0.35rem !important;
+    font-size: 0.8rem !important;
+    writing-mode: horizontal-tb !important;
+    transform: none !important;
+  }
+
+  @page {
+    size: A4 portrait;
+    margin: 20mm;
+  }
+}
+
+/* график — альбомный A4 */
+@media print {
+  body.risks-preview-mode-schedule {
+    /* size задаётся в Preview inline */
+  }
+
+  body.risks-preview-mode-schedule .risks-schedule-sheet {
+    font-size: 10.5px !important;
+  }
+}
+
+/* Sticky for risks "Подразделения" sidebar */
+.sout-workplaces-departments{
+  position: sticky !important;
+  top: 12px !important;
+  align-self: start;
+  max-height: calc(100vh - 24px);
+  overflow-y: auto;
+  overflow-x: hidden;
+  z-index: 5;
+  background: var(--surface, #fff);
+}
+
+/* Avoid sticky breaking on hover (global .panel:hover uses transform). */
+.sout-workplaces-departments.panel:hover{
+  transform: none !important;
+}
+
+/* Хаб документов оценки рисков */
+.risks-docs-hub {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 14px;
+  padding: 4px 2px 12px;
+}
+
+.risks-docs-tile {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 8px;
+  min-height: 110px;
+  padding: 18px 20px;
+  border: 1px solid var(--border, #d5ddd8);
+  border-radius: 10px;
+  background: var(--surface, #fff);
+  color: inherit;
+  text-decoration: none;
+  box-shadow: 0 1px 2px rgba(15, 26, 21, 0.04);
+  transition: border-color 0.15s ease, box-shadow 0.15s ease, transform 0.15s ease;
+}
+
+.risks-docs-tile:hover {
+  border-color: #6aa88a;
+  box-shadow: 0 4px 14px rgba(26, 107, 74, 0.12);
+  transform: translateY(-1px);
+  text-decoration: none;
+  color: inherit;
+}
+
+.risks-docs-tile-title {
+  font-size: 1.05rem;
+  font-weight: 650;
+  line-height: 1.25;
+}
+
+.risks-docs-tile-hint {
+  font-size: 0.86rem;
+  line-height: 1.35;
+  color: var(--muted, #66736c);
+}
+
+.risks-docs-section-title {
+  margin: 0.35rem 0 0.85rem;
+}
+
+[data-theme='dark'] .risks-docs-tile {
+  background: var(--surface, #1a2a24);
+  border-color: var(--border, #3a4a44);
+}
+
+.risks-docs-tile:hover {
+  border-color: #6aa88a;
+}
+
+/* Перечень / реестр / подпись председателя */
+.risks-wp-org-center {
+  text-align: center;
+  font-weight: 700;
+  margin: 0 0 8mm;
+  font-size: 12pt;
+}
+
+.risks-wp-table-2col th:first-child,
+.risks-wp-table-2col td:first-child {
+  width: 12%;
+  text-align: center;
+}
+
+.risks-wp-table-2col th:nth-child(2),
+.risks-wp-table-2col td:nth-child(2) {
+  width: 88%;
+  text-align: left;
+}
+
+.risks-wp-table thead th {
+  font-weight: 700;
+}
+
+.risks-wp-table tbody td {
+  font-weight: 400;
+}
+
+.risks-wp-table-measures th:nth-child(1),
+.risks-wp-table-measures td:nth-child(1) {
+  width: 10%;
+  text-align: center;
+}
+
+.risks-wp-table-measures th:nth-child(2),
+.risks-wp-table-measures td:nth-child(2) {
+  width: 42%;
+}
+
+.risks-wp-table-measures th:nth-child(3),
+.risks-wp-table-measures td:nth-child(3) {
+  width: 34%;
+}
+
+.risks-wp-table-measures th:nth-child(4),
+.risks-wp-table-measures td:nth-child(4) {
+  width: 14%;
+  text-align: center;
+}
+
+.risks-chair-footer {
+  margin-top: 10mm;
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 8mm 12mm;
+  align-items: end;
+}
+
+.risks-chair-label {
+  font-size: 11pt;
+  white-space: nowrap;
+}
+
+.risks-chair-fields {
+  display: grid;
+  grid-template-columns: 1fr 1.2fr 1fr;
+  gap: 10mm;
+  align-items: end;
+}
+
+.risks-chair-col {
+  text-align: center;
+}
+
+.risks-chair-line {
+  display: block;
+  min-height: 1.2em;
+  border-bottom: 1px solid #000;
+}
+
+.risks-chair-value {
+  min-height: 1.2em;
+  font-weight: 700;
+  border-bottom: 1px solid #000;
+}
+
+.risks-chair-hint {
+  display: block;
+  font-size: 8.5pt;
+  margin-top: 1mm;
+}
+
+.risks-order-letterhead {
+  text-align: center;
+  margin-bottom: 10mm;
+}
+
+.risks-order-letterhead-role,
+.risks-order-letterhead-name {
+  margin: 0;
+  font-weight: 700;
+  font-size: 12pt;
+}
+
+.risks-order-letterhead-rule,
+.risks-order-letterhead-rule-double {
+  border: none;
+  border-top: 3px double #000;
+  height: 0;
+  margin: 2mm 0;
+  padding: 0;
+}
+
+.risks-order-letterhead-bank {
+  margin: 2mm 0;
+  font-size: 9pt;
+  font-weight: 400;
+  line-height: 1.35;
+}
+
+.risks-order-meta-2 {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  margin: 6mm 0 8mm;
+}
+
+.risks-order-sublist {
+  margin: 2mm 0 0.5mm;
+  padding-left: 1.35rem;
+  list-style: disc;
+}
+
+.risks-order-sign-row2 {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  gap: 2rem;
+  margin-top: 10mm;
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+.risks-order-sign-left,
+.risks-order-sign-right {
+  margin: 0;
+  min-height: 1.2em;
+  min-width: 0;
+  width: fit-content;
+  max-width: 48%;
+  padding-bottom: 2px;
+  border-bottom: 1px solid #000;
+}
+
+.risks-order-sign-rule + .risks-order-sign-row2 .risks-order-sign-left,
+.risks-order-sign-rule + .risks-order-sign-row2 .risks-order-sign-right {
+  border-bottom: none;
+  padding-bottom: 0;
+}
+
+.risks-card-doc-title {
+  text-align: center;
+  font-size: 13pt;
+  font-weight: 700;
+  margin: 0 0 5mm;
+}
+
+.risks-card-meta-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-bottom: 5mm;
+  font-size: 10pt;
+}
+
+.risks-card-meta-table td {
+  border: 1px solid #000;
+  padding: 2px 4px;
+  vertical-align: top;
+}
+
+.risks-card-meta-label {
+  width: 18%;
+  font-weight: 400;
+  background: #f7f7f7;
+}
+
+.risks-card-table th {
+  font-weight: 700;
+  font-size: 8.5pt;
+}
+
+.risks-card-table td {
+  font-weight: 400;
+  font-size: 8.5pt;
+}
+
+.risks-card-table {
+  table-layout: fixed;
+  width: 100%;
+}
+
+.risks-card-table th:nth-child(1),
+.risks-card-table td:nth-child(1) { width: 6%; text-align: center; }
+.risks-card-table th:nth-child(2),
+.risks-card-table td:nth-child(2) { width: 16%; }
+.risks-card-table th:nth-child(3),
+.risks-card-table td:nth-child(3) { width: 12%; }
+.risks-card-table th:nth-child(4),
+.risks-card-table td:nth-child(4) { width: 10%; }
+.risks-card-table th:nth-child(5),
+.risks-card-table td:nth-child(5) { width: 8%; }
+.risks-card-table th:nth-child(6),
+.risks-card-table td:nth-child(6) { width: 8%; text-align: center; }
+.risks-card-table th:nth-child(7),
+.risks-card-table td:nth-child(7) { width: 32%; }
+.risks-card-table th:nth-child(8),
+.risks-card-table td:nth-child(8) { width: 8%; }
+
+.risks-card-compiled {
+  display: flex;
+  align-items: flex-end;
+  gap: 12px;
+  margin-top: 6mm;
+  font-size: 10pt;
+  page-break-before: avoid;
+  break-before: avoid;
+  page-break-inside: avoid;
+}
+
+.risks-card-page-foot {
+  margin-top: 4mm;
+  font-size: 9pt;
+  page-break-before: avoid;
+  break-before: avoid;
+}
+
+.risks-card-acq-foot {
+  margin-top: 8mm;
+  font-size: 9pt;
+  color: #000;
+  page-break-before: avoid;
+  break-before: avoid;
+  page-break-inside: avoid;
+}
+
+.risks-card-compiled-sign,
+.risks-card-compiled-name {
+  flex: 1;
+  text-align: center;
+}
+
+.risks-card-acquainted {
+  margin-top: 4mm;
+  font-size: 11pt;
+}
+
+.risks-card-acq-sheet {
+  box-sizing: border-box;
+  padding: 8mm 10mm;
+  background: #fff;
+}
+
+.risks-card-acq-spacer {
+  height: 1.35em;
+  line-height: 1.35em;
+  font-size: 11pt;
+  margin: 0 0 2mm;
+}
+
+.risks-card-acq-table {
+  width: 100%;
+  border-collapse: collapse;
+  table-layout: fixed;
+  font-family: "Times New Roman", Times, serif;
+  font-size: 10.5pt;
+  color: #000;
+}
+
+.risks-card-acq-table td {
+  border: 0;
+  vertical-align: bottom;
+  padding: 1.6mm 3mm 1.2mm 0;
+}
+
+.risks-card-acq-title {
+  margin: 0 0 8mm;
+  font-size: 12pt;
+  line-height: 1.35;
+}
+
+.risks-card-acq-pair {
+  margin: 0 0 7mm;
+}
+
+.risks-card-acq-line {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 10px;
+  align-items: end;
+  margin: 0 0 4mm;
+}
+
+.risks-card-acq-underscore {
+  display: block;
+  border-bottom: 1px solid #000;
+  min-height: 5mm;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.risks-card-acq-row {
+  /* legacy class kept for older markup */
+}
+
+.risks-card-acq-label {
+  width: 52%;
+  line-height: 1.2;
+  padding-bottom: 1.5mm !important;
+  white-space: normal;
+}
+
+.risks-card-acq-field {
+  width: 18%;
+  text-align: center;
+}
+
+.risks-card-acq-field-name {
+  width: 30%;
+}
+
+.risks-card-acq-field .risks-card-acq-underscore {
+  margin-bottom: 1mm;
+}
+
+.risks-card-acq-field .risks-chair-hint {
+  display: block;
+  font-size: 9pt;
+  line-height: 1.15;
+  text-align: center;
+}
+
+.risks-page-break {
+  page-break-before: always;
+  break-before: page;
+  height: 0;
+}
+
+.risks-method-sheet {
+  font-family: "Times New Roman", Times, serif;
+  font-size: 11pt;
+  line-height: 1.4;
+  color: #000;
+  background: #fff;
+  padding: 8mm 10mm;
+}
+
+.risks-method-cover {
+  min-height: 180mm;
+}
+
+.risks-method-approve {
+  width: 70mm;
+  margin-left: auto;
+  text-align: center;
+  margin-bottom: 14mm;
+}
+
+.risks-method-approve-label {
+  font-weight: 700;
+  margin: 0 0 2mm;
+}
+
+.risks-method-title-block {
+  text-align: center;
+  margin: 16mm 0 12mm;
+}
+
+.risks-method-title-main {
+  font-size: 18pt;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  margin: 0 0 3mm;
+}
+
+.risks-method-title-sub {
+  font-size: 12pt;
+  font-weight: 700;
+  margin: 0;
+}
+
+.risks-method-h {
+  font-size: 12pt;
+  font-weight: 700;
+  margin: 5mm 0 2mm;
+}
+
+.risks-regulation-body {
+  font-family: "Times New Roman", Times, serif;
+  font-size: 11pt;
+  line-height: 1.35;
+  color: #000;
+}
+
+/* Колонтитул образца: организация по центру, жирным */
+.risks-regulation-running-header {
+  text-align: center;
+  font-weight: 700;
+  font-size: 12pt;
+  margin: 0 0 8mm;
+  padding-bottom: 0;
+  color: #000;
+  text-decoration: none;
+  border-bottom: none;
+}
+
+/* 1-я стр.: ПОЛОЖЕНИЕ / подзаголовок / организация — как в образце Word */
+.risks-method-title-main,
+.risks-method-title-import {
+  text-align: center;
+  font-size: 16pt;
+  font-weight: 700;
+  margin: 2mm 0 1mm;
+  line-height: 1.25;
+  text-transform: uppercase;
+}
+
+.risks-method-subtitle,
+.risks-method-subtitle-import,
+.risks-wp-title-sub {
+  text-align: center;
+  font-size: 12pt;
+  font-weight: 700;
+  margin: 0 0 3mm;
+  line-height: 1.3;
+}
+
+.risks-method-org-uline,
+.risks-wp-org-center {
+  text-align: center;
+  font-weight: 700;
+  font-size: 16pt;
+  margin: 0 0 8mm;
+  text-decoration: none;
+}
+
+.risks-regulation-body .risks-order-preamble {
+  margin: 0 0 0.55em;
+  text-align: justify;
+}
+
+.risks-regulation-body .risks-method-h {
+  margin: 4mm 0 1.5mm;
+  font-size: 12pt;
+}
+
+.risks-method-table-caption {
+  text-align: center;
+  margin: 4mm 0 2mm;
+  font-size: 11pt;
+}
+
+.risks-method-list {
+  margin: 0.2em 0 0.85em;
+  padding-left: 0;
+  list-style: none;
+}
+
+.risks-method-list li {
+  margin: 0.25em 0;
+  text-align: justify;
+  line-height: 1.35;
+  padding-left: 1.1em;
+  position: relative;
+}
+
+.risks-method-list li::before {
+  content: "– ";
+  position: absolute;
+  left: 0;
+}
+
+.risks-method-doc-table {
+  margin: 3mm 0 5mm;
+  font-size: 9.5pt;
+}
+
+.risks-method-doc-table td {
+  text-align: center;
+  vertical-align: middle;
+}
+
+.risks-risk-class-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 2mm 0 5mm;
+  font-size: 10pt;
+  table-layout: fixed;
+}
+
+.risks-risk-class-table th,
+.risks-risk-class-table td {
+  border: 1px solid #000;
+  padding: 5px 6px;
+  vertical-align: top;
+}
+
+.risks-risk-class-table th {
+  text-align: center;
+  font-weight: 700;
+  background: #f5f5f5;
+}
+
+.risks-risk-class-table .risk-zone-low {
+  background: #c6efce;
+  text-align: center;
+  vertical-align: middle;
+}
+
+.risks-risk-class-table .risk-zone-mid {
+  background: #ffeb9c;
+  text-align: center;
+  vertical-align: middle;
+}
+
+.risks-risk-class-table .risk-zone-high {
+  background: #ffc7ce;
+  text-align: center;
+  vertical-align: middle;
+}
+
+.risks-risk-class-action {
+  text-align: justify;
+}
+
+/* Матрица оценки рисков 5×5 (канон для положения/методики) */
+.risks-assessment-matrix {
+  width: 100%;
+  max-width: 190mm;
+  margin: 4mm auto 6mm;
+  border-collapse: collapse;
+  table-layout: fixed;
+  font-family: "Times New Roman", Times, serif;
+  font-size: 9pt;
+  color: #000;
+  border: 1.5pt solid #000;
+}
+
+.risks-assessment-matrix td {
+  border: 0.75pt solid #000;
+  vertical-align: middle;
+  text-align: center;
+  padding: 2px 3px;
+}
+
+.risks-assessment-matrix .ram-head {
+  background: #f8cbad;
+  font-weight: 700;
+}
+
+.risks-assessment-matrix .ram-corner {
+  background: #fff;
+  position: relative;
+  width: 32%;
+  height: 48mm;
+  padding: 0;
+  overflow: hidden;
+}
+
+.risks-assessment-matrix .ram-corner-inner {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  min-height: 46mm;
+}
+
+.risks-assessment-matrix .ram-corner-prob {
+  position: absolute;
+  top: 2.5mm;
+  right: 2mm;
+  left: 38%;
+  font-weight: 700;
+  font-size: 9pt;
+  line-height: 1.15;
+  text-align: right;
+}
+
+.risks-assessment-matrix .ram-corner-sev {
+  position: absolute;
+  left: 2mm;
+  bottom: 2.5mm;
+  right: 38%;
+  font-weight: 700;
+  font-size: 9pt;
+  line-height: 1.15;
+  text-align: left;
+}
+
+.risks-assessment-matrix .ram-corner-inner::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 160%;
+  height: 1.15px;
+  background: #000;
+  transform-origin: top left;
+  transform: rotate(36deg);
+}
+
+.risks-assessment-matrix .ram-prob-label {
+  background: #ffcc99;
+  height: 42mm;
+  width: 11%;
+  padding: 2px 1px;
+}
+
+.risks-assessment-matrix .ram-weight-header {
+  width: 9%;
+}
+
+.risks-assessment-matrix .ram-vert {
+  writing-mode: vertical-rl;
+  transform: rotate(180deg);
+  white-space: normal;
+  max-height: 40mm;
+  margin: 0 auto;
+  font-size: 8.5pt;
+  font-weight: 700;
+  line-height: 1.2;
+  text-align: left;
+}
+
+.risks-assessment-matrix .ram-weight-caption {
+  background: #fff;
+  font-size: 8pt;
+  font-weight: 700;
+  line-height: 1.15;
+  padding: 2px;
+}
+
+.risks-assessment-matrix .ram-weight {
+  background: #fff;
+  font-size: 12pt;
+  font-weight: 700;
+  height: 8mm;
+}
+
+.risks-assessment-matrix .ram-sev-label {
+  background: #ffcc99;
+  text-align: left;
+  padding: 2mm 2.5mm;
+  font-weight: 700;
+  font-size: 8.5pt;
+  line-height: 1.2;
+}
+
+.risks-assessment-matrix .ram-sev-weight-cell {
+  background: #fff;
+  font-size: 12pt;
+  font-weight: 700;
+  width: 9%;
+}
+
+.risks-assessment-matrix .ram-score {
+  font-size: 12pt;
+  font-weight: 700;
+  width: 11%;
+  height: 10mm;
+}
+
+/* Цвета как в образце Методики (ИП Нигамаев / E-Stroy) */
+.risks-assessment-matrix .risk-zone-low {
+  background: #c5e0b3 !important;
+}
+
+.risks-assessment-matrix .risk-zone-mid {
+  background: #ffc000 !important;
+}
+
+.risks-assessment-matrix .risk-zone-high {
+  background: #ff0000 !important;
+  color: #000;
+}
+
+@media print {
+  .risks-assessment-matrix {
+    max-width: 100%;
+    page-break-inside: avoid;
+  }
+
+  .risks-assessment-matrix .risk-zone-low,
+  .risks-assessment-matrix .risk-zone-mid,
+  .risks-assessment-matrix .risk-zone-high,
+  .risks-assessment-matrix .ram-head,
+  .risks-assessment-matrix .ram-prob-label,
+  .risks-assessment-matrix .ram-sev-label {
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+}
+
+@media print {
+  .risks-page-break {
+    page-break-before: always;
+    break-before: page;
+    height: 0;
+    margin: 0;
+    padding: 0;
+    border: none;
+  }
+
+  /* Разрыв только у .risks-page-break — иначе пустой лист перед ознакомлением */
+  .risks-card-acq-sheet {
+    min-height: auto !important;
+    height: auto !important;
+    page-break-before: auto;
+    break-before: auto;
+    page-break-after: auto;
+  }
+}
+
+
+
+/* Карты оценки рисков — титульная шапка + альбом */
+.risks-card-sheet {
+  width: 100%;
+  max-width: none;
+  margin: 0;
+  padding: 8mm 10mm;
+  box-sizing: border-box;
+  background: #fff;
+  color: #000;
+  font-family: "Times New Roman", Times, serif;
+  font-size: 11pt;
+  line-height: 1.35;
+}
+
+.risks-card-cover {
+  position: relative;
+  margin-bottom: 6mm;
+  min-height: 70mm;
+}
+
+.risks-card-org-top {
+  text-align: center;
+  font-weight: 700;
+  text-transform: uppercase;
+  margin: 0 0 4mm;
+  font-size: 12pt;
+  letter-spacing: 0.02em;
+}
+
+.risks-card-approve {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 8mm;
+}
+
+.risks-card-approve-box {
+  width: 72mm;
+  text-align: center;
+  font-size: 10.5pt;
+}
+
+.risks-card-approve-label {
+  margin: 0 0 2mm;
+  font-weight: 700;
+}
+
+.risks-card-approve-role,
+.risks-card-approve-sign,
+.risks-card-approve-date {
+  margin: 0 0 1.5mm;
+}
+
+.risks-card-approve-sign {
+  min-height: 1.4em;
+  border-bottom: 1px solid #000;
+}
+
+.risks-card-title-block {
+  text-align: center;
+  margin: 10mm 0 8mm;
+}
+
+.risks-card-title-main {
+  margin: 0 0 3mm;
+  font-size: 18pt;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+}
+
+.risks-card-title-sub {
+  margin: 0 0 4mm;
+  font-size: 12pt;
+  font-weight: 700;
+}
+
+.risks-card-doc-kind {
+  margin: 0;
+  font-size: 11pt;
+}
+
+.risks-card-field {
+  display: grid;
+  grid-template-columns: 48mm 1fr;
+  column-gap: 4mm;
+  row-gap: 1mm;
+  align-items: end;
+  margin: 0 0 6mm;
+}
+
+.risks-card-field-label {
+  font-size: 11pt;
+}
+
+.risks-card-field-line {
+  display: block;
+  min-height: 1.35em;
+  border-bottom: 1px solid #000;
+  text-align: center;
+  font-weight: 700;
+}
+
+.risks-card-field-line-construction {
+  font-style: italic;
+  font-weight: 600;
+}
+
+.risks-card-field-hint {
+  grid-column: 2;
+  font-size: 8.5pt;
+  text-align: center;
+  color: #333;
+}
+
+.risks-card-meta {
+  margin: 4mm 0 3mm;
+  font-size: 10.5pt;
+}
+
+.risks-card-meta p {
+  margin: 0.2em 0;
+}
+
+.risks-card-sheet .risks-print-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 9.5pt;
+}
+
+.risks-card-sheet .risks-print-table th,
+.risks-card-sheet .risks-print-table td {
+  border: 1px solid #000;
+  padding: 2px 4px;
+  vertical-align: top;
+}
+
+@media print {
+  .risks-card-sheet {
+    padding: 0;
+  }
+}
+
+
+
+/* Перечень / реестр / подпись председателя / приказ / карта / методика */
+.risks-wp-org-center { text-align: center; font-weight: 700; margin: 0 0 8mm; font-size: 12pt; }
+.risks-wp-table-2col th:first-child, .risks-wp-table-2col td:first-child { width: 12%; text-align: center; }
+.risks-wp-table-2col th:nth-child(2), .risks-wp-table-2col td:nth-child(2) { width: 88%; text-align: left; }
+.risks-wp-table thead th { font-weight: 700; }
+.risks-wp-table tbody td { font-weight: 400; }
+.risks-wp-table-measures th:nth-child(1), .risks-wp-table-measures td:nth-child(1) { width: 10%; text-align: center; }
+.risks-wp-table-measures th:nth-child(2), .risks-wp-table-measures td:nth-child(2) { width: 42%; text-align: left; }
+.risks-wp-table-measures th:nth-child(3), .risks-wp-table-measures td:nth-child(3) { width: 34%; text-align: left; }
+.risks-wp-table-measures th:nth-child(4), .risks-wp-table-measures td:nth-child(4) { width: 14%; text-align: center; }
+.risks-chair-footer { margin-top: 10mm; display: grid; grid-template-columns: auto 1fr; gap: 8mm 12mm; align-items: end; }
+.risks-chair-label { font-size: 11pt; white-space: nowrap; }
+.risks-chair-fields { display: grid; grid-template-columns: 1fr 1.2fr 1fr; gap: 10mm; align-items: end; }
+.risks-chair-col { text-align: center; }
+.risks-chair-line { display: block; min-height: 1.2em; border-bottom: 1px solid #000; }
+.risks-chair-value { min-height: 1.2em; font-weight: 700; border-bottom: 1px solid #000; }
+.risks-chair-hint { display: block; font-size: 8.5pt; margin-top: 1mm; }
+.risks-order-letterhead { text-align: center; margin-bottom: 10mm; }
+.risks-order-letterhead-role, .risks-order-letterhead-name { margin: 0; font-weight: 700; font-size: 12pt; }
+.risks-order-letterhead-rule, .risks-order-letterhead-rule-double { border: none; border-top: 3px double #000; height: 0; margin: 2mm 0; padding: 0; }
+.risks-order-letterhead-bank { margin: 2mm 0; font-size: 9pt; font-weight: 400; line-height: 1.35; }
+.risks-order-meta-2 { display: flex; justify-content: space-between; gap: 1rem; margin: 6mm 0 8mm; }
+.risks-order-sublist { margin: 2mm 0 0; padding-left: 1.2rem; list-style: disc; }
+.risks-card-doc-title { text-align: center; font-size: 13pt; font-weight: 700; margin: 0 0 5mm; }
+.risks-card-meta-table { width: 100%; border-collapse: collapse; margin-bottom: 5mm; font-size: 10pt; }
+.risks-card-meta-table td { border: 1px solid #000; padding: 2px 4px; vertical-align: top; }
+.risks-card-meta-label { width: 18%; background: #f7f7f7; }
+.risks-card-table th { font-weight: 700; font-size: 8.5pt; }
+.risks-card-table td { font-weight: 400; font-size: 8.5pt; }
+.risks-card-table {
+  table-layout: fixed;
+  width: 100%;
+}
+.risks-card-table th:nth-child(1),
+.risks-card-table td:nth-child(1) { width: 6%; text-align: center; }
+.risks-card-table th:nth-child(2),
+.risks-card-table td:nth-child(2) { width: 16%; }
+.risks-card-table th:nth-child(3),
+.risks-card-table td:nth-child(3) { width: 12%; }
+.risks-card-table th:nth-child(4),
+.risks-card-table td:nth-child(4) { width: 10%; }
+.risks-card-table th:nth-child(5),
+.risks-card-table td:nth-child(5) { width: 8%; }
+.risks-card-table th:nth-child(6),
+.risks-card-table td:nth-child(6) { width: 8%; text-align: center; }
+.risks-card-table th:nth-child(7),
+.risks-card-table td:nth-child(7) { width: 32%; } /* Меры управления */
+.risks-card-table th:nth-child(8),
+.risks-card-table td:nth-child(8) { width: 8%; }
+.risks-card-compiled { display: flex; align-items: flex-end; gap: 12px; margin-top: 6mm; font-size: 10pt; page-break-before: avoid; page-break-inside: avoid; }
+.risks-card-compiled-sign, .risks-card-compiled-name { flex: 1; text-align: center; }
+.risks-card-acquainted { margin-top: 4mm; font-size: 11pt; }
+.risks-card-acq-sheet { box-sizing: border-box; padding: 8mm 10mm; }
+.risks-card-acq-spacer { height: 1.35em; line-height: 1.35em; font-size: 11pt; margin: 0 0 2mm; }
+.risks-card-acq-table { width: 100%; border-collapse: collapse; table-layout: fixed; font-family: "Times New Roman", Times, serif; font-size: 10.5pt; }
+.risks-card-acq-table td { border: 0; vertical-align: bottom; padding: 1.6mm 3mm 1.2mm 0; }
+.risks-card-acq-title { margin: 0 0 8mm; font-size: 12pt; line-height: 1.35; }
+.risks-card-acq-pair { margin: 0 0 7mm; }
+.risks-card-acq-line { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 10px; align-items: end; margin: 0 0 4mm; }
+.risks-card-acq-underscore { display: block; border-bottom: 1px solid #000; min-height: 5mm; width: 100%; }
+.risks-card-acq-label { width: 52%; line-height: 1.2; padding-bottom: 1.5mm !important; }
+.risks-card-acq-field { width: 18%; text-align: center; }
+.risks-card-acq-field-name { width: 30%; }
+.risks-card-acq-field .risks-card-acq-underscore { margin-bottom: 1mm; }
+.risks-card-acq-field .risks-chair-hint { display: block; font-size: 9pt; line-height: 1.15; text-align: center; }
+.risks-card-page-foot { margin-top: 4mm; font-size: 9pt; page-break-before: avoid; }
+.risks-card-acq-foot { margin-top: 8mm; font-size: 9pt; page-break-before: avoid; page-break-inside: avoid; }
+.risks-page-break { page-break-before: always; break-before: page; height: 0; }
+.risks-method-sheet { font-family: "Times New Roman", Times, serif; font-size: 11pt; line-height: 1.4; color: #000; background: #fff; padding: 8mm 10mm; }
+.risks-method-cover { min-height: 160mm; }
+.risks-method-approve { width: 70mm; margin-left: auto; text-align: center; margin-bottom: 14mm; }
+.risks-method-approve-label { font-weight: 700; margin: 0 0 2mm; }
+.risks-method-title-block { text-align: center; margin: 16mm 0 12mm; }
+.risks-method-title-main { font-size: 18pt; font-weight: 700; letter-spacing: 0.08em; margin: 0 0 3mm; }
+.risks-method-title-sub { font-size: 12pt; font-weight: 700; margin: 0; }
+.risks-method-h { font-size: 12pt; font-weight: 700; margin: 5mm 0 2mm; }
+.risks-regulation-running-header { text-align: center; font-weight: 700; font-size: 12pt; margin: 0 0 8mm; color: #000; text-decoration: none; border-bottom: none; }
+.risks-method-title-import { text-align: center; font-size: 16pt; font-weight: 700; margin: 2mm 0 1mm; line-height: 1.25; text-transform: uppercase; }
+.risks-method-subtitle-import { text-align: center; font-size: 12pt; font-weight: 700; margin: 0 0 2mm; line-height: 1.3; }
+.risks-regulation-body .risks-order-preamble { margin: 0 0 0.55em; text-align: justify; }
+.risks-method-list { margin: 0.2em 0 0.85em; padding-left: 0; list-style: none; }
+.risks-method-list li { margin: 0.25em 0; text-align: justify; line-height: 1.35; padding-left: 1.1em; position: relative; }
+.risks-method-list li::before { content: "– "; position: absolute; left: 0; }
+.risks-method-doc-table { margin: 3mm 0 5mm; font-size: 9.5pt; }
+.risks-method-doc-table td { text-align: center; vertical-align: middle; }
+.risks-method-table-caption { text-align: center; margin: 4mm 0 2mm; font-size: 11pt; }
+.risks-risk-class-table { width: 100%; border-collapse: collapse; margin: 2mm 0 5mm; font-size: 10pt; }
+.risks-risk-class-table th, .risks-risk-class-table td { border: 1px solid #000; padding: 5px 6px; vertical-align: top; }
+.risks-risk-class-table th { text-align: center; font-weight: 700; background: #f5f5f5; }
+.risks-risk-class-table .risk-zone-low { background: #c5e0b3; text-align: center; vertical-align: middle; }
+.risks-risk-class-table .risk-zone-mid { background: #ffc000; text-align: center; vertical-align: middle; }
+.risks-risk-class-table .risk-zone-high { background: #ff0000; text-align: center; vertical-align: middle; color: #000; }
+.risks-risk-class-action { text-align: justify; }
+.risks-method-org-uline, .risks-wp-org-center { text-align: center; font-weight: 700; font-size: 16pt; margin: 0 0 8mm; text-decoration: none; }
+
+.sout-commission-appendix-ref { text-align: right; margin: 4mm 0 6mm; font-size: 11pt; line-height: 1.35; }
+.sout-commission-appendix-title { text-align: center; font-size: 12pt; font-weight: 700; margin: 0 0 8mm; }
+.sout-commission-appendix { padding-top: 10mm; }
+.sout-commission-chair-footer { margin-top: 14mm; }
+.sout-commission-schedule { width: 100%; border-collapse: collapse; font-size: 10.5pt; table-layout: fixed; }
+.sout-commission-schedule th,
+.sout-commission-schedule td { border: 1px solid #000; padding: 4px 6px; vertical-align: top; }
+.sout-commission-schedule th { font-weight: 700; text-align: center; background: #fff; color: #000; }
+.sout-commission-schedule .sout-schedule-col-n { width: 8%; text-align: center; }
+.sout-commission-schedule .sout-schedule-col-stage { width: 62%; }
+.sout-commission-schedule .sout-schedule-col-deadline { width: 30%; }

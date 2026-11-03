@@ -1,0 +1,318 @@
+@page "/Sout/Catalog/Edit"
+@model Zashita.Web.Pages.Sout.Catalog.EditModel
+@{
+    var r = Model.Record;
+    var isGroup = r.IsGroup || Model.IsGroup;
+    ViewData["Title"] = Model.IsNew ? $"{Model.Title} (создание)" : Model.Title;
+    ViewData["Subtitle"] = "общий для всех ЮЛ";
+}
+
+<link rel="stylesheet" href="/css/sout-catalog.css" asp-append-version="true" />
+
+@if (!string.IsNullOrWhiteSpace(Model.Message))
+{
+  <p class="@(Model.IsError ? "form-error" : "text-success")">@Model.Message</p>
+}
+
+<div class="panel ppe-panel sout-catalog-edit" id="sout-catalog-edit">
+  <form method="post" asp-page="/Sout/Catalog/Edit">
+    <input type="hidden" name="recordId" value="@r.Id" />
+    <input type="hidden" asp-for="Kind" />
+    <input type="hidden" asp-for="Id" />
+    <input type="hidden" name="isGroup" value="@isGroup.ToString().ToLowerInvariant()" />
+
+    <div class="sout-assignment-toolbar sout-catalog-edit-toolbar">
+      <div class="sout-assignment-toolbar-left">
+        <a class="btn btn-outline btn-sm" asp-page="/Sout/Catalog" asp-route-kind="@Model.Kind">←</a>
+        <button type="submit" formaction="?handler=SaveAndClose" class="btn btn-primary btn-sm">Записать и закрыть</button>
+        <button type="submit" formaction="?handler=Save" class="btn btn-outline btn-sm">Записать</button>
+      </div>
+    </div>
+
+    <div class="sout-catalog-edit-header">
+      <label class="ppe-field sout-catalog-edit-name">
+        <span>Наименование</span>
+        <input name="name" value="@r.Name" class="ppe-input" required autofocus />
+      </label>
+      <label class="ppe-field sout-catalog-edit-code">
+        <span>Код</span>
+        <input name="code" value="@(string.IsNullOrWhiteSpace(r.Code) ? "<Авто>" : r.Code)" class="ppe-input" readonly />
+      </label>
+    </div>
+
+    @if (isGroup)
+    {
+      <div class="sout-catalog-edit-body">
+        <label class="ppe-field">
+          <span>Входит в группу</span>
+          <select name="parentId" class="ppe-input">
+            <option value="">—</option>
+            @foreach (var group in Model.GroupOptions.Where(g => g.Id != r.Id))
+            {
+              if (string.Equals(r.ParentId, group.Id, StringComparison.Ordinal))
+              {
+                <option value="@group.Id" selected>@group.Name</option>
+              }
+              else
+              {
+                <option value="@group.Id">@group.Name</option>
+              }
+            }
+          </select>
+        </label>
+      </div>
+    }
+    else
+    {
+      <div class="sout-assignment-tabs sout-catalog-edit-tabs" role="tablist">
+        <button type="button" class="sout-assignment-tab sout-assignment-tab-active" data-tab="main">Основное</button>
+        <button type="button" class="sout-assignment-tab" data-tab="risk">Меры управления риском (Источник опасности)</button>
+        <button type="button" class="sout-assignment-tab" data-tab="files">Присоединенные файлы</button>
+        <button type="button" class="sout-assignment-tab" data-tab="workplaces">Рабочие места</button>
+        <button type="button" class="sout-assignment-tab" data-tab="photos">Фотографии объектов</button>
+      </div>
+
+      <div class="sout-assignment-tab-panel sout-assignment-tab-panel-active" data-tab-panel="main">
+        <div class="sout-catalog-edit-layout">
+          <nav class="sout-catalog-edit-nav" aria-label="Разделы">
+            @if (Model.IsEquipment)
+            {
+              <button type="button" class="sout-catalog-edit-nav-item sout-catalog-edit-nav-active" data-section="general">Основное</button>
+              <button type="button" class="sout-catalog-edit-nav-item" data-section="properties">Свойства оборудования</button>
+              <button type="button" class="sout-catalog-edit-nav-item" data-section="workplaces-form">Формирование рабочих мест</button>
+              <button type="button" class="sout-catalog-edit-nav-item" data-section="operation">Эксплуатация</button>
+              <button type="button" class="sout-catalog-edit-nav-item sout-catalog-edit-nav-disabled" disabled>Инструкции</button>
+              <button type="button" class="sout-catalog-edit-nav-item" data-section="tests">Испытания экспертизы</button>
+              <button type="button" class="sout-catalog-edit-nav-item sout-catalog-edit-nav-disabled" disabled>Соответствие объектов учета</button>
+            }
+            else
+            {
+              <button type="button" class="sout-catalog-edit-nav-item sout-catalog-edit-nav-active" data-section="general">Основное</button>
+              <button type="button" class="sout-catalog-edit-nav-item" data-section="instruction">Инструкция</button>
+            }
+          </nav>
+
+          <div class="sout-catalog-edit-content">
+            <section class="sout-catalog-edit-section sout-catalog-edit-section-active" data-section-panel="general">
+              <label class="ppe-field">
+                <span>Входит в группу</span>
+                <select name="parentId" class="ppe-input">
+                  <option value="">—</option>
+                  @foreach (var group in Model.GroupOptions)
+                  {
+                    if (string.Equals(r.ParentId, group.Id, StringComparison.Ordinal))
+                    {
+                      <option value="@group.Id" selected>@group.Name</option>
+                    }
+                    else
+                    {
+                      <option value="@group.Id">@group.Name</option>
+                    }
+                  }
+                </select>
+              </label>
+
+              @if (Model.IsEquipment)
+              {
+                <h3 class="sout-catalog-edit-block-title">Общие сведения</h3>
+                <div class="sout-catalog-edit-grid">
+                  <label class="ppe-field sout-catalog-edit-span2">
+                    <span>Наименование полное</span>
+                    <textarea name="fullName" class="ppe-input" rows="2">@r.FullName</textarea>
+                  </label>
+                  <label class="ppe-field">
+                    <span>Инв. номер</span>
+                    <input name="inventoryNumber" value="@r.InventoryNumber" class="ppe-input" />
+                  </label>
+                  <label class="ppe-field">
+                    <span>Рег. номер</span>
+                    <input name="registrationNumber" value="@r.RegistrationNumber" class="ppe-input" />
+                  </label>
+                  <label class="ppe-field">
+                    <span>Гос. рег. знак</span>
+                    <input name="statePlate" value="@r.StatePlate" class="ppe-input" />
+                  </label>
+                  <label class="ppe-field">
+                    <span>Заводской номер</span>
+                    <input name="factoryNumber" value="@r.FactoryNumber" class="ppe-input" />
+                  </label>
+                  <label class="ppe-field">
+                    <span>Серийный номер</span>
+                    <input name="serialNumber" value="@r.SerialNumber" class="ppe-input" />
+                  </label>
+                </div>
+
+                <h3 class="sout-catalog-edit-block-title">Паспорт</h3>
+                <div class="sout-catalog-edit-grid">
+                  <label class="ppe-field">
+                    <span>Номер паспорта</span>
+                    <input name="passportNumber" value="@r.PassportNumber" class="ppe-input" />
+                  </label>
+                  <label class="ppe-field">
+                    <span>Дата выпуска</span>
+                    <input type="date" name="releaseDate" value="@r.ReleaseDate?.ToString("yyyy-MM-dd")" class="ppe-input" />
+                  </label>
+                  <label class="ppe-field">
+                    <span>Дата установки</span>
+                    <input type="date" name="installationDate" value="@r.InstallationDate?.ToString("yyyy-MM-dd")" class="ppe-input" />
+                  </label>
+                  <label class="ppe-field sout-catalog-edit-span2">
+                    <span>Изготовитель</span>
+                    <input name="manufacturer" value="@r.Manufacturer" class="ppe-input" />
+                  </label>
+                </div>
+
+                <h3 class="sout-catalog-edit-block-title">Дополнительная информация</h3>
+                <div class="sout-catalog-edit-grid">
+                  <label class="ppe-field sout-catalog-edit-span2">
+                    <span>Набор факторов и видов работ</span>
+                    <select name="factorsSet" class="ppe-input">
+                      <option value="">—</option>
+                      @foreach (var factor in Model.FactorOptions)
+                      {
+                        if (string.Equals(r.FactorsSet, factor, StringComparison.OrdinalIgnoreCase))
+                        {
+                          <option value="@factor" selected>@factor</option>
+                        }
+                        else
+                        {
+                          <option value="@factor">@factor</option>
+                        }
+                      }
+                    </select>
+                  </label>
+                  <label class="ppe-field sout-catalog-edit-span2">
+                    <span>Место установки / РМ</span>
+                    <span class="hint">Привязку к рабочим местам задайте на вкладке «Рабочие места».</span>
+                    <input type="hidden" name="installationLocation" value="@r.InstallationLocation" />
+                  </label>
+                  <label class="ppe-field">
+                    <span>Тип оборудования</span>
+                    <input name="typeName" value="@r.TypeName" class="ppe-input" />
+                  </label>
+                </div>
+              }
+              else
+              {
+                <label class="ppe-field">
+                  <span>Набор факторов и видов работ</span>
+                  <select name="factorsSet" class="ppe-input">
+                    <option value="">—</option>
+                    @foreach (var factor in Model.FactorOptions)
+                    {
+                      if (string.Equals(r.FactorsSet, factor, StringComparison.OrdinalIgnoreCase))
+                      {
+                        <option value="@factor" selected>@factor</option>
+                      }
+                      else
+                      {
+                        <option value="@factor">@factor</option>
+                      }
+                    }
+                  </select>
+                </label>
+                <label class="ppe-field">
+                  <span>Описание</span>
+                  <textarea name="description" class="ppe-input" rows="8">@r.Description</textarea>
+                </label>
+              }
+
+              <label class="ppe-field">
+                <span>Комментарий</span>
+                <textarea name="comment" class="ppe-input" rows="2">@r.Comment</textarea>
+              </label>
+            </section>
+
+            @if (Model.IsEquipment)
+            {
+              <section class="sout-catalog-edit-section" data-section-panel="properties">
+                <p class="hint">Свойства оборудования — раздел в разработке.</p>
+              </section>
+              <section class="sout-catalog-edit-section" data-section-panel="workplaces-form">
+                <p class="hint">Формирование рабочих мест — раздел в разработке.</p>
+              </section>
+              <section class="sout-catalog-edit-section" data-section-panel="operation">
+                <p class="hint">Эксплуатация — раздел в разработке.</p>
+              </section>
+              <section class="sout-catalog-edit-section" data-section-panel="tests">
+                <p class="hint">Испытания экспертизы — раздел в разработке.</p>
+              </section>
+            }
+            else
+            {
+              <section class="sout-catalog-edit-section" data-section-panel="instruction">
+                <label class="ppe-field">
+                  <span>Инструкция</span>
+                  <textarea name="instruction" class="ppe-input" rows="12">@r.Instruction</textarea>
+                </label>
+              </section>
+            }
+          </div>
+        </div>
+      </div>
+
+      <div class="sout-assignment-tab-panel" data-tab-panel="risk">
+        <p class="hint">Меры управления риском — раздел в разработке.</p>
+      </div>
+      <div class="sout-assignment-tab-panel" data-tab-panel="files">
+        <p class="hint">Присоединенные файлы — раздел в разработке.</p>
+      </div>
+      <div class="sout-assignment-tab-panel" data-tab-panel="workplaces">
+        <p class="hint">Отметьте рабочие места, на которых используется это @(Model.IsEquipment ? "оборудование" : "сырьё / материал"). Привязка попадает в печатные формы подготовки СОУТ.</p>
+        @if (Model.WorkplaceOptions.Count == 0)
+        {
+          <p class="hint">Нет рабочих мест в справочнике. Сначала добавьте их в «Рабочие места».</p>
+        }
+        else
+        {
+          var selected = new HashSet<string>(r.WorkplaceIds ?? [], StringComparer.OrdinalIgnoreCase);
+          <div class="sout-catalog-workplace-links" style="max-height:28rem;overflow:auto;border:1px solid #ccc;padding:8px;border-radius:4px">
+            <table class="data-grid ppe-edit-grid">
+              <thead>
+                <tr>
+                  <th style="width:2.5rem"></th>
+                  <th>Подразделение</th>
+                  <th>№ РМ</th>
+                  <th>Наименование</th>
+                  <th>Профессия</th>
+                </tr>
+              </thead>
+              <tbody>
+                @foreach (var wp in Model.WorkplaceOptions)
+                {
+                  var checkedAttr = selected.Contains(wp.Id) ? "checked" : null;
+                  <tr>
+                    <td>
+                      <input type="checkbox" name="linkedWorkplaceId" value="@wp.Id" @checkedAttr />
+                    </td>
+                    <td>@(string.IsNullOrWhiteSpace(wp.Department) ? "—" : wp.Department)</td>
+                    <td>@(string.IsNullOrWhiteSpace(wp.WorkplaceNumber) ? "—" : wp.WorkplaceNumber)</td>
+                    <td>@wp.Name</td>
+                    <td>@(string.IsNullOrWhiteSpace(wp.Profession) ? "—" : wp.Profession)</td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        }
+        <label class="ppe-field" style="margin-top:12px">
+          <span>Место установки (текст, если РМ не отмечены)</span>
+          <input name="installationLocation" value="@r.InstallationLocation" class="ppe-input" placeholder="номер или название РМ" />
+        </label>
+      </div>
+      <div class="sout-assignment-tab-panel" data-tab-panel="photos">
+        <p class="hint">Фотографии объектов — раздел в разработке.</p>
+      </div>
+    }
+  </form>
+</div>
+
+<datalist id="sout-catalog-factors">
+  <option value="Общие факторы"></option>
+  <option value="Химические вещества"></option>
+  <option value="Производственное оборудование"></option>
+</datalist>
+
+@section Scripts {
+  <script src="~/js/sout-catalog-edit.js" asp-append-version="true"></script>
+}

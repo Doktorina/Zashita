@@ -1,0 +1,83 @@
+@page "/Training/PrintHistory"
+@model Zashita.Web.Pages.Training.PrintHistoryModel
+@{
+    ViewData["Title"] = "История печати";
+}
+
+<div class="panel ppe-panel">
+  <p class="hint">Ранее сформированные и напечатанные журналы. Карточки СИЗ: <a asp-page="/Ppe/SavedCards">сохранённые карточки</a>.</p>
+  <form method="get" class="journal-filters">
+    <div class="journal-filter-grid">
+      <label class="ppe-field">
+        <span>Поиск</span>
+        <input type="text" name="Q" value="@Model.Q" class="ppe-input" />
+      </label>
+      <label class="ppe-field">
+        <span>С</span>
+        <input type="date" name="PrintedFrom" value="@(Model.PrintedFrom?.ToString("yyyy-MM-dd"))" class="ppe-input" />
+      </label>
+      <label class="ppe-field">
+        <span>По</span>
+        <input type="date" name="PrintedTo" value="@(Model.PrintedTo?.ToString("yyyy-MM-dd"))" class="ppe-input" />
+      </label>
+      <label class="ppe-field">
+        <span>Журнал</span>
+        <select name="Kind" class="ppe-input">
+          <option value="">— все —</option>
+          @foreach (var j in Model.Journals)
+          {
+            <option value="@j.Kind" selected="@(Model.Kind == j.Kind)">@j.Title</option>
+          }
+        </select>
+      </label>
+      <label class="ppe-field">
+        <span>Вид инструктажа</span>
+        <select name="BriefingType" class="ppe-input">
+          <option value="">— все —</option>
+          @foreach (var t in Model.BriefingTypeOptions)
+          {
+            <option value="@t" selected="@(string.Equals(t, Model.BriefingType, StringComparison.OrdinalIgnoreCase))">@t</option>
+          }
+        </select>
+      </label>
+    </div>
+    <div class="ppe-actions">
+      <button type="submit" class="btn btn-primary">Найти</button>
+    </div>
+  </form>
+</div>
+
+<div class="panel ppe-panel">
+  @if (Model.Items.Count == 0)
+  {
+    <p class="hint">Записей пока нет.</p>
+  }
+  else
+  {
+    <table class="ppe-table">
+      <thead>
+        <tr>
+          <th>Дата печати</th>
+          <th>Журнал</th>
+          <th>Организация</th>
+          <th>Вид</th>
+          <th>Строк</th>
+          <th>Сводка</th>
+        </tr>
+      </thead>
+      <tbody>
+        @foreach (var item in Model.Items)
+        {
+          <tr>
+            <td>@item.PrintedAt.ToString("dd.MM.yyyy HH:mm")</td>
+            <td>@item.Title</td>
+            <td>@item.Organization</td>
+            <td>@(item.BriefingType ?? "—")</td>
+            <td>@item.EntryCount</td>
+            <td>@item.Summary</td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  }
+</div>

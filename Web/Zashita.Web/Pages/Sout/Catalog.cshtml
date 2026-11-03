@@ -1,0 +1,164 @@
+@page "/Sout/Catalog"
+@using Zashita.Web.Pages.Training
+@model Zashita.Web.Pages.Sout.CatalogModel
+@{
+    ViewData["Title"] = Model.Title;
+    ViewData["Subtitle"] = "общий для всех ЮЛ";
+}
+
+<link rel="stylesheet" href="/css/sout-catalog.css" asp-append-version="true" />
+
+@if (!string.IsNullOrWhiteSpace(Model.Message))
+{
+  <p class="text-success">@Model.Message</p>
+}
+
+<div class="panel ppe-panel sout-catalog-panel">
+  <div class="sout-catalog-stub ppe-no-print">
+    <p class="hint sout-catalog-stub-text">@Model.StubMessage</p>
+  </div>
+
+  <div class="ppe-toolbar sout-toolbar">
+    <button type="button" class="btn btn-outline btn-sm" id="sout-catalog-add-row-btn">Создать</button>
+    <button type="button" class="btn btn-outline btn-sm" id="sout-catalog-add-group-btn">Создать группу</button>
+    <button type="button" class="btn btn-outline btn-sm" id="sout-catalog-bulk-edit-btn">Изменить выделенные...</button>
+  </div>
+  <p class="hint ppe-no-print">Кнопка «Создать» открывает карточку, как в 1С. Выделите папку или элемент — новая запись попадёт в ту же группу. Двойной клик по строке открывает карточку.</p>
+
+  <form method="get" class="sout-workplaces-filters" id="sout-catalog-filter-form">
+    <input type="hidden" name="kind" value="@Model.Kind" />
+    <label class="sout-workplaces-search">
+      <span class="visually-hidden">Поиск</span>
+      <input type="search" name="q" value="@Model.Q" class="ppe-input" placeholder="Поиск (Ctrl+F)" autocomplete="off" />
+    </label>
+  </form>
+
+  <form method="post" asp-page="/Sout/Catalog" asp-page-handler="Save">
+    <input type="hidden" asp-for="Kind" />
+    <div class="ppe-actions ppe-actions-top">
+      <button type="submit" class="btn btn-primary">Сохранить</button>
+    </div>
+    <table class="data-grid ppe-edit-grid training-catalog-grid sout-catalog-grid">
+      <thead>
+        <tr>
+          <th class="training-select-col"></th>
+          <th>Наименование</th>
+          <th>@(Model.IsEquipment ? "Тип оборудования" : "Тип материала")</th>
+          <th>Инвентарный номер</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody id="sout-catalog-body">
+        @foreach (var item in Model.TreeItems)
+        {
+          var node = item.Node;
+          <tr class="training-catalog-row training-tree-row sout-catalog-row @(node.IsGroup ? "training-tree-folder training-tree-open" : "training-tree-file")"
+              data-id="@node.Id"
+              data-parent-id="@(node.ParentId ?? "")"
+              data-is-group="@node.IsGroup.ToString().ToLowerInvariant()"
+              data-depth="@item.Depth">
+            <td class="training-select-col">
+              <input type="checkbox" class="training-row-select" aria-label="Выделить" />
+            </td>
+            <td>
+              <input type="hidden" name="Id" value="@node.Id" />
+              <input type="hidden" name="ParentId" value="@node.ParentId" />
+              <input type="hidden" name="IsGroup" value="@node.IsGroup.ToString().ToLowerInvariant()" />
+              <input type="hidden" name="IsNew" value="false" />
+              @await Html.PartialAsync("/Pages/Training/_TrainingTreeName.cshtml", new TrainingTreeNameModel
+              {
+                Depth = item.Depth,
+                IsGroup = node.IsGroup,
+                Name = node.Name,
+                InputClass = node.IsGroup ? "ppe-input training-group-name" : "ppe-input training-item-name"
+              })
+            </td>
+            <td>
+              @if (node.IsGroup)
+              {
+                <input type="hidden" name="TypeName" value="@node.TypeName" />
+              }
+              else
+              {
+                <input name="TypeName" value="@node.TypeName" class="ppe-input" />
+              }
+            </td>
+            <td>
+              @if (node.IsGroup)
+              {
+                <input type="hidden" name="InventoryNumber" value="@node.InventoryNumber" />
+              }
+              else
+              {
+                <input name="InventoryNumber" value="@node.InventoryNumber" class="ppe-input" />
+              }
+            </td>
+            <td>
+              <div class="sout-catalog-row-actions">
+                <a class="suot-action" asp-page="/Sout/Catalog/Edit" asp-route-kind="@Model.Kind" asp-route-id="@node.Id" title="Открыть">✎</a>
+                <button type="button" class="suot-action suot-action-danger" data-action="delete" title="Удалить">🗑</button>
+              </div>
+              <input type="hidden" name="Delete" value="false" class="training-delete-flag" />
+            </td>
+          </tr>
+        }
+
+        <tr id="sout-catalog-row-template" class="training-tree-row training-tree-file sout-catalog-row sout-catalog-row-new" hidden
+            data-id="" data-parent-id="" data-is-group="false" data-depth="0">
+          <td class="training-select-col"><input type="checkbox" class="training-row-select" aria-label="Выделить" /></td>
+          <td>
+            <input type="hidden" name="Id" value="" />
+            <input type="hidden" name="ParentId" value="" />
+            <input type="hidden" name="IsGroup" value="false" />
+            <input type="hidden" name="IsNew" value="true" />
+            @await Html.PartialAsync("/Pages/Training/_TrainingTreeName.cshtml", new TrainingTreeNameModel { Depth = 0, IsGroup = false, InputClass = "ppe-input training-item-name" })
+          </td>
+          <td><input name="TypeName" value="" class="ppe-input" /></td>
+          <td><input name="InventoryNumber" value="" class="ppe-input" /></td>
+          <td>
+            <button type="button" class="suot-action suot-action-danger" data-action="delete" title="Удалить">🗑</button>
+            <input type="hidden" name="Delete" value="false" class="training-delete-flag" />
+          </td>
+        </tr>
+
+        <tr id="sout-catalog-group-template" class="training-tree-row training-tree-folder sout-catalog-row sout-catalog-row-new" hidden
+            data-id="" data-parent-id="" data-is-group="true" data-depth="0">
+          <td class="training-select-col"><input type="checkbox" class="training-row-select" aria-label="Выделить" /></td>
+          <td>
+            <input type="hidden" name="Id" value="" />
+            <input type="hidden" name="ParentId" value="" />
+            <input type="hidden" name="IsGroup" value="true" />
+            <input type="hidden" name="IsNew" value="true" />
+            @await Html.PartialAsync("/Pages/Training/_TrainingTreeName.cshtml", new TrainingTreeNameModel { Depth = 0, IsGroup = true, InputClass = "ppe-input training-group-name" })
+          </td>
+          <td><input type="hidden" name="TypeName" value="" /></td>
+          <td><input type="hidden" name="InventoryNumber" value="" /></td>
+          <td>
+            <button type="button" class="suot-action suot-action-danger" data-action="delete" title="Удалить">🗑</button>
+            <input type="hidden" name="Delete" value="false" class="training-delete-flag" />
+          </td>
+        </tr>
+      </tbody>
+    </table>
+    
+  </form>
+</div>
+
+@section Scripts {
+  <script src="~/js/training-catalog.js" asp-append-version="true"></script>
+  <script src="~/js/sout-catalog.js" asp-append-version="true"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', function () {
+      initSoutCatalog({
+        filterFormId: 'sout-catalog-filter-form',
+        addRowBtnId: 'sout-catalog-add-row-btn',
+        addGroupBtnId: 'sout-catalog-add-group-btn',
+        bulkEditBtnId: 'sout-catalog-bulk-edit-btn',
+        rowTemplateId: 'sout-catalog-row-template',
+        groupTemplateId: 'sout-catalog-group-template',
+        treeBodyId: 'sout-catalog-body',
+        kind: '@Model.Kind'
+      });
+    });
+  </script>
+}

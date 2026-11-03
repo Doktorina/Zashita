@@ -1,0 +1,178 @@
+@page "/Training/Tree"
+@model Zashita.Web.Pages.Training.TreeModel
+@{
+    ViewData["Title"] = Model.KindTitle;
+    ViewData["Subtitle"] = Model.IsWorkTypes
+        ? "Справочник видов работ для обучения и допусков."
+        : "Справочник модуля обучения.";
+}
+
+@if (!string.IsNullOrWhiteSpace(Model.Message))
+{
+  <p class="text-success">@Model.Message</p>
+}
+
+<div class="panel ppe-panel">
+  <div class="ppe-toolbar">
+    <button type="button" class="btn btn-outline btn-sm" id="tree-add-row-btn">Создать</button>
+    <button type="button" class="btn btn-outline btn-sm" id="tree-add-group-btn">Создать группу</button>
+    <button type="button" class="btn btn-outline btn-sm" id="tree-bulk-edit-btn">Изменить выделенные...</button>
+  </div>
+
+  <form method="post" asp-page-handler="Save">
+    <input type="hidden" name="kind" value="@Model.Kind.ToString().ToLowerInvariant()" />
+    <div class="ppe-actions ppe-actions-top">
+      <button type="submit" class="btn btn-primary">Сохранить</button>
+    </div>
+    <table class="data-grid ppe-edit-grid training-catalog-grid">
+      <thead>
+        <tr>
+          <th class="training-select-col"></th>
+          <th>Наименование</th>
+          @if (Model.ShowExtraColumn)
+          {
+            <th>@Model.ExtraColumnTitle</th>
+          }
+          <th>Действия</th>
+        </tr>
+      </thead>
+      <tbody id="tree-catalog-body">
+        @foreach (var item in Model.TreeItems)
+        {
+          var n = item.Node;
+          <tr class="training-catalog-row training-tree-row @(n.IsGroup ? "training-tree-folder training-tree-open" : "training-tree-file")"
+              data-id="@n.Id"
+              data-parent-id="@(n.ParentId ?? "")"
+              data-is-group="@n.IsGroup.ToString().ToLowerInvariant()"
+              data-depth="@item.Depth">
+            <td class="training-select-col">
+              <input type="checkbox" class="training-row-select" aria-label="Выделить" />
+            </td>
+            <td>
+              <input type="hidden" name="Id" value="@n.Id" />
+              <input type="hidden" name="ParentId" value="@n.ParentId" />
+              <input type="hidden" name="IsGroup" value="@n.IsGroup.ToString().ToLowerInvariant()" />
+              @await Html.PartialAsync("_TrainingTreeName", new TrainingTreeNameModel
+              {
+                Depth = item.Depth,
+                IsGroup = n.IsGroup,
+                Name = n.Name,
+                InputClass = n.IsGroup ? "ppe-input training-group-name" : "ppe-input training-item-name"
+              })
+              @if (!Model.ShowExtraColumn)
+              {
+                <input type="hidden" name="Hours" value="@n.Hours" />
+                <input type="hidden" name="Description" value="@n.Description" />
+              }
+            </td>
+            @if (Model.ShowExtraColumn)
+            {
+              <td>
+                @if (Model.Kind == Zashita.Core.Training.TrainingSimpleTreeKind.Topics)
+                {
+                  <input name="Hours" value="@n.Hours" class="ppe-input ppe-input-sm" />
+                }
+                else
+                {
+                  <input name="Description" value="@n.Description" class="ppe-input" />
+                }
+              </td>
+            }
+            <td>
+              <div class="suot-action-bar">
+                <button type="button" class="suot-action" data-action="edit" title="Редактировать">✏️</button>
+                <button type="button" class="suot-action suot-action-danger" data-action="delete" title="Удалить">🗑</button>
+              </div>
+              <input type="hidden" name="Delete" value="false" class="training-delete-flag" />
+            </td>
+          </tr>
+        }
+        <tr id="tree-add-row-template" class="training-tree-row training-tree-file" hidden data-id="" data-parent-id="" data-is-group="false" data-depth="0">
+          <td class="training-select-col"><input type="checkbox" class="training-row-select" aria-label="Выделить" /></td>
+          <td>
+            <input type="hidden" name="Id" value="" />
+            <input type="hidden" name="ParentId" value="" />
+            <input type="hidden" name="IsGroup" value="false" />
+            @await Html.PartialAsync("_TrainingTreeName", new TrainingTreeNameModel { Depth = 0, IsGroup = false, InputClass = "ppe-input training-item-name" })
+            @if (!Model.ShowExtraColumn)
+            {
+              <input type="hidden" name="Hours" value="" />
+              <input type="hidden" name="Description" value="" />
+            }
+          </td>
+          @if (Model.ShowExtraColumn)
+          {
+            <td>
+              @if (Model.Kind == Zashita.Core.Training.TrainingSimpleTreeKind.Topics)
+              {
+                <input name="Hours" value="" class="ppe-input ppe-input-sm" />
+              }
+              else
+              {
+                <input name="Description" value="" class="ppe-input" />
+              }
+            </td>
+          }
+          <td>
+            <div class="suot-action-bar">
+              <button type="button" class="suot-action" data-action="edit" title="Редактировать">✏️</button>
+              <button type="button" class="suot-action suot-action-danger" data-action="delete" title="Удалить">🗑</button>
+            </div>
+            <input type="hidden" name="Delete" value="false" class="training-delete-flag" />
+          </td>
+        </tr>
+        <tr id="tree-add-group-template" class="training-tree-row training-tree-folder" hidden data-id="" data-parent-id="" data-is-group="true" data-depth="0">
+          <td class="training-select-col"><input type="checkbox" class="training-row-select" aria-label="Выделить" /></td>
+          <td>
+            <input type="hidden" name="Id" value="" />
+            <input type="hidden" name="ParentId" value="" />
+            <input type="hidden" name="IsGroup" value="true" />
+            @await Html.PartialAsync("_TrainingTreeName", new TrainingTreeNameModel { Depth = 0, IsGroup = true, InputClass = "ppe-input training-group-name" })
+            @if (!Model.ShowExtraColumn)
+            {
+              <input type="hidden" name="Hours" value="" />
+              <input type="hidden" name="Description" value="" />
+            }
+          </td>
+          @if (Model.ShowExtraColumn)
+          {
+            <td>
+              @if (Model.Kind == Zashita.Core.Training.TrainingSimpleTreeKind.Topics)
+              {
+                <input name="Hours" value="" class="ppe-input ppe-input-sm" />
+              }
+              else
+              {
+                <input name="Description" value="" class="ppe-input" />
+              }
+            </td>
+          }
+          <td>
+            <div class="suot-action-bar">
+              <button type="button" class="suot-action" data-action="edit" title="Редактировать">✏️</button>
+              <button type="button" class="suot-action suot-action-danger" data-action="delete" title="Удалить">🗑</button>
+            </div>
+            <input type="hidden" name="Delete" value="false" class="training-delete-flag" />
+          </td>
+        </tr>
+      </tbody>
+    </table>
+    
+  </form>
+</div>
+
+@section Scripts {
+  <script src="~/js/training-catalog.js" asp-append-version="true"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', function () {
+      initTrainingCatalog({
+        addRowBtnId: 'tree-add-row-btn',
+        addGroupBtnId: 'tree-add-group-btn',
+        rowTemplateId: 'tree-add-row-template',
+        groupTemplateId: 'tree-add-group-template',
+        bulkEditBtnId: 'tree-bulk-edit-btn',
+        treeBodyId: 'tree-catalog-body'
+      });
+    });
+  </script>
+}

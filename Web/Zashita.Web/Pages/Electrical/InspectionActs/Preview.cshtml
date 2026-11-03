@@ -1,0 +1,54 @@
+@page "/Electrical/InspectionActs/Preview"
+@model Zashita.Web.Pages.Electrical.InspectionActs.PreviewModel
+@{
+    ViewData["Title"] = "Предпросмотр акта проверки";
+    ViewData["Subtitle"] = Model.Record is not null
+        ? $"№ {Model.Record.Number} от {Model.Record.Date:dd.MM.yyyy}"
+        : "Акт проверки";
+}
+
+<link rel="stylesheet" href="/css/ot-inspection-act-print.css" asp-append-version="true" />
+<style>
+  @@media print {
+    .sidebar, .page-head, .toolbar-wrap, .ppe-no-print { display: none !important; }
+    .app-main, .window-frame, .window-body, .panel { margin: 0 !important; padding: 0 !important; border: none !important; box-shadow: none !important; }
+    .ot-act-preview-wrap { max-height: none !important; overflow: visible !important; border: none !important; margin: 0 !important; padding: 0 !important; }
+  }
+</style>
+
+@if (Model.NotFound)
+{
+  <div class="panel ppe-panel">
+    <p class="form-error">Документ не найден. Сохраните документ в списке и повторите печать.</p>
+    <div class="ppe-actions ppe-no-print">
+      <a class="btn btn-outline" asp-page="/Electrical/InspectionActs">К списку</a>
+    </div>
+  </div>
+}
+else
+{
+  <div class="panel ppe-panel">
+    <div class="ppe-preview-head ppe-no-print">
+      <div><strong>Документ:</strong> Акт проверки № @Model.Record!.Number</div>
+      <div><strong>Дата:</strong> @Model.Record.Date.ToString("dd.MM.yyyy HH:mm")</div>
+      <div><strong>Объект:</strong> @Model.Record.ConstructionObject</div>
+      <div><strong>Подрядчик:</strong> @Model.Record.Contractor</div>
+    </div>
+
+    <p class="hint ppe-no-print">Предпросмотр акта проверки. Нажмите «Печать», чтобы сохранить в PDF.</p>
+
+    <div class="ot-act-preview-wrap ppe-doc-body" id="ot-act-print-area">
+      @Html.Raw(Model.PreviewHtml)
+    </div>
+
+    <div class="ppe-actions ppe-no-print">
+      <a class="btn btn-outline" asp-page="/Electrical/InspectionActs/Edit" asp-route-id="@Model.Id">Назад к документу</a>
+      <button type="button" class="btn btn-primary"
+              onclick="zashitaRecordPrint({ category: 'compliance', title: document.title, summary: 'Печать акта проверки' })">
+        Печать
+      </button>
+    </div>
+  </div>
+}
+
+<script src="/js/print-history.js"></script>

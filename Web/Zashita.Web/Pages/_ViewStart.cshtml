@@ -1,0 +1,5 @@
+@{
+    var pagePath = ViewContext.RouteData.Values["page"]?.ToString() ?? string.Empty;
+    var isLoginPage = pagePath.Contains("Login", StringComparison.OrdinalIgnoreCase);
+    Layout = isLoginPage ? null : "Shared/_Layout";
+}

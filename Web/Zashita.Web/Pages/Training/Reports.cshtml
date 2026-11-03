@@ -1,0 +1,46 @@
+@page "/Training/Reports"
+@model Zashita.Web.Pages.Training.ReportsModel
+@using Zashita.Web.Services
+@{
+    ViewData["Title"] = "Журналы по обучению";
+    ViewData["Subtitle"] = "Обучение, инструктажи, проверка знаний, стажировка";
+}
+
+<link rel="stylesheet" href="/css/risks-preparation.css" asp-append-version="true" />
+
+<div class="panel ppe-panel">
+  <form method="get" class="ppe-filter-bar ppe-no-print">
+    <label>
+      Поиск
+      <input name="q" value="@Model.Q" class="ppe-input" placeholder="название журнала или раздел" />
+    </label>
+    <button type="submit" class="btn btn-outline">Найти</button>
+    @if (!string.IsNullOrWhiteSpace(Model.Q))
+    {
+      <a class="btn btn-outline" asp-page="/Training/Reports">Сбросить</a>
+    }
+  </form>
+
+  @if (Model.Sections.Count == 0)
+  {
+    <p class="hint" style="margin-top:16px">По запросу «@Model.Q» журналы не найдены.</p>
+  }
+  else
+  {
+    @foreach (var journalSection in Model.Sections)
+    {
+      <div class="risks-docs-section" style="margin-top:20px">
+        <h2 class="ppe-subtitle risks-docs-section-title">@journalSection.Title</h2>
+        <div class="risks-docs-hub" aria-label="@journalSection.Title">
+          @foreach (var entry in journalSection.Entries)
+          {
+            <a class="risks-docs-tile" href="@TrainingItemRouter.ResolveReportUrl(entry.Title)">
+              <span class="risks-docs-tile-title">@entry.Title</span>
+              <span class="risks-docs-tile-hint">@entry.Description</span>
+            </a>
+          }
+        </div>
+      </div>
+    }
+  }
+</div>

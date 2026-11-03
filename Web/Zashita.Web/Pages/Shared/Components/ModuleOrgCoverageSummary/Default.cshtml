@@ -1,0 +1,177 @@
+@using Zashita.Core.Risks
+@model Zashita.Web.Services.ModuleOrgCoverageSummaryView
+@{
+    var kpi = HomeReportSummaryBuilder.KpiLabels(Model.ModuleKey);
+    const int visibleRows = 5;
+    var hasMore = Model.Rows.Count > visibleRows;
+    var inv = System.Globalization.CultureInfo.InvariantCulture;
+
+    // Единая палитра со сводкой по организациям и диаграммами ознакомления.
+    var pieSlices = new (string Label, int Count, string Color)[]
+    {
+        (kpi.Complete, Model.CompleteCount, HomeReportSummaryBuilder.StatusChartColors.Complete),
+        (kpi.Partial, Model.PartialCount, HomeReportSummaryBuilder.StatusChartColors.Partial),
+        (kpi.None, Model.NoneCount, HomeReportSummaryBuilder.StatusChartColors.None),
+        (kpi.Overdue, Model.OverdueCount, HomeReportSummaryBuilder.StatusChartColors.Overdue),
+        ("нет данных", Model.EmptyCount, HomeReportSummaryBuilder.StatusChartColors.Empty)
+    };
+    var pieTotal = pieSlices.Sum(s => s.Count);
+    string? pieGradient = null;
+    if (pieTotal > 0)
+    {
+        var parts = new List<string>();
+        var offset = 0.0;
+        foreach (var slice in pieSlices)
+        {
+            if (slice.Count <= 0) continue;
+            var start = offset;
+            offset += slice.Count * 100.0 / pieTotal;
+            parts.Add($"{slice.Color} {start.ToString("0.###", inv)}% {offset.ToString("0.###", inv)}%");
+        }
+        if (parts.Count > 0)
+        {
+            pieGradient = "conic-gradient(" + string.Join(", ", parts) + ")";
+        }
+    }
+}
+
+<section class="panel module-report-summary module-org-coverage">
+  <div class="module-org-coverage-head">
+    <div class="module-org-coverage-head-text">
+      <h2 class="panel-title module-org-coverage-title">Сводка по организациям</h2>
+      <p class="hint module-org-coverage-hint">
+        @Model.Title — статус проведения по каждой организации (режим «Все»).
+      </p>
+    </div>
+    @if (!string.IsNullOrWhiteSpace(Model.ReportUrl))
+    {
+      <a class="btn btn-primary" href="@Model.ReportUrl">@Model.ReportButtonLabel</a>
+    }
+  </div>
+
+  <div class="module-summary-kpi-row module-org-coverage-kpi">
+    <article class="module-summary-kpi module-summary-kpi-success">
+      <div class="module-summary-kpi-value">@Model.CompleteCount</div>
+      <div class="module-summary-kpi-label">@kpi.Complete</div>
+    </article>
+    <article class="module-summary-kpi module-summary-kpi-warn module-org-coverage-kpi-partial">
+      <div class="module-summary-kpi-value">@Model.PartialCount</div>
+      <div class="module-summary-kpi-label">@kpi.Partial</div>
+    </article>
+    <article class="module-summary-kpi module-summary-kpi-danger">
+      <div class="module-summary-kpi-value">@Model.NoneCount</div>
+      <div class="module-summary-kpi-label">@kpi.None</div>
+    </article>
+    <article class="module-summary-kpi module-summary-kpi-danger module-org-coverage-kpi-overdue">
+      <div class="module-summary-kpi-value">@Model.OverdueCount</div>
+      <div class="module-summary-kpi-label">@kpi.Overdue</div>
+    </article>
+    @if (Model.EmptyCount > 0)
+    {
+      <article class="module-summary-kpi">
+        <div class="module-summary-kpi-value">@Model.EmptyCount</div>
+        <div class="module-summary-kpi-label">нет данных</div>
+      </article>
+    }
+  </div>
+
+  <div class="module-org-coverage-split@(string.IsNullOrWhiteSpace(pieGradient) || pieTotal <= 0 ? " module-org-coverage-split-table-only" : "")">
+    @if (!string.IsNullOrWhiteSpace(pieGradient) && pieTotal > 0)
+    {
+      <aside class="module-org-coverage-pie" aria-label="Распределение организаций по статусу">
+        <div class="module-org-coverage-pie-ring">
+          <div class="module-org-coverage-pie-visual"
+               style="background:@pieGradient"
+               role="img"
+               aria-label="Распределение организаций, всего @pieTotal"></div>
+          <div class="module-org-coverage-pie-center">
+            <span class="module-org-coverage-pie-total">@pieTotal</span>
+            <span class="module-org-coverage-pie-total-label">орг.</span>
+          </div>
+        </div>
+        <ul class="module-org-coverage-pie-legend">
+          @foreach (var slice in pieSlices.Where(s => s.Count > 0))
+          {
+            var slicePct = Math.Round(slice.Count * 100.0 / pieTotal);
+            <li>
+              <span class="module-fam-swatch" style="background:@slice.Color" aria-hidden="true"></span>
+              <span class="module-fam-legend-label">@slice.Label</span>
+              <span class="module-fam-legend-value">@slice.Count <span class="module-fam-legend-pct">(@slicePct%)</span></span>
+            </li>
+          }
+        </ul>
+      </aside>
+    }
+
+    <div class="table-wrap module-org-coverage-table-wrap">
+      <table class="data-grid module-org-coverage-grid" id="module-org-coverage-table">
+        <thead>
+          <tr>
+            <th>Организация</th>
+            <th>Статус</th>
+            <th class="num">Проведено</th>
+            <th class="num">Не проведено</th>
+            <th class="num">Просрочено</th>
+            <th class="num">Истекает</th>
+          </tr>
+        </thead>
+        <tbody>
+          @{
+            var index = 0;
+          }
+          @foreach (var row in Model.Rows)
+          {
+            var tone = row.Status switch
+            {
+              HomeReportSummaryBuilder.OrgCoverageStatus.Complete => "success",
+              HomeReportSummaryBuilder.OrgCoverageStatus.Partial => "partial",
+              HomeReportSummaryBuilder.OrgCoverageStatus.None => "danger",
+              HomeReportSummaryBuilder.OrgCoverageStatus.Overdue => "danger",
+              _ => "neutral"
+            };
+            var hidden = hasMore && index >= visibleRows;
+            <tr class="module-org-coverage-row module-org-coverage-@tone@(hidden ? " module-org-coverage-row-more" : "")"
+                @(hidden ? "hidden" : null)>
+              <td>@row.Organization</td>
+              <td>
+                <span class="module-org-coverage-badge module-org-coverage-badge-@tone">@row.StatusLabel</span>
+              </td>
+              <td class="num">@row.Done</td>
+              <td class="num">@row.Missing</td>
+              <td class="num">@row.Overdue</td>
+              <td class="num">@row.Expiring</td>
+            </tr>
+            index++;
+          }
+        </tbody>
+      </table>
+      @if (hasMore)
+      {
+        <div class="module-org-coverage-toggle-wrap">
+          <button type="button"
+                  class="btn btn-outline btn-sm"
+                  id="module-org-coverage-toggle"
+                  data-collapsed-label="Показать ещё @(Model.Rows.Count - visibleRows)"
+                  data-expanded-label="Свернуть список">
+            Показать ещё @(Model.Rows.Count - visibleRows)
+          </button>
+        </div>
+        <script>
+          (function () {
+            var btn = document.getElementById('module-org-coverage-toggle');
+            if (!btn) return;
+            btn.addEventListener('click', function () {
+              var rows = document.querySelectorAll('#module-org-coverage-table .module-org-coverage-row-more');
+              var expand = btn.getAttribute('data-expanded') !== '1';
+              rows.forEach(function (row) { row.hidden = !expand; });
+              btn.setAttribute('data-expanded', expand ? '1' : '0');
+              btn.textContent = expand
+                ? (btn.getAttribute('data-expanded-label') || 'Свернуть список')
+                : (btn.getAttribute('data-collapsed-label') || 'Показать ещё');
+            });
+          })();
+        </script>
+      }
+    </div>
+  </div>
+</section>

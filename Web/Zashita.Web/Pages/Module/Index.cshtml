@@ -1,0 +1,139 @@
+@page "/module/{slug}"
+@using Zashita.Web.Services
+@model Zashita.Web.Pages.Module.IndexModel
+@{
+    ViewData["Title"] = Model.Module?.ModuleName ?? "Модуль";
+    ViewData["Subtitle"] = Model.Subtitle;
+    ViewData["SectionTitle"] = Model.Module?.ModuleName ?? "Модуль";
+    ViewData["IsModulePage"] = true;
+}
+
+@if (Model.Module is null)
+{
+    <div class="empty-state">
+        <h2>Модуль не найден</h2>
+        <p><a asp-page="/Index">Вернуться на главную</a></p>
+    </div>
+}
+else
+{
+    var isMedModule = MedItemRouter.IsMedModule(Model.Slug);
+    <div class="module-page">
+        @if (Model.ShowReportSummary && Model.IsAllOrganizationsSelected)
+        {
+            @await Component.InvokeAsync("ModuleOrgCoverageSummary", new
+            {
+                module = Model.SummaryModuleKey,
+                organizations = Model.VisibleOrganizations,
+                reportUrl = Model.ReportUrl
+            })
+        }
+        else if (Model.ShowReportSummary && !string.IsNullOrWhiteSpace(Model.SelectedOrganization))
+        {
+            @await Component.InvokeAsync("ModuleReportSummary", new
+            {
+                module = Model.SummaryModuleKey,
+                organization = Model.SelectedOrganization,
+                reportUrl = Model.ReportUrl
+            })
+            @await Component.InvokeAsync("StaffingOnboardingAlerts", new
+            {
+                organization = Model.SelectedOrganization,
+                moduleKey = Model.Slug
+            })
+        }
+
+        @if (isMedModule && Model.Module is not null)
+        {
+          <div class="panel med-home-panel med-home-primary-panel">
+            <h2 class="section-title">Основные функции</h2>
+            <div class="ppe-toolbar module-home-primary-btns med-home-primary-btns">
+              <a class="btn btn-outline module-home-primary-btn" href="/Med/Directions">Направления на медосмотры</a>
+              <a class="btn btn-outline module-home-primary-btn" href="/Med/Status">Отчет по медосмотрам</a>
+              <a class="btn btn-outline module-home-primary-btn" href="/Med/Schedule">Планирование медосмотров</a>
+              <a class="btn btn-outline module-home-primary-btn" href="/Med/Calendar">Календарь</a>
+              <a class="btn btn-outline module-home-primary-btn" href="/Med/ContingentLists">Списки контингентов</a>
+            </div>
+          </div>
+
+          <div class="med-home-layout">
+            <div class="panel med-home-panel">
+              @foreach (var menuSection in Model.Module.LeftSections)
+              {
+                <section class="module-section">
+                  <h2 class="section-title">@menuSection.Title</h2>
+                  <div class="module-links">
+                    @foreach (var item in menuSection.Items)
+                    {
+                      <a href="@ModuleItemUrlResolver.Resolve(Model.Slug, item)">@item</a>
+                    }
+                  </div>
+                </section>
+              }
+            </div>
+
+            <div class="panel med-home-panel med-home-refs">
+              @foreach (var menuSection in Model.Module.RightSections)
+              {
+                <section class="module-section">
+                  <h2 class="section-title">@menuSection.Title</h2>
+                  <div class="module-links">
+                    @foreach (var item in menuSection.Items)
+                    {
+                      <a href="@ModuleItemUrlResolver.Resolve(Model.Slug, item)">@item</a>
+                    }
+                  </div>
+                </section>
+              }
+            </div>
+          </div>
+        }
+        else
+        {
+          @if (Model.Module.TopLinks.Count > 0)
+          {
+            <div class="panel module-home-primary-panel">
+              <h2 class="section-title">Основные функции</h2>
+              <div class="module-home-primary-btns">
+                @foreach (var link in Model.Module.TopLinks)
+                {
+                  <a class="btn btn-outline module-home-primary-btn" href="@ModuleItemUrlResolver.Resolve(Model.Slug, link)">@link</a>
+                }
+              </div>
+            </div>
+          }
+
+          <div class="module-home-layout">
+            <div class="panel module-home-panel">
+              @foreach (var menuSection in Model.Module.LeftSections)
+              {
+                <section class="module-section">
+                  <h2 class="section-title">@menuSection.Title</h2>
+                  <div class="module-links">
+                    @foreach (var item in menuSection.Items)
+                    {
+                      <a href="@ModuleItemUrlResolver.Resolve(Model.Slug, item)">@item</a>
+                    }
+                  </div>
+                </section>
+              }
+            </div>
+
+            <div class="panel module-home-panel module-home-refs">
+              @foreach (var menuSection in Model.Module.RightSections)
+              {
+                <section class="module-section">
+                  <h2 class="section-title">@menuSection.Title</h2>
+                  <div class="module-links">
+                    @foreach (var item in menuSection.Items)
+                    {
+                      <a href="@ModuleItemUrlResolver.Resolve(Model.Slug, item)">@item</a>
+                    }
+                  </div>
+                </section>
+              }
+            </div>
+          </div>
+        }
+    </div>
+}

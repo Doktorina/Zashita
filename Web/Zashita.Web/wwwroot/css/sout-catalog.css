@@ -1,0 +1,248 @@
+.sout-catalog-stub {
+  padding: 10px 14px;
+  margin-bottom: 10px;
+  background: #fff8e1;
+  border: 1px solid #e8d9a0;
+  border-radius: 4px;
+}
+
+.sout-catalog-stub-text {
+  margin: 0;
+  color: #5d4e37;
+}
+
+.sout-catalog-readonly,
+.sout-catalog-readonly-name {
+  display: inline-block;
+  padding: 4px 2px;
+  color: #333;
+}
+
+.sout-catalog-readonly-input {
+  background: #f5f5f5 !important;
+  border-color: transparent !important;
+  color: #333 !important;
+  cursor: default;
+}
+
+.sout-catalog-row-new input[name="Name"] {
+  min-width: 220px;
+}
+
+.sout-catalog-grid .training-tree-name {
+  align-items: center;
+}
+
+.sout-catalog-grid .sout-catalog-row {
+  cursor: default;
+}
+
+.sout-import-panel .sout-assignment-tabs {
+  margin-bottom: 12px;
+}
+
+.sout-import-panel .ppe-field {
+  max-width: 520px;
+  margin: 12px 0;
+}
+
+.sout-catalog-edit-toolbar {
+  margin-bottom: 12px;
+}
+
+.sout-catalog-edit-header {
+  display: grid;
+  grid-template-columns: 1fr 140px;
+  gap: 12px;
+  margin-bottom: 12px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--border, #ddd);
+}
+
+.sout-catalog-edit-header .ppe-field[style*="grid-column"] {
+  margin-top: 4px;
+}
+
+.sout-catalog-edit-tabs {
+  margin-bottom: 0;
+}
+
+.sout-catalog-edit-layout {
+  display: grid;
+  grid-template-columns: 220px 1fr;
+  gap: 0;
+  min-height: 420px;
+  border: 1px solid var(--border, #ddd);
+  border-top: none;
+}
+
+.sout-catalog-edit-nav {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 8px;
+  background: #f7f7f7;
+  border-right: 1px solid var(--border, #ddd);
+}
+
+.sout-catalog-edit-nav-item {
+  text-align: left;
+  padding: 8px 10px;
+  border: none;
+  background: transparent;
+  border-radius: 4px;
+  cursor: pointer;
+  font: inherit;
+  color: #333;
+}
+
+.sout-catalog-edit-nav-item:hover:not(:disabled) {
+  background: #ebebeb;
+}
+
+.sout-catalog-edit-nav-active {
+  background: #fff;
+  box-shadow: inset 3px 0 0 #2d6a4f;
+}
+
+.sout-catalog-edit-nav-disabled {
+  color: #999;
+  cursor: default;
+}
+
+.sout-catalog-edit-content {
+  padding: 16px;
+  background: #fff;
+}
+
+.sout-catalog-edit-section {
+  display: none;
+}
+
+.sout-catalog-edit-section-active {
+  display: block;
+}
+
+.sout-catalog-edit-block-title {
+  margin: 16px 0 8px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #555;
+}
+
+.sout-catalog-edit-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px 16px;
+}
+
+.sout-catalog-edit-span2 {
+  grid-column: span 2;
+}
+
+.sout-catalog-edit-body {
+  padding: 16px 0;
+}
+
+.sout-catalog-row-actions {
+  display: flex;
+  gap: 4px;
+  align-items: center;
+}
+
+.catalog-multiselect {
+  position: relative;
+  max-width: 42rem;
+  width: 100%;
+  min-width: 0;
+}
+
+.ppe-field .catalog-multiselect,
+.catalog-multiselect-wide,
+.catalog-multiselect-wide .catalog-multiselect {
+  max-width: 100%;
+}
+
+.catalog-multiselect-trigger,
+.catalog-multiselect-trigger.ppe-input {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: start;
+  gap: 8px;
+  cursor: pointer;
+  list-style: none;
+  min-height: 2.4rem;
+  height: auto;
+  max-width: 100%;
+  width: 100%;
+  white-space: normal;
+  box-sizing: border-box;
+}
+
+.catalog-multiselect-trigger::-webkit-details-marker {
+  display: none;
+}
+
+.catalog-multiselect-value {
+  display: block;
+  min-width: 0;
+  max-width: 100%;
+  overflow: visible;
+  text-overflow: unset;
+  white-space: pre-wrap !important;
+  overflow-wrap: break-word;
+  word-wrap: break-word;
+  word-break: break-word;
+  line-height: 1.4;
+}
+
+.catalog-multiselect-chevron {
+  flex: 0 0 auto;
+  color: #667;
+  line-height: 1.35;
+  margin-top: 0.1em;
+}
+
+.catalog-multiselect-menu {
+  position: absolute;
+  z-index: 20;
+  left: 0;
+  right: 0;
+  top: calc(100% + 4px);
+  max-height: 18rem;
+  overflow: auto;
+  padding: 8px;
+  background: #fff;
+  border: 1px solid #d0d5dd;
+  border-radius: 8px;
+  box-shadow: 0 8px 24px rgba(16, 24, 40, 0.12);
+}
+
+.catalog-multiselect-search {
+  margin-bottom: 8px;
+}
+
+.catalog-multiselect-toolbar {
+  display: flex;
+  justify-content: flex-end;
+  margin: 0 0 8px;
+}
+
+.catalog-multiselect-clear {
+  font-size: 0.8rem;
+  padding: 4px 10px;
+  min-height: 0;
+  line-height: 1.3;
+}
+
+.catalog-multiselect-option {
+  display: flex;
+  gap: 8px;
+  align-items: flex-start;
+  padding: 4px 2px;
+  cursor: pointer;
+}
+
+.catalog-multiselect-option[hidden] {
+  display: none;
+}

@@ -1,0 +1,254 @@
+@page "/Ppe/SiosCard/Preview"
+@model Zashita.Web.Pages.Ppe.SiosCard.PreviewModel
+@{
+    ViewData["Title"] = Model.State.DocumentName;
+    ViewData["Subtitle"] = Model.IsSavedView ? "Сохранённая карточка" : "Предпросмотр перед печатью";
+}
+
+@if (!string.IsNullOrWhiteSpace(Model.Message))
+{
+  <p class="text-success">@Model.Message</p>
+}
+
+<div class="panel ppe-panel">
+  <div class="ppe-preview-head">
+    <div><strong>Документ:</strong> @Model.State.DocumentName</div>
+    <div><strong>Организация:</strong> @Model.State.Organization</div>
+    <div><strong>Профессия:</strong> @(string.IsNullOrWhiteSpace(Model.Profession) ? Model.State.Profession : Model.Profession)</div>
+    <div><strong>@(Model.IsDutyCard ? "Ответственные" : "Сотрудники"):</strong> @(string.IsNullOrWhiteSpace(Model.EmployeeName) ? string.Join(", ", Model.State.SelectedEmployees) : Model.EmployeeName)</div>
+  </div>
+
+  <div class="ppe-card-preview-wrap">
+    <h2 class="panel-title">Предпросмотр бланка</h2>
+    <p class="hint">Ниже — как карточка будет выглядеть на печати. <b>Кликните по ячейке на бланке</b> (пункт норм, модель) — можно править прямо там. Либо используйте таблицу под бланком. Для печати нажмите «Печать».</p>
+    <iframe class="ppe-card-preview-frame" src="@Model.CardPreviewUrl" title="Предпросмотр карточки СИЗ"></iframe>
+  </div>
+
+  @if (Model.IsDutyCard)
+  {
+    <p class="hint">Таблица норм по бланку дежурных СИЗ. «Пункт норм» и модель (оборот, кол. 2) — из «Номенклатуры», на предпросмотре можно править.</p>
+  }
+  else
+  {
+    <p class="hint">Таблица норм (лицевая сторона). «Пункт типовых норм» и «Модель, марка, артикул» (оборот, кол. 2) подставляются из справочника «Номенклатура», на предпросмотре можно править.</p>
+  }
+
+  <form method="post" class="ppe-preview-form" id="ppe-preview-form">
+    @Html.AntiForgeryToken()
+    @if (!string.IsNullOrWhiteSpace(Model.Id))
+    {
+      <input type="hidden" name="Id" value="@Model.Id" />
+    }
+
+    <table class="data-grid" style="margin-top:12px">
+      <thead>
+        <tr>
+          <th>Наименование СИЗ</th>
+          <th>Пункт типовых норм</th>
+          <th>Модель, марка, артикул<br/><span class="hint">оборот, кол. 2</span></th>
+          <th>Единица измерения</th>
+          <th>@(Model.IsDutyCard ? "Количество на период" : "Количество на год")</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (var i = 0; i < Model.PrintRows.Count; i++)
+        {
+          var row = Model.PrintRows[i];
+          <tr>
+            <td>
+              <input name="PrintRows[@i].Name"
+                     value="@row.Name"
+                     class="ppe-input js-ppe-preview-field"
+                     placeholder="наименование СИЗ" />
+              <input type="hidden" name="PrintRows[@i].IssueMethod" value="@row.IssueMethod" />
+              <input type="hidden" name="PrintRows[@i].ShelfLife" value="@row.ShelfLife" />
+            </td>
+            <td>
+              <input name="PrintRows[@i].NormPoint"
+                     value="@row.NormPoint"
+                     class="ppe-input ppe-input-sm js-ppe-preview-field"
+                     placeholder="пункт норм" />
+            </td>
+            <td>
+              <input name="PrintRows[@i].ModelDescription"
+                     value="@row.ModelDescription"
+                     class="ppe-input js-ppe-preview-field"
+                     placeholder="модель, марка, артикул, класс защиты" />
+            </td>
+            <td>@(string.IsNullOrWhiteSpace(row.Norm) ? "штука" : "по норме")</td>
+            <td>
+              <input name="PrintRows[@i].Norm"
+                     value="@row.Norm"
+                     class="ppe-input ppe-input-sm js-ppe-preview-field"
+                     placeholder="кол-во" />
+            </td>
+          </tr>
+        }
+      </tbody>
+    </table>
+
+    @if (Model.ShowSizeForm)
+    {
+      <div class="panel" style="margin-top:16px">
+        <h2 class="panel-title">Размеры для печати</h2>
+        <p class="hint">Выберите пол — списки размеров подставятся из файла «размерчики.xlsx». При смене роста остальные поля обновятся автоматически.</p>
+        <div class="ppe-form-grid" id="ppe-size-form">
+          <label>Пол
+            <select name="Sex" id="ppe-sex" class="ppe-input ppe-input-sm">
+              <option value="муж." selected="@(Model.Sex.Contains("муж"))">муж.</option>
+              <option value="жен." selected="@(Model.Sex.Contains("жен"))">жен.</option>
+            </select>
+          </label>
+          <label>Рост
+            <select name="Height" id="ppe-height" class="ppe-input"></select>
+          </label>
+          <label>Одежда
+            <select name="ClothesSize" id="ppe-clothes" class="ppe-input"></select>
+          </label>
+          <label>Обувь
+            <select name="ShoeSize" id="ppe-shoe" class="ppe-input ppe-input-sm"></select>
+          </label>
+          <label>Головной убор
+            <select name="HeadwearSize" id="ppe-head" class="ppe-input ppe-input-sm"></select>
+          </label>
+          <label>Перчатки
+            <select name="GloveSize" id="ppe-glove" class="ppe-input ppe-input-sm"></select>
+          </label>
+          <label>Противогаз
+            <select name="GasMaskSize" id="ppe-gas" class="ppe-input ppe-input-sm">
+              <option value="">—</option>
+            </select>
+          </label>
+        </div>
+      </div>
+    }
+
+    <div class="ppe-form-grid">
+      <label>№ карточки <input name="CardNumber" value="@Model.CardNumber" class="ppe-input ppe-input-sm js-ppe-preview-field" /></label>
+      <label>@(Model.IsDutyCard ? "Ответственный / ФИО" : "ФИО")
+        <input name="EmployeeName" value="@Model.EmployeeName" class="ppe-input js-ppe-preview-field" placeholder="как на бланке" />
+      </label>
+      <label>Профессия (должность)
+        <input name="Profession" value="@Model.Profession" class="ppe-input js-ppe-preview-field" />
+      </label>
+      @if (Model.IsDutyCard)
+      {
+        <label>Идентификатор рабочего места <input name="WorkplaceId" value="@Model.WorkplaceId" class="ppe-input js-ppe-preview-field" /></label>
+        @await Html.PartialAsync("~/Pages/Shared/_DepartmentSelect.cshtml", new Zashita.Web.Pages.Shared.DepartmentSelectModel
+        {
+            Name = "Department",
+            Value = Model.Department,
+            Options = Model.Departments,
+            Label = "Структурное подразделение",
+            Optional = true,
+            InputClass = "ppe-input js-ppe-preview-field"
+        })
+        <label>Приказ об утверждении Норм <input name="NormsOrderText" value="@Model.NormsOrderText" class="ppe-input js-ppe-preview-field" placeholder="№ __ от __.__.____" /></label>
+        <label>Ответственное лицо (подпись на бланке) <input name="ResponsiblePerson" value="@Model.ResponsiblePerson" class="ppe-input js-ppe-preview-field" /></label>
+      }
+      else
+      {
+        <label>Табельный номер <input name="TabNumber" value="@Model.TabNumber" class="ppe-input ppe-input-sm js-ppe-preview-field" /></label>
+        @await Html.PartialAsync("~/Pages/Shared/_DepartmentSelect.cshtml", new Zashita.Web.Pages.Shared.DepartmentSelectModel
+        {
+            Name = "Department",
+            Value = Model.Department,
+            Options = Model.Departments,
+            Optional = true,
+            InputClass = "ppe-input js-ppe-preview-field"
+        })
+        <label>Дата поступления
+          <input name="HireDate" type="date" value="@Model.HireDateIso" class="ppe-input ppe-input-sm js-ppe-preview-field" />
+          <span class="hint" style="display:block;margin-top:4px">Из 1С — дата приёма сотрудника</span>
+        </label>
+        <label>Дата изменения профессии
+          <input name="ProfessionChangeDate" type="date" value="@Model.ProfessionChangeDateIso" class="ppe-input ppe-input-sm js-ppe-preview-field" />
+        </label>
+        <label>Дата выдачи СИЗ
+          <input name="PpeIssueDate" type="date" value="@Model.PpeIssueDateIso" class="ppe-input ppe-input-sm js-ppe-preview-field" />
+          <span class="hint" style="display:block;margin-top:4px">Колонка 3 «дата» на обороте карточки</span>
+        </label>
+        <label>Ответственное лицо <input name="ResponsiblePerson" value="@Model.ResponsiblePerson" class="ppe-input js-ppe-preview-field" /></label>
+      }
+    </div>
+    <div class="ppe-actions">
+      <button type="submit" asp-page-handler="Save" class="btn btn-primary">Сохранить</button>
+      <button type="submit" asp-page-handler="Print" class="btn btn-outline">Печать</button>
+      <a class="btn btn-outline" asp-page="/Ppe/SavedCards">Сохранённые карточки</a>
+      @if (!Model.IsSavedView)
+      {
+        <a class="btn btn-outline" asp-page="/Ppe/CardSelect">Новая карточка</a>
+      }
+    </div>
+  </form>
+</div>
+
+@if (Model.ShowSizeForm)
+{
+  <script type="application/json" id="ppe-size-charts">@Html.Raw(Model.SizeChartsJson)</script>
+  <script>
+    window.ppePreviewInitial = {
+      sex: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.Sex)),
+      height: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.Height)),
+      clothes: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.ClothesSize)),
+      shoe: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.ShoeSize)),
+      head: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.HeadwearSize)),
+      glove: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.GloveSize)),
+      gas: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.GasMaskSize))
+    };
+  </script>
+  <script src="/js/ppe-preview-sizes.js"></script>
+}
+
+<script>
+  (function () {
+    var form = document.getElementById('ppe-preview-form');
+    var iframe = document.querySelector('.ppe-card-preview-frame');
+    if (!form || !iframe) return;
+
+    var refreshTimer;
+
+    function reloadPreview() {
+      var base = '@(Url.Page("/Ppe/SiosCard/Print", new { preview = true }) ?? "/Ppe/SiosCard/Print?preview=true")';
+      iframe.src = base + '&_=' + Date.now();
+    }
+
+    function refreshPreview() {
+      clearTimeout(refreshTimer);
+      refreshTimer = setTimeout(function () {
+        var fd = new FormData(form);
+        fetch(form.action + '?handler=RefreshPreview', {
+          method: 'POST',
+          body: fd,
+          credentials: 'same-origin',
+          headers: { 'RequestVerificationToken': form.querySelector('input[name="__RequestVerificationToken"]')?.value || '' }
+        }).then(function (response) {
+          if (response.ok) reloadPreview();
+        });
+      }, 250);
+    }
+
+    form.querySelectorAll('input, select, textarea').forEach(function (el) {
+      if (el.type === 'hidden' || el.type === 'submit' || el.type === 'button') return;
+      el.classList.add('js-ppe-preview-field');
+      el.addEventListener('change', refreshPreview);
+      if (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA') {
+        el.addEventListener('input', refreshPreview);
+      }
+    });
+
+    window.addEventListener('message', function (event) {
+      var data = event.data;
+      if (!data || data.type !== 'sios-preview-edit') return;
+      var field = data.field;
+      var index = data.index;
+      if (!field || typeof index !== 'number' || index < 0) return;
+      var input = form.querySelector('input[name="PrintRows[' + index + '].' + field + '"]');
+      if (!input) return;
+      var next = data.value || '';
+      if (input.value === next) return;
+      input.value = next;
+      refreshPreview();
+    });
+  })();
+</script>

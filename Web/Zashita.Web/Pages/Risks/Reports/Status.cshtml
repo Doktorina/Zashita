@@ -1,0 +1,342 @@
+@page "/Risks/Reports/Status"
+@model Zashita.Web.Pages.Risks.Reports.StatusModel
+@using Zashita.Core.Risks
+@{
+    ViewData["Title"] = "Отчет по ОПР";
+}
+
+<link rel="stylesheet" href="/css/risks-report.css" asp-append-version="true" />
+
+@if (!string.IsNullOrWhiteSpace(Model.Message))
+{
+  <p class="text-success">@Model.Message</p>
+}
+
+@await Component.InvokeAsync("StaffingOnboardingAlerts", new { organization = Model.Organization, moduleKey = "риски" })
+
+<div class="panel training-report-panel risks-hazard-panel">
+  <div class="training-report-toolbar" style="margin-bottom:8px">
+    <a class="btn btn-outline" href="/module/риски">Все разделы модуля</a>
+  </div>
+  <p class="hint"><b>Отчёт:</b> @ViewData["Title"]</p>
+  <p class="hint">
+    Под каждой профессией — сотрудники из штата 1С с датой трудоустройства и статусом ознакомления с картой оценки рисков.
+    В строке профессии можно править номер карты, дату, общий риск и периодичность.
+    Отчёт дублируется по объектам оценки (как в картах РМ). Статус ознакомления: ознакомлен / не ознакомлен / не работает на объекте.
+    Сохранение — кнопкой «Сохранить».
+    Карты РМ: <a asp-page="/Risks/Workplaces" asp-route-view="assessment">Рабочие места (оценка)</a>.
+  </p>
+  <datalist id="risk-periodicity-options">
+    <option value="-"></option>
+    <option value="1 раз в год"></option>
+    <option value="1 раз в 3 года"></option>
+    <option value="1 раз в 5 лет"></option>
+  </datalist>
+
+  <form method="get" class="training-report-filters" id="risks-status-filters">
+    <div class="training-filter-grid">
+      <label class="ppe-field">
+        <span>Подразделение</span>
+        <select asp-for="Department" class="ppe-input js-auto-filter">
+          <option value="">все</option>
+          @foreach (var item in Model.DepartmentOptions)
+          {
+            <option value="@item">@item</option>
+          }
+        </select>
+      </label>
+      <label class="ppe-field">
+        <span>Профессия / объект</span>
+        <select asp-for="Profession" class="ppe-input js-auto-filter">
+          <option value="">все</option>
+          @foreach (var item in Model.ProfessionOptions)
+          {
+            <option value="@item">@item</option>
+          }
+        </select>
+      </label>
+      <label class="ppe-field">
+        <span>Статус оценки</span>
+        <select asp-for="MeasureStatus" class="ppe-input js-auto-filter">
+          <option value="">все</option>
+          @foreach (var item in Model.StatusOptions)
+          {
+            <option value="@item">@item</option>
+          }
+        </select>
+      </label>
+    </div>
+
+    <div class="training-report-toolbar">
+      <button type="submit" class="btn btn-primary">Сформировать</button>
+      <button type="button" class="btn btn-outline" onclick="window.print()">Печать</button>
+      <a class="btn btn-outline" asp-page="/Risks/Reports/Status">Сбросить</a>
+    </div>
+  </form>
+
+  <p class="hint" style="margin:0 0 14px">
+    Объект: <b>@Model.SelectedObjectDisplayName</b>. Переключение — в панели сверху.
+    Состав карт на объекте независим (как в картах оценки рисков).
+  </p>
+
+  <div class="risks-hazard-legend hint">
+    <span class="risks-legend-item traffic-dot-green">Проведена</span>
+    <span class="risks-legend-item traffic-dot-yellow">Приближается срок пересмотра</span>
+    <span class="risks-legend-item traffic-dot-red">Не проведена оценка / просрочено</span>
+  </div>
+
+  <form method="post" asp-page-handler="Save" class="training-status-wrap" id="risks-status-save">
+    <input type="hidden" name="ReportDate" value="@Model.ReportDate.ToString("yyyy-MM-dd")" />
+    <input type="hidden" asp-for="SelectedOrganization" />
+    <input type="hidden" asp-for="Department" />
+    <input type="hidden" asp-for="Profession" />
+    <input type="hidden" asp-for="MeasureStatus" />
+    <input type="hidden" name="ObjectId" value="@Model.SelectedObjectId" />
+    <div class="training-report-toolbar training-status-save-bar report-save-bar" style="margin-bottom:8px">
+      <button type="submit" class="btn btn-primary">Сохранить</button>
+      <span class="hint" title="Людей = штат 1С (человек×компания), как в медосмотрах/обучении.">Профессий: @Model.WorkplaceCount · людей: @Model.PeopleCount · объект: @Model.SelectedObjectDisplayName</span>
+    </div>
+
+    <table class="data-grid training-status-grid risks-hazard-grid risks-opr-staff-grid training-sticky-head-grid report-sticky-head-grid">
+      <thead>
+        <tr>
+          <th class="col-tree">Структура</th>
+          <th style="width:10rem">Дата трудоустройства</th>
+          <th style="width:12rem">Статус ознакомления</th>
+        </tr>
+      </thead>
+      <tbody>
+        @if (Model.TreeLines.Count == 0)
+        {
+          <tr>
+            <td colspan="3" class="hint">
+              Нет данных для выбранных фильтров.
+              Проверьте штат 1С и карты оценки РМ.
+            </td>
+          </tr>
+        }
+        @foreach (var line in Model.TreeLines)
+        {
+          if (line.IsGroup)
+          {
+            var isProfession = line.Level == 2;
+            var profStatus = string.IsNullOrWhiteSpace(line.ProfessionStatus)
+                ? (line.RiskAssessmentNotConducted
+                    ? RiskHazardStatuses.NotConducted
+                    : line.CardAssessmentDate.HasValue ? "Проведена" : RiskHazardStatuses.NotConducted)
+                : line.ProfessionStatus;
+            var profRed = isProfession && (
+                string.Equals(line.ProfessionTraffic, "red", StringComparison.OrdinalIgnoreCase)
+                || string.Equals(profStatus, RiskHazardStatuses.NotConducted, StringComparison.OrdinalIgnoreCase)
+                || string.Equals(profStatus, RiskHazardStatuses.Overdue, StringComparison.OrdinalIgnoreCase));
+            // По макету: развёрнуто до сотрудников.
+            <tr class="training-tree-group training-tree-open level-@line.Level @(isProfession ? "risks-prof-group" : "") @(profRed ? "traffic-red" : "")"
+                data-level="@line.Level"
+                data-group="true"
+                data-expanded="true"
+                data-id="@line.Id">
+              <td colspan="3">
+                <div class="risks-tree-group-row">
+                  <button type="button"
+                          class="risks-tree-toggle"
+                          aria-expanded="true"
+                          title="@(isProfession ? "Показать / скрыть сотрудников" : "Свернуть / развернуть")">
+                    <span class="risks-tree-toggle-icon">▾</span>
+                  </button>
+                  <strong class="risks-tree-group-label">@line.Label</strong>
+                  @if (isProfession)
+                  {
+                    <span class="risks-prof-meta @(profRed ? "text-danger risks-status-badge" : "risks-status-badge")">@profStatus</span>
+                    @if (!string.IsNullOrWhiteSpace(line.WorkplaceId))
+                    {
+                      <input type="hidden" name="cardWorkplaceId" value="@line.WorkplaceId" />
+                      <div class="risks-prof-card-fields">
+                        <label class="risks-prof-card-field">
+                          <span>Номер карты</span>
+                          <input type="text"
+                                 name="cardRiskCardNumber"
+                                 class="ppe-input"
+                                 value="@line.RiskCardNumber"
+                                 placeholder="№ карты" />
+                        </label>
+                        <label class="risks-prof-card-field">
+                          <span>Дата проведения</span>
+                          <input type="date"
+                                 name="cardAssessmentDate"
+                                 class="ppe-input"
+                                 value="@(line.CardAssessmentDate?.ToString("yyyy-MM-dd") ?? "")" />
+                        </label>
+                        <label class="risks-prof-card-field">
+                          <span>Общий риск</span>
+                          <input type="text"
+                                 name="cardOverallRisk"
+                                 class="ppe-input"
+                                 value="@line.OverallRisk"
+                                 placeholder="Средний" />
+                        </label>
+                        <label class="risks-prof-card-field">
+                          <span>Периодичность</span>
+                          <input type="text"
+                                 name="cardRiskPeriodicity"
+                                 class="ppe-input"
+                                 list="risk-periodicity-options"
+                                 value="@line.RiskPeriodicity"
+                                 placeholder="1 раз в три года или -"
+                                 title="«-» означает, что периодичности нет" />
+                        </label>
+                        <a class="btn btn-outline btn-sm"
+                           asp-page="/Risks/Workplaces/Assessment"
+                           asp-route-id="@line.WorkplaceId"
+                           asp-route-objectId="@Model.SelectedObjectId"
+                           target="_blank"
+                           rel="noopener">Открыть карту</a>
+                      </div>
+                    }
+                    else
+                    {
+                      <span class="risks-prof-meta hint">Нет карты РМ — создайте в «Карта оценки рисков»</span>
+                    }
+                  }
+                </div>
+              </td>
+            </tr>
+          }
+          else if (line.IsPerson)
+          {
+            <tr class="training-tree-data risks-opr-person-row"
+                data-level="@line.Level"
+                data-group="false"
+                data-parent="@line.ParentId">
+              <td class="col-tree level-@line.Level">
+                @line.EmployeeName
+                <input type="hidden" name="famWorkplaceId" value="@(line.WorkplaceId ?? "")" />
+                <input type="hidden" name="famEmployeeKey" value="@line.EmployeeKey" />
+                <input type="hidden" name="famEmployeeName" value="@line.EmployeeName" />
+              </td>
+              <td>@(line.EmploymentDate?.ToString("dd.MM.yyyy") ?? "—")</td>
+              <td>
+                @{
+                  var famSelected = line.NotWorkingOnObject
+                      ? "away"
+                      : line.IsFamiliarized ? "1" : "0";
+                }
+                <select name="famStatus" class="ppe-input ppe-input-sm" title="Ознакомление с картой оценки рисков">
+                  @if (famSelected == "1")
+                  {
+                    <option value="1" selected>Ознакомлен</option>
+                    <option value="0">Не ознакомлен</option>
+                    <option value="away">Не работает на объекте</option>
+                  }
+                  else if (famSelected == "away")
+                  {
+                    <option value="1">Ознакомлен</option>
+                    <option value="0">Не ознакомлен</option>
+                    <option value="away" selected>Не работает на объекте</option>
+                  }
+                  else
+                  {
+                    <option value="1">Ознакомлен</option>
+                    <option value="0" selected>Не ознакомлен</option>
+                    <option value="away">Не работает на объекте</option>
+                  }
+                </select>
+              </td>
+            </tr>
+          }
+        }
+      </tbody>
+    </table>
+  </form>
+</div>
+
+<style>
+  @@media print {
+    .training-report-filters,
+    .training-report-toolbar,
+    .risks-hazard-legend,
+    .page-head,
+    .sidebar,
+    nav { display: none !important; }
+  }
+</style>
+
+<script>
+  (function () {
+    var filterForm = document.getElementById('risks-status-filters');
+    if (filterForm) {
+      filterForm.querySelectorAll('.js-auto-filter').forEach(function (el) {
+        el.addEventListener('change', function () { filterForm.submit(); });
+      });
+    }
+
+    var tbody = document.querySelector('.risks-hazard-grid tbody');
+    if (!tbody) return;
+
+    function setToggleIcon(tr, expanded) {
+      var icon = tr.querySelector('.risks-tree-toggle-icon');
+      var btn = tr.querySelector('.risks-tree-toggle');
+      if (icon) icon.textContent = expanded ? '▾' : '▸';
+      if (btn) btn.setAttribute('aria-expanded', expanded ? 'true' : 'false');
+    }
+
+    function hideDescendants(startRow, startLevel) {
+      var row = startRow.nextElementSibling;
+      while (row) {
+        var lvl = Number(row.getAttribute('data-level') || '0');
+        if (Number.isNaN(lvl) || lvl <= startLevel) break;
+        row.classList.add('training-tree-hidden');
+        if (row.getAttribute('data-group') === 'true') {
+          row.dataset.expanded = 'false';
+          setToggleIcon(row, false);
+        }
+        row = row.nextElementSibling;
+      }
+    }
+
+    function showImmediateChildren(startRow, startLevel) {
+      var row = startRow.nextElementSibling;
+      while (row) {
+        var lvl = Number(row.getAttribute('data-level') || '0');
+        if (Number.isNaN(lvl) || lvl <= startLevel) break;
+        if (lvl === startLevel + 1) {
+          row.classList.remove('training-tree-hidden');
+        }
+        row = row.nextElementSibling;
+      }
+    }
+
+    function toggleGroup(tr) {
+      var level = Number(tr.getAttribute('data-level') || '0');
+      var expanded = tr.dataset.expanded !== 'false';
+      if (expanded) {
+        tr.dataset.expanded = 'false';
+        setToggleIcon(tr, false);
+        hideDescendants(tr, level);
+      } else {
+        tr.dataset.expanded = 'true';
+        setToggleIcon(tr, true);
+        showImmediateChildren(tr, level);
+      }
+    }
+
+    tbody.addEventListener('click', function (e) {
+      var toggleBtn = e.target.closest('.risks-tree-toggle');
+      var tr = e.target && e.target.closest ? e.target.closest('tr[data-group="true"]') : null;
+      if (!tr) return;
+      if (e.target.closest('a, input, select, label')) return;
+      if (!toggleBtn && e.target.closest('button') && !e.target.closest('.risks-tree-toggle')) return;
+      e.preventDefault();
+      toggleGroup(tr);
+    });
+
+    // По умолчанию развёрнуто до сотрудников (как на макете).
+    Array.from(tbody.querySelectorAll('tr[data-group="true"]')).forEach(function (tr) {
+      tr.dataset.expanded = 'true';
+      tr.classList.add('training-tree-open');
+      setToggleIcon(tr, true);
+    });
+    Array.from(tbody.querySelectorAll('tr')).forEach(function (tr) {
+      tr.classList.remove('training-tree-hidden');
+    });
+  })();
+</script>

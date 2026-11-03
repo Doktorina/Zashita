@@ -1,0 +1,218 @@
+@page "/Med/Factors/Edit"
+@model Zashita.Web.Pages.Med.Factors.EditModel
+@{
+    var r = Model.Record;
+    ViewData["Title"] = Model.IsNew
+        ? (r.IsGroup ? "Группа факторов (создание)" : "Фактор / вид работ (создание)")
+        : (r.IsGroup ? r.Name : "Фактор / вид работ");
+    ViewData["Subtitle"] = Model.Organization;
+}
+
+@section Styles {
+  <link rel="stylesheet" href="~/css/med-catalog-edit.css" asp-append-version="true" />
+}
+
+@if (!string.IsNullOrWhiteSpace(Model.Message))
+{
+  <p class="@(Model.IsError ? "form-error" : "text-success")">@Model.Message</p>
+}
+
+<div class="panel ppe-panel med-catalog-edit" id="med-factor-edit">
+  <form method="post" asp-page="/Med/Factors/Edit">
+    <input type="hidden" name="recordId" value="@r.Id" />
+    <input type="hidden" asp-for="Id" />
+    <input type="hidden" name="isGroup" value="@r.IsGroup.ToString().ToLowerInvariant()" />
+
+    <div class="sout-assignment-toolbar">
+      <div class="sout-assignment-toolbar-left">
+        <a class="btn btn-outline btn-sm" asp-page="/Med/Factors">←</a>
+        <button type="submit" formaction="?handler=SaveAndClose" class="btn btn-primary btn-sm">Записать и закрыть</button>
+        <button type="submit" formaction="?handler=Save" class="btn btn-outline btn-sm">Записать</button>
+      </div>
+    </div>
+
+    <div class="med-catalog-edit-top">
+      <label class="ppe-field med-catalog-edit-number">
+        <span>Номер п/п</span>
+        <input name="itemNumber" value="@r.ItemNumber" class="ppe-input" />
+      </label>
+      <label class="ppe-field med-catalog-edit-name">
+        <span>Наименование</span>
+        <input name="name" value="@r.Name" class="ppe-input @(Model.IsError ? "ppe-input-invalid" : "")" required autofocus />
+      </label>
+      <label class="ppe-field med-catalog-edit-code">
+        <span>Код</span>
+        <input name="code" value="@(string.IsNullOrWhiteSpace(r.Code) ? "<Авто>" : r.Code)" class="ppe-input" readonly />
+      </label>
+    </div>
+
+    @if (!r.IsGroup)
+    {
+      <div class="med-catalog-edit-links">
+        <span class="med-catalog-edit-link med-catalog-edit-link-active">Основное</span>
+        <span class="med-catalog-edit-link med-catalog-edit-link-disabled">Соответствие элементов МО (Элемент МО отменен)</span>
+        <span class="med-catalog-edit-link med-catalog-edit-link-disabled">Соответствие элементов МО (Элемент МО)</span>
+      </div>
+
+      <div class="med-catalog-edit-layout">
+        <nav class="med-catalog-edit-nav" aria-label="Разделы">
+          <button type="button" class="med-catalog-edit-nav-item med-catalog-edit-nav-active" data-section="general">Основное</button>
+          <button type="button" class="med-catalog-edit-nav-item" data-section="doctors">Врачи</button>
+          <button type="button" class="med-catalog-edit-nav-item" data-section="examinations">Исследования</button>
+          <button type="button" class="med-catalog-edit-nav-item" data-section="contraindications">Противопоказания</button>
+        </nav>
+
+        <div class="med-catalog-edit-content">
+          <section class="med-catalog-edit-section med-catalog-edit-section-active" data-section-panel="general">
+            <label class="ppe-field">
+              <span><a href="#" class="med-link-field" onclick="return false;">Периодичность</a></span>
+              <select name="periodicity" class="ppe-input">
+                @foreach (var option in Model.PeriodicityOptions)
+                {
+                  if (string.Equals(r.Periodicity, option, StringComparison.Ordinal))
+                  {
+                    <option value="@option" selected>@option</option>
+                  }
+                  else
+                  {
+                    <option value="@option">@option</option>
+                  }
+                }
+              </select>
+            </label>
+            <label class="ppe-field">
+              <span>Описание</span>
+              <textarea name="description" class="ppe-input med-catalog-textarea" rows="4">@r.Description</textarea>
+            </label>
+            <label class="ppe-field">
+              <span>Входит в группу</span>
+              <select name="parentId" class="ppe-input">
+                <option value="">—</option>
+                @foreach (var group in Model.GroupOptions.Where(g => g.Id != r.Id))
+                {
+                  if (string.Equals(r.ParentId, group.Id, StringComparison.Ordinal))
+                  {
+                    <option value="@group.Id" selected>@group.Name</option>
+                  }
+                  else
+                  {
+                    <option value="@group.Id">@group.Name</option>
+                  }
+                }
+              </select>
+            </label>
+            <label class="ppe-field">
+              <span>Вид</span>
+              <input name="kind" value="@r.Kind" class="ppe-input" list="med-factor-kinds" />
+            </label>
+            <label class="ppe-field">
+              <span>Приказ</span>
+              <input name="orderType" value="@r.OrderType" class="ppe-input" list="med-factor-orders" />
+            </label>
+            <label class="ppe-field training-assistant-wizard-check">
+              <span>Действует</span>
+              <span class="med-filter-inline"><input type="hidden" name="isActive" value="false" /><input type="checkbox" name="isActive" value="true" @(r.IsActive ? "checked" : null) /></span>
+            </label>
+            <label class="ppe-field">
+              <span>Дата начала действия</span>
+              <input type="date" name="effectiveFrom" value="@(r.EffectiveFrom?.ToString("yyyy-MM-dd"))" class="ppe-input" />
+            </label>
+            <label class="ppe-field">
+              <span>Номер приказа</span>
+              <input name="orderNumber" value="@r.OrderNumber" class="ppe-input" />
+            </label>
+            <label class="ppe-field">
+              <span>Номер пункта</span>
+              <input name="pointNumber" value="@(string.IsNullOrWhiteSpace(r.PointNumber) ? r.ItemNumber : r.PointNumber)" class="ppe-input" />
+            </label>
+            <label class="ppe-field training-assistant-wizard-check">
+              <span>Учитывать класс условий труда</span>
+              <span class="med-filter-inline"><input type="hidden" name="considerConditionsClass" value="false" /><input type="checkbox" name="considerConditionsClass" value="true" @(r.ConsiderConditionsClass ? "checked" : null) /></span>
+            </label>
+            <label class="ppe-field">
+              <span>Внешняя ссылка</span>
+              <input name="externalLink" value="@r.ExternalLink" class="ppe-input" />
+            </label>
+          </section>
+
+          <section class="med-catalog-edit-section" data-section-panel="doctors" hidden>
+            <table class="data-grid ppe-edit-grid">
+              <thead><tr><th>Врач</th><th></th></tr></thead>
+              <tbody id="med-factor-doctors-body">
+                @foreach (var doctor in r.Doctors.DefaultIfEmpty(""))
+                {
+                  <tr><td><input name="doctor" value="@doctor" class="ppe-input" /></td><td><button type="button" class="btn btn-outline btn-sm med-remove-line-btn">Удалить</button></td></tr>
+                }
+              </tbody>
+            </table>
+            <button type="button" class="btn btn-outline btn-sm" id="med-factor-add-doctor-btn">Добавить</button>
+          </section>
+
+          <section class="med-catalog-edit-section" data-section-panel="examinations" hidden>
+            <table class="data-grid ppe-edit-grid">
+              <thead><tr><th>Исследование</th><th></th></tr></thead>
+              <tbody id="med-factor-examinations-body">
+                @foreach (var item in r.Examinations.DefaultIfEmpty(""))
+                {
+                  <tr><td><input name="examination" value="@item" class="ppe-input" /></td><td><button type="button" class="btn btn-outline btn-sm med-remove-line-btn">Удалить</button></td></tr>
+                }
+              </tbody>
+            </table>
+            <button type="button" class="btn btn-outline btn-sm" id="med-factor-add-examination-btn">Добавить</button>
+          </section>
+
+          <section class="med-catalog-edit-section" data-section-panel="contraindications" hidden>
+            <table class="data-grid ppe-edit-grid">
+              <thead><tr><th>Противопоказание</th><th></th></tr></thead>
+              <tbody id="med-factor-contra-body">
+                @foreach (var item in r.Contraindications.DefaultIfEmpty(""))
+                {
+                  <tr><td><input name="contraindication" value="@item" class="ppe-input" /></td><td><button type="button" class="btn btn-outline btn-sm med-remove-line-btn">Удалить</button></td></tr>
+                }
+              </tbody>
+            </table>
+            <button type="button" class="btn btn-outline btn-sm" id="med-factor-add-contra-btn">Добавить</button>
+          </section>
+        </div>
+      </div>
+
+      <datalist id="med-factor-kinds">
+        <option value="Фактор"></option>
+        <option value="Вид работ"></option>
+      </datalist>
+      <datalist id="med-factor-orders">
+        <option value="Приказ 302н"></option>
+        <option value="Постановление 377"></option>
+        <option value="Приказ 29н"></option>
+      </datalist>
+    }
+    else
+    {
+      <div class="med-catalog-edit-body">
+        <label class="ppe-field">
+          <span>Входит в группу</span>
+          <select name="parentId" class="ppe-input">
+            <option value="">—</option>
+            @foreach (var group in Model.GroupOptions.Where(g => g.Id != r.Id))
+            {
+              <option value="@group.Id" selected="@(string.Equals(r.ParentId, group.Id, StringComparison.Ordinal) ? "selected" : null)">@group.Name</option>
+            }
+          </select>
+        </label>
+        <label class="ppe-field">
+          <span>Описание</span>
+          <textarea name="description" class="ppe-input med-catalog-textarea" rows="3">@r.Description</textarea>
+        </label>
+        <input type="hidden" name="periodicity" value="@r.Periodicity" />
+        <input type="hidden" name="kind" value="" />
+        <input type="hidden" name="orderType" value="" />
+        <input type="hidden" name="isActive" value="@(r.IsActive ? "true" : "false")" />
+      </div>
+    }
+  </form>
+</div>
+
+@section Scripts {
+  <script src="~/js/med-catalog-edit.js" asp-append-version="true"></script>
+  <script>document.addEventListener('DOMContentLoaded', function () { initMedCatalogEdit('med-factor-edit'); });</script>
+}

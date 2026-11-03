@@ -1,0 +1,761 @@
+@page "/Sout/Workplaces"
+@using Zashita.Web.Pages.Training
+@using Zashita.Core.Risks
+@model Zashita.Web.Pages.Sout.WorkplacesModel
+@{
+    ViewData["Title"] = Model.IsCardsView
+        ? "Карты СОУТ"
+        : Model.IsAssessmentView
+            ? "Оценка рабочих мест по условиям труда"
+            : "Рабочие места";
+    ViewData["Subtitle"] = Model.Organization;
+}
+
+@if (Model.IsAssessmentView)
+{
+  <p class="hint">
+    <b>Оценка рабочих мест по условиям труда</b> — тот же справочник РМ, но акцент на класс условий труда, плановый год СОУТ и код по ОК
+    (данные для отчёта по спецоценке). Структура подразделений ведётся в «Рабочие места».
+  </p>
+}
+
+@if (!string.IsNullOrWhiteSpace(Model.Message))
+{
+  <p class="text-success">@Model.Message</p>
+}
+
+<div class="sout-workplaces-layout@(Model.IsCardsView ? " sout-workplaces-layout-cards" : "")">
+  <div class="panel ppe-panel sout-workplaces-main">
+    <div class="ppe-toolbar sout-toolbar">
+      @if (!Model.IsCardsView)
+      {
+        <button type="button" class="btn btn-outline btn-sm" id="sout-workplace-add-row-btn">Создать</button>
+        <button type="button" class="btn btn-outline btn-sm" id="sout-workplace-add-group-btn">Создать группу</button>
+        <button type="button" class="btn btn-outline btn-sm" id="sout-workplace-move-btn" title="Перенести выделенные строки в другую группу">Переместить в группу…</button>
+      }
+      else
+      {
+        <button type="button" class="btn btn-outline btn-sm" id="sout-workplace-add-card-btn">Создать карту</button>
+        <a class="btn btn-outline btn-sm"
+           asp-page="/Sout/ImportCards"
+           title="Загрузить Word (.docx) с картами СОУТ и заполнить поля">Импорт из Word</a>
+        <a class="btn btn-outline btn-sm" asp-page="/Sout/Workplaces">← Рабочие места</a>
+      }
+      <details class="ppe-print-menu" id="sout-workplaces-print-menu">
+        <summary class="btn btn-outline btn-sm">Печать ▾</summary>
+        <div class="ppe-print-dropdown">
+          @if (Model.IsCardsView)
+          {
+            <a class="btn btn-outline btn-sm"
+               asp-page="/Sout/Workplaces/CardsPreview"
+               target="_blank"
+               title="Все карты организации одним документом">Выгрузить все карты</a>
+            <a class="btn btn-outline btn-sm" asp-page="/Sout/Workplaces/Preview" asp-route-view="cards" target="_blank">Предпечать списка</a>
+          }
+          else if (Model.IsAssessmentView)
+          {
+            <a class="btn btn-outline btn-sm" asp-page="/Sout/Workplaces/Preview" asp-route-view="assessment" target="_blank">Предпечать оценки</a>
+          }
+          else
+          {
+            <a class="btn btn-outline btn-sm" asp-page="/Sout/Workplaces/Preview" target="_blank">Предпечать списка</a>
+          }
+        </div>
+      </details>
+    </div>
+
+    <form method="get" class="sout-workplaces-filters" id="sout-workplaces-filter-form">
+      @if (Model.IsAssessmentView)
+      {
+        <input type="hidden" name="view" value="assessment" />
+      }
+      else if (Model.IsCardsView)
+      {
+        <input type="hidden" name="view" value="cards" />
+      }
+      <label class="training-assistant-wizard-check">
+        <input type="hidden" name="usedOnly" value="false" />
+        <input type="checkbox" name="usedOnly" value="true" @(Model.UsedOnly ? "checked" : null) />
+        <span>Используемые</span>
+      </label>
+      @if (!string.IsNullOrWhiteSpace(Model.DepartmentId))
+      {
+        <input type="hidden" name="departmentId" value="@Model.DepartmentId" />
+      }
+      <label class="sout-workplaces-search">
+        <span class="visually-hidden">Поиск</span>
+        <input type="search" name="q" value="@Model.Q" class="ppe-input" placeholder="Поиск (Ctrl+F)" autocomplete="off" />
+      </label>
+      <button type="submit" class="btn btn-outline btn-sm">Найти</button>
+    </form>
+
+    <form method="post" asp-page-handler="Save">
+      @if (Model.IsAssessmentView)
+      {
+        <input type="hidden" name="View" value="assessment" />
+      }
+      else if (Model.IsCardsView)
+      {
+        <input type="hidden" name="View" value="cards" />
+      }
+      <div class="training-status-wrap sout-workplaces-table-wrap">
+      <div class="ppe-actions ppe-actions-top training-status-save-bar report-save-bar">
+        <button type="submit" class="btn btn-primary">Сохранить</button>
+      </div>
+      @if (Model.IsCardsView)
+      {
+        <div class="sout-cards-traffic-legend hint" style="margin:0 0 10px;display:flex;flex-wrap:wrap;gap:14px;align-items:center">
+          <span class="risks-legend-item traffic-dot-green">Проведена</span>
+          <span class="risks-legend-item traffic-dot-red">Не проведена / просрочена</span>
+          <span class="risks-legend-item traffic-dot-blue">Истекает</span>
+          <span>Пометку можно задать вручную в колонке «Статус» и сохранить.</span>
+        </div>
+      }
+    <table class="data-grid ppe-edit-grid training-catalog-grid training-sticky-head-grid report-sticky-head-grid sout-workplaces-grid@(Model.IsCardsView ? " sout-workplaces-cards" : "")">
+        <thead>
+          <tr>
+            <th class="training-select-col"></th>
+            <th>Наименование</th>
+            @if (Model.IsCardsView)
+            {
+              <th title="Декларация соответствия условий труда">Декларация</th>
+            }
+            else
+            {
+              <th>№ РМ</th>
+            }
+            <th>ОК</th>
+            <th>Класс</th>
+            @if (!Model.IsCardsView)
+            {
+              <th>Профессия</th>
+            }
+            <th class="training-assistant-num-col">Чел.</th>
+            @if (!Model.IsCardsView)
+            {
+              <th>Плановый год СОУТ</th>
+            }
+            @if (Model.IsCardsView)
+            {
+              <th>Дата</th>
+              <th>№ карты</th>
+              <th title="Авто по дате СОУТ или ручная пометка">Статус</th>
+            }
+            <th></th>
+          </tr>
+        </thead>
+        <tbody id="sout-workplaces-body">
+          @foreach (var item in Model.TreeItems)
+          {
+            var node = item.Node;
+            var cardsTraffic = Model.IsCardsView && !node.IsGroup
+                ? SoutStatusBuilder.ResolveCardsTraffic(node)
+                : string.Empty;
+            var cardsTrafficClass = cardsTraffic switch
+            {
+                "green" => "traffic-green",
+                "red" => "traffic-red",
+                "blue" => "traffic-blue",
+                _ => ""
+            };
+            var autoTraffic = Model.IsCardsView && !node.IsGroup
+                ? SoutStatusBuilder.ResolveCardsTraffic(new WorkplaceRecord
+                {
+                    IsGroup = false,
+                    ConditionsClass = node.ConditionsClass,
+                    DeclarationOfConformity = node.DeclarationOfConformity,
+                    RequiresUnscheduledSout = node.RequiresUnscheduledSout,
+                    SoutAssessmentNotConducted = node.SoutAssessmentNotConducted,
+                    SoutAssessmentDate = node.SoutAssessmentDate ?? node.SoutCard?.PreparedDate,
+                    SoutReportNumber = node.SoutReportNumber,
+                    SoutCard = node.SoutCard is null
+                        ? null
+                        : new SoutCardDetails { PreparedDate = node.SoutCard.PreparedDate }
+                })
+                : string.Empty;
+            var autoTrafficLabel = Model.IsCardsView && !node.IsGroup
+                ? SoutStatusBuilder.CardsAutoStatusLabel(node)
+                : string.Empty;
+            var mark = SoutStatusBuilder.NormalizeTrafficMark(node.SoutTrafficMark);
+            <tr class="training-catalog-row training-tree-row sout-workplace-row @(node.IsGroup ? "training-tree-folder training-tree-open" : "training-tree-file") @(Model.IsCardsView && !node.IsGroup ? "risks-assessment-openable risks-workplace-row" : "") @cardsTrafficClass"
+                data-id="@node.Id"
+                data-parent-id="@(node.ParentId ?? "")"
+                data-is-group="@node.IsGroup.ToString().ToLowerInvariant()"
+                data-depth="@item.Depth"
+                data-department="@node.Department"
+                data-auto-traffic="@autoTraffic"
+                @if (Model.IsCardsView && !node.IsGroup)
+                {
+                  <text>data-assessment-href="/Sout/Workplaces/Card?id=@Uri.EscapeDataString(node.Id)"</text>
+                }>
+              <td class="training-select-col">
+                <input type="checkbox" class="training-row-select" aria-label="Выделить" />
+              </td>
+              <td>
+                <input type="hidden" name="Id" value="@node.Id" />
+                <input type="hidden" name="ParentId" value="@node.ParentId" />
+                <input type="hidden" name="IsGroup" value="@node.IsGroup.ToString().ToLowerInvariant()" />
+                <input type="hidden" name="Department" value="@node.Department" class="sout-department-input" />
+                <input type="hidden" name="MainWorkplaceNumber" value="@node.MainWorkplaceNumber" />
+                @if (Model.IsCardsView)
+                {
+                  <input type="hidden" name="Profession" value="@(node.IsGroup ? "" : (string.IsNullOrWhiteSpace(node.Profession) ? node.Name : node.Profession))" class="sout-profession-input" />
+                  <input type="hidden" name="PlanYear" value="@(node.IsGroup ? "" : node.PlanYear)" />
+                  <input type="hidden" name="IsManualSoutCard" value="@(!node.IsGroup && node.IsManualSoutCard ? "true" : "false")" />
+                }
+                @await Html.PartialAsync("/Pages/Training/_TrainingTreeName.cshtml", new TrainingTreeNameModel
+                {
+                  Depth = item.Depth,
+                  IsGroup = node.IsGroup,
+                  Name = node.Name,
+                  InputClass = node.IsGroup ? "ppe-input training-group-name" : "ppe-input training-item-name",
+                  ListId = Model.IsCardsView && !node.IsGroup ? "sout-professions" : null,
+                  Placeholder = Model.IsCardsView && !node.IsGroup ? "Профессия из списка или новая…" : null
+                })
+              </td>
+              <td>
+                @if (Model.IsCardsView)
+                {
+                  @* № РМ на картах не показываем — значение сохраняем скрыто *@
+                  <input type="hidden" name="WorkplaceNumber" value="@(node.IsGroup ? "" : node.WorkplaceNumber)" />
+                  @if (!node.IsGroup)
+                  {
+                    <input type="hidden"
+                           name="DeclarationOfConformity"
+                           value="@(node.DeclarationOfConformity ? "true" : "false")"
+                           class="sout-declaration-input" />
+                    <label class="sout-declaration-check" title="Декларация соответствия">
+                      <input type="checkbox"
+                             class="sout-declaration-toggle"
+                             @(node.DeclarationOfConformity ? "checked" : null) />
+                    </label>
+                  }
+                  else
+                  {
+                    <input type="hidden" name="DeclarationOfConformity" value="false" />
+                  }
+                }
+                else if (!node.IsGroup)
+                {
+                  <input name="WorkplaceNumber" value="@node.WorkplaceNumber" class="ppe-input" />
+                }
+                else
+                {
+                  <input type="hidden" name="WorkplaceNumber" value="" />
+                }
+              </td>
+              <td>
+                @if (!node.IsGroup)
+                {
+                  <input name="OkCode" value="@node.OkCode" class="ppe-input ppe-input-sm" placeholder="код ОК" title="Код по ОК" />
+                }
+                else
+                {
+                  <input type="hidden" name="OkCode" value="" />
+                }
+              </td>
+              <td>
+                @if (!node.IsGroup)
+                {
+                  var classValue = Model.IsCardsView
+                      ? SoutStatusBuilder.ConditionsClassForCards(node)
+                      : (node.ConditionsClass ?? string.Empty);
+                  <select name="ConditionsClass" class="ppe-input ppe-input-sm" title="Итоговый класс условий труда">
+                    <option value="">—</option>
+                    @foreach (var opt in Model.ConditionsClassOptions)
+                    {
+                      if (string.Equals(opt, classValue, StringComparison.OrdinalIgnoreCase))
+                      {
+                        <option value="@opt" selected>@opt</option>
+                      }
+                      else
+                      {
+                        <option value="@opt">@opt</option>
+                      }
+                    }
+                    @if (!string.IsNullOrWhiteSpace(classValue) &&
+                         !Model.ConditionsClassOptions.Contains(classValue, StringComparer.OrdinalIgnoreCase))
+                    {
+                      <option value="@classValue" selected>@classValue</option>
+                    }
+                  </select>
+                }
+                else
+                {
+                  <input type="hidden" name="ConditionsClass" value="" />
+                }
+              </td>
+              @if (!Model.IsCardsView)
+              {
+              <td>
+                @if (!node.IsGroup)
+                {
+                  <input name="Profession" value="@node.Profession" class="ppe-input sout-profession-input" autocomplete="off" />
+                }
+                else
+                {
+                  <input type="hidden" name="Profession" value="" />
+                }
+              </td>
+              }
+              <td>
+                @if (!node.IsGroup)
+                {
+                  <input name="WorkerCount" value="@node.WorkerCount" type="number" min="0" class="ppe-input ppe-input-sm" />
+                }
+                else
+                {
+                  <input type="hidden" name="WorkerCount" value="0" />
+                }
+              </td>
+              @if (!Model.IsCardsView)
+              {
+              <td>
+                @if (!node.IsGroup)
+                {
+                  <span class="sout-plan-year" title="Считается из отчёта СОУТ: дата + 5 лет, декларация → бессрочно, требуется внеплановая спецоценка → текущий год">@(string.IsNullOrWhiteSpace(node.PlanYear) ? "—" : node.PlanYear)</span>
+                  <input type="hidden" name="PlanYear" value="@node.PlanYear" />
+                }
+                else
+                {
+                  <input type="hidden" name="PlanYear" value="" />
+                }
+              </td>
+              }
+              @if (Model.IsCardsView)
+              {
+                <td>
+                  @if (!node.IsGroup)
+                  {
+                    var cardDate = node.SoutAssessmentDate?.Date
+                                   ?? node.SoutCard?.PreparedDate?.Date;
+                    @(cardDate?.ToString("dd.MM.yyyy") ?? "—")
+                  }
+                </td>
+                <td>
+                  @if (!node.IsGroup)
+                  {
+                    @(string.IsNullOrWhiteSpace(node.SoutReportNumber) ? "—" : node.SoutReportNumber)
+                  }
+                </td>
+                <td>
+                  @if (!node.IsGroup)
+                  {
+                    <select name="SoutTrafficMark"
+                            class="ppe-input ppe-input-sm sout-traffic-mark"
+                            title="Авто — по дате СОУТ; или задайте пометку вручную">
+                      @if (string.IsNullOrEmpty(mark))
+                      {
+                        <option value="" selected>Авто (@autoTrafficLabel)</option>
+                      }
+                      else
+                      {
+                        <option value="">Авто (@autoTrafficLabel)</option>
+                      }
+                      @if (mark == "green")
+                      {
+                        <option value="green" selected>Проведена</option>
+                      }
+                      else
+                      {
+                        <option value="green">Проведена</option>
+                      }
+                      @if (mark == "red")
+                      {
+                        <option value="red" selected>Не проведена / просрочена</option>
+                      }
+                      else
+                      {
+                        <option value="red">Не проведена / просрочена</option>
+                      }
+                      @if (mark == "blue")
+                      {
+                        <option value="blue" selected>Истекает</option>
+                      }
+                      else
+                      {
+                        <option value="blue">Истекает</option>
+                      }
+                    </select>
+                  }
+                  else
+                  {
+                    <input type="hidden" name="SoutTrafficMark" value="" />
+                  }
+                </td>
+              }
+              <td>
+                @if (!node.IsGroup)
+                {
+                  <input type="hidden" name="IsUsed" value="@(node.IsUsed ? "true" : "false")" class="sout-is-used-input" />
+                  @if (!Model.IsCardsView)
+                  {
+                    <label class="sout-used-check" title="Используется">
+                      <input type="checkbox" class="sout-is-used-toggle" @(node.IsUsed ? "checked" : null) />
+                    </label>
+                  }
+                }
+                else
+                {
+                  <input type="hidden" name="IsUsed" value="true" />
+                }
+                @if (Model.IsCardsView && !node.IsGroup)
+                {
+                  <a class="btn btn-outline btn-sm sout-open-card-btn"
+                     asp-page="/Sout/Workplaces/Card"
+                     asp-route-id="@node.Id"
+                     title="Открыть карту СОУТ">Карта</a>
+                }
+                <div class="suot-action-bar">
+                  <button type="button" class="suot-action suot-action-danger" data-action="delete"
+                          title="@(Model.IsCardsView && !node.IsGroup ? "Удалить карту" : "Удалить")">🗑</button>
+                </div>
+                <input type="hidden" name="Delete" value="false" class="training-delete-flag" />
+              </td>
+            </tr>
+          }
+
+          @if (!Model.IsCardsView)
+          {
+          <tr id="sout-workplace-row-template" class="training-tree-row training-tree-file sout-workplace-row" hidden
+              data-id="" data-parent-id="" data-is-group="false" data-depth="0" data-department="">
+            <td class="training-select-col"><input type="checkbox" class="training-row-select" aria-label="Выделить" disabled /></td>
+            <td>
+              <input type="hidden" name="Id" value="" disabled />
+              <input type="hidden" name="ParentId" value="" disabled />
+              <input type="hidden" name="IsGroup" value="false" disabled />
+              <input type="hidden" name="Department" value="" class="sout-department-input" disabled />
+              <input type="hidden" name="MainWorkplaceNumber" value="" disabled />
+              @await Html.PartialAsync("/Pages/Training/_TrainingTreeName.cshtml", new TrainingTreeNameModel { Depth = 0, IsGroup = false, InputClass = "ppe-input training-item-name", Disabled = true })
+            </td>
+            <td><input name="WorkplaceNumber" value="" class="ppe-input" disabled /></td>
+            <td><input name="OkCode" value="" class="ppe-input ppe-input-sm" placeholder="код ОК" disabled /></td>
+            <td><input name="ConditionsClass" value="" class="ppe-input ppe-input-sm" list="sout-conditions-classes" disabled /></td>
+            <td><input name="Profession" value="" class="ppe-input" disabled /></td>
+            <td><input name="WorkerCount" value="0" type="number" min="0" class="ppe-input ppe-input-sm" disabled /></td>
+            <td>
+              <span class="sout-plan-year">—</span>
+              <input type="hidden" name="PlanYear" value="" disabled />
+            </td>
+            <td>
+              <input type="hidden" name="IsUsed" value="true" class="sout-is-used-input" disabled />
+              <label class="sout-used-check" title="Используется">
+                <input type="checkbox" class="sout-is-used-toggle" checked disabled />
+              </label>
+              <div class="suot-action-bar">
+                <button type="button" class="suot-action suot-action-danger" data-action="delete" title="Удалить">🗑</button>
+              </div>
+              <input type="hidden" name="Delete" value="false" class="training-delete-flag" disabled />
+            </td>
+          </tr>
+          }
+
+          <tr id="sout-workplace-group-template" class="training-tree-row training-tree-folder sout-workplace-row" hidden
+              data-id="" data-parent-id="" data-is-group="true" data-depth="0" data-department="">
+            <td class="training-select-col"><input type="checkbox" class="training-row-select" aria-label="Выделить" disabled /></td>
+            <td>
+              <input type="hidden" name="Id" value="" disabled />
+              <input type="hidden" name="ParentId" value="" disabled />
+              <input type="hidden" name="IsGroup" value="true" disabled />
+              <input type="hidden" name="Department" value="" class="sout-department-input" disabled />
+              <input type="hidden" name="MainWorkplaceNumber" value="" disabled />
+              @if (Model.IsCardsView)
+              {
+                <input type="hidden" name="Profession" value="" disabled />
+                <input type="hidden" name="PlanYear" value="" disabled />
+              }
+              @await Html.PartialAsync("/Pages/Training/_TrainingTreeName.cshtml", new TrainingTreeNameModel { Depth = 0, IsGroup = true, InputClass = "ppe-input training-group-name", Disabled = true })
+            </td>
+            <td>
+              <input type="hidden" name="WorkplaceNumber" value="" disabled />
+              @if (Model.IsCardsView)
+              {
+                <input type="hidden" name="DeclarationOfConformity" value="false" disabled />
+              }
+            </td>
+            <td><input type="hidden" name="OkCode" value="" disabled /></td>
+            <td><input type="hidden" name="ConditionsClass" value="" disabled /></td>
+            @if (!Model.IsCardsView)
+            {
+              <td><input type="hidden" name="Profession" value="" disabled /></td>
+            }
+            <td><input type="hidden" name="WorkerCount" value="0" disabled /></td>
+            @if (!Model.IsCardsView)
+            {
+              <td><input type="hidden" name="PlanYear" value="" disabled /></td>
+            }
+            @if (Model.IsCardsView)
+            {
+              <td></td>
+              <td></td>
+              <td><input type="hidden" name="SoutTrafficMark" value="" disabled /></td>
+            }
+            <td>
+              <input type="hidden" name="IsUsed" value="true" disabled />
+              <div class="suot-action-bar">
+                <button type="button" class="suot-action suot-action-danger" data-action="delete" title="Удалить">🗑</button>
+              </div>
+              <input type="hidden" name="Delete" value="false" class="training-delete-flag" disabled />
+            </td>
+          </tr>
+
+          @if (Model.IsCardsView)
+          {
+          <tr id="sout-workplace-card-row-template" class="training-tree-row training-tree-file sout-workplace-row traffic-red" hidden
+              data-id="" data-parent-id="" data-is-group="false" data-depth="0" data-department="" data-auto-traffic="red">
+            <td class="training-select-col"><input type="checkbox" class="training-row-select" aria-label="Выделить" disabled /></td>
+            <td>
+              <input type="hidden" name="Id" value="" disabled />
+              <input type="hidden" name="ParentId" value="" disabled />
+              <input type="hidden" name="IsGroup" value="false" disabled />
+              <input type="hidden" name="Department" value="" class="sout-department-input" disabled />
+              <input type="hidden" name="MainWorkplaceNumber" value="" disabled />
+              <input type="hidden" name="Profession" value="" class="sout-profession-input" disabled />
+              <input type="hidden" name="PlanYear" value="" disabled />
+              <input type="hidden" name="IsManualSoutCard" value="true" disabled />
+              @await Html.PartialAsync("/Pages/Training/_TrainingTreeName.cshtml", new TrainingTreeNameModel
+              {
+                Depth = 0,
+                IsGroup = false,
+                InputClass = "ppe-input training-item-name",
+                ListId = "sout-professions",
+                Placeholder = "Профессия из списка или новая…",
+                Disabled = true
+              })
+            </td>
+            <td>
+              <input type="hidden" name="WorkplaceNumber" value="" disabled />
+              <input type="hidden" name="DeclarationOfConformity" value="false" class="sout-declaration-input" disabled />
+              <label class="sout-declaration-check" title="Декларация соответствия">
+                <input type="checkbox" class="sout-declaration-toggle" disabled />
+              </label>
+            </td>
+            <td><input name="OkCode" value="" class="ppe-input ppe-input-sm" placeholder="код ОК" disabled /></td>
+            <td><input name="ConditionsClass" value="" class="ppe-input ppe-input-sm" list="sout-conditions-classes" disabled /></td>
+            <td><input name="WorkerCount" value="1" type="number" min="0" class="ppe-input ppe-input-sm" disabled /></td>
+            <td>—</td>
+            <td>—</td>
+            <td>
+              <select name="SoutTrafficMark" class="ppe-input ppe-input-sm sout-traffic-mark" title="Авто — по дате СОУТ; или задайте пометку вручную" disabled>
+                <option value="" selected>Авто (Не проведена / просрочена)</option>
+                <option value="green">Проведена</option>
+                <option value="red">Не проведена / просрочена</option>
+                <option value="blue">Истекает</option>
+              </select>
+            </td>
+            <td>
+              <input type="hidden" name="IsUsed" value="true" class="sout-is-used-input" disabled />
+              <a class="btn btn-outline btn-sm sout-open-card-btn" href="#" title="Сначала сохраните список, затем откройте карту">Карта</a>
+              <div class="suot-action-bar">
+                <button type="button" class="suot-action suot-action-danger" data-action="delete" title="Удалить карту">🗑</button>
+              </div>
+              <input type="hidden" name="Delete" value="false" class="training-delete-flag" disabled />
+            </td>
+          </tr>
+          }
+        </tbody>
+      </table>
+      </div>
+      
+    </form>
+  </div>
+
+  <datalist id="sout-conditions-classes">
+    @foreach (var item in Model.ConditionsClassOptions)
+    {
+      <option value="@item"></option>
+    }
+  </datalist>
+
+  @if (Model.IsCardsView)
+  {
+    <datalist id="sout-professions">
+      @foreach (var profession in Model.ProfessionOptions)
+      {
+        <option value="@profession"></option>
+      }
+    </datalist>
+  }
+
+  <div class="panel ppe-panel sout-workplaces-departments">
+    <h3 class="ppe-subtitle">Подразделения</h3>
+    <ul class="sout-department-tree" id="sout-department-tree">
+      <li>
+        <a class="sout-department-link @(string.IsNullOrWhiteSpace(Model.DepartmentId) ? "sout-department-active" : "")"
+           href="#"
+           data-department-id="">Подразделения</a>
+      </li>
+      @foreach (var group in Model.DepartmentGroups)
+      {
+        <li>
+          <a class="sout-department-link @(Model.DepartmentId == group.Id ? "sout-department-active" : "")"
+             href="#"
+             data-department-id="@group.Id">@group.Name</a>
+        </li>
+      }
+    </ul>
+  </div>
+</div>
+
+@section Scripts {
+  <script src="~/js/training-catalog.js" asp-append-version="true"></script>
+  <script src="~/js/sout-workplaces.js" asp-append-version="true"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', function () {
+      @if (!Model.IsCardsView)
+      {
+        <text>
+      initTrainingCatalog({
+        addRowBtnId: 'sout-workplace-add-row-btn',
+        addGroupBtnId: 'sout-workplace-add-group-btn',
+        rowTemplateId: 'sout-workplace-row-template',
+        groupTemplateId: 'sout-workplace-group-template',
+        moveToGroupBtnId: 'sout-workplace-move-btn',
+        treeBodyId: 'sout-workplaces-body'
+      });
+        </text>
+      }
+      else
+      {
+        <text>
+      initTrainingCatalog({
+        addRowBtnId: 'sout-workplace-add-card-btn',
+        rowTemplateId: 'sout-workplace-card-row-template',
+        treeBodyId: 'sout-workplaces-body',
+        defaultParentId: '@(Model.DepartmentId ?? "")',
+        onRowAppended: function (row) {
+          if (typeof window.bindSoutCardRow === 'function') {
+            window.bindSoutCardRow(row);
+          }
+          var idInput = row.querySelector('input[name="Id"]');
+          var id = idInput ? (idInput.value || '').trim() : '';
+          if (id) {
+            row.setAttribute('data-assessment-href', '/Sout/Workplaces/Card?id=' + encodeURIComponent(id));
+            var openBtn = row.querySelector('.sout-open-card-btn');
+            if (openBtn) {
+              openBtn.setAttribute('title', 'Сначала нажмите «Сохранить», затем откройте карту');
+            }
+          }
+        }
+      });
+        </text>
+      }
+      initSoutWorkplaces({
+        filterFormId: 'sout-workplaces-filter-form',
+        treeBodyId: 'sout-workplaces-body',
+        departmentTreeId: 'sout-department-tree',
+        departmentId: '@(Model.DepartmentId ?? "")',
+        professionSync: @(Model.IsCardsView ? "true" : "false")
+      });
+
+      (function () {
+        var scrollKey = 'soutWorkplacesScroll';
+        function getScrollWrap() {
+          return document.querySelector('.sout-workplaces-table-wrap')
+            || document.querySelector('.training-status-wrap');
+        }
+        function saveScroll() {
+          try {
+            var wrap = getScrollWrap();
+            var active = document.activeElement;
+            var row = active && active.closest ? active.closest('tr[data-id]') : null;
+            sessionStorage.setItem(scrollKey, JSON.stringify({
+              top: wrap ? wrap.scrollTop : (window.scrollY || 0),
+              left: wrap ? wrap.scrollLeft : 0,
+              pageTop: window.scrollY || 0,
+              rowId: row ? (row.getAttribute('data-id') || '') : '',
+              at: Date.now()
+            }));
+          } catch (e) { /* ignore */ }
+        }
+        function restoreScroll() {
+          try {
+            var raw = sessionStorage.getItem(scrollKey);
+            if (!raw) return;
+            var saved = JSON.parse(raw);
+            sessionStorage.removeItem(scrollKey);
+            if (!saved || typeof saved.top !== 'number') return;
+            if (saved.at && Date.now() - saved.at > 120000) return;
+            var wrap = getScrollWrap();
+            function apply() {
+              if (saved.rowId) {
+                var safeId = String(saved.rowId).replace(/\\/g, '\\\\').replace(/"/g, '\\"');
+                var row = document.querySelector('#sout-workplaces-body tr[data-id="' + safeId + '"]');
+                if (row && wrap) {
+                  var y = row.getBoundingClientRect().top - wrap.getBoundingClientRect().top + wrap.scrollTop - 72;
+                  wrap.scrollTop = Math.max(0, y);
+                  if (typeof saved.left === 'number') wrap.scrollLeft = saved.left;
+                  return;
+                }
+                if (row) {
+                  row.scrollIntoView({ block: 'center', behavior: 'auto' });
+                  return;
+                }
+              }
+              if (wrap) {
+                wrap.scrollTop = saved.top;
+                if (typeof saved.left === 'number') wrap.scrollLeft = saved.left;
+              }
+              if (typeof saved.pageTop === 'number') {
+                window.scrollTo(0, saved.pageTop);
+              }
+            }
+            apply();
+            requestAnimationFrame(function () {
+              apply();
+              setTimeout(apply, 50);
+              setTimeout(apply, 200);
+            });
+          } catch (e) { /* ignore */ }
+        }
+        document.querySelectorAll('form[method="post"]').forEach(function (form) {
+          var isSave = form.querySelector('button.btn-primary')
+            && form.querySelector('#sout-workplaces-body');
+          if (!isSave) return;
+          form.addEventListener('submit', saveScroll);
+        });
+        restoreScroll();
+      })();
+
+      @if (Model.IsCardsView)
+      {
+        <text>
+      var body = document.getElementById('sout-workplaces-body');
+      if (body) {
+        function applySoutTrafficClass(row, traffic) {
+          row.classList.remove('traffic-green', 'traffic-red', 'traffic-blue', 'traffic-yellow');
+          if (traffic === 'green' || traffic === 'red' || traffic === 'blue') {
+            row.classList.add('traffic-' + traffic);
+          }
+        }
+
+        function syncSoutTrafficMark(select) {
+          var row = select.closest('tr');
+          if (!row) return;
+          var mark = (select.value || '').trim().toLowerCase();
+          var traffic = mark || (row.getAttribute('data-auto-traffic') || '');
+          applySoutTrafficClass(row, traffic);
+        }
+
+        body.querySelectorAll('.sout-traffic-mark').forEach(function (select) {
+          select.addEventListener('change', function () { syncSoutTrafficMark(select); });
+        });
+
+        body.addEventListener('change', function (e) {
+          var select = e.target.closest('.sout-traffic-mark');
+          if (select) syncSoutTrafficMark(select);
+        });
+
+        body.addEventListener('click', function (e) {
+          if (e.target.closest('a, button, input, label, select, .training-tree-toggle')) return;
+          var row = e.target.closest('tr[data-assessment-href]');
+          if (!row) return;
+          var href = row.getAttribute('data-assessment-href');
+          if (href) window.location.href = href;
+        });
+      }
+        </text>
+      }
+    });
+  </script>
+}

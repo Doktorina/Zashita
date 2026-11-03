@@ -1,0 +1,68 @@
+@model Zashita.Web.ViewComponents.StaffingOnboardingAlertsView
+@using Zashita.Core.Employees
+@{
+  string KindLabel(StaffingChangeKind kind) => kind switch
+  {
+    StaffingChangeKind.Hired => "Приём",
+    StaffingChangeKind.Transferred => "Перевод",
+    _ => "Изменение"
+  };
+
+  string ModuleActionUrl(StaffingOnboardingItem item)
+  {
+    var key = (Model.ModuleKey ?? "").Trim().ToLowerInvariant();
+    var person = Uri.EscapeDataString(item.Event.Person ?? "");
+    return key switch
+    {
+      "обучение" or "training" => $"/Training/Status?personQ={person}",
+      "медосмотры" or "med" => $"/Med/Status?q={person}",
+      "специальная-оценка" or "спецоценка" or "sout" => $"/Sout/Status?q={person}",
+      "риски" or "risks" => "/Risks/Reports/Status",
+      _ => "/"
+    };
+  }
+}
+
+<div class="home-alert staffing-onboarding-alert home-alert-dismissible"
+     data-dismiss-key="module-staffing-@(Model.ModuleKey)"
+     data-dismiss-version="@(string.Join(",", Model.Items.Select(i => i.Event.Id).Take(12)))"
+     style="flex-wrap:wrap;align-items:flex-start;gap:10px;margin-bottom:16px">
+  <span class="home-alert-icon" aria-hidden="true">👤</span>
+  <div class="home-alert-text" style="flex:1;min-width:16rem">
+    <strong>Приём и перевод — нужно заполнить раздел</strong>
+    <p class="hint" style="margin:6px 0 0">
+      Сотрудник пропадает из этого списка после заполнения данных раздела; на главной остаётся, пока не закрыты все модули.
+    </p>
+    <ul class="home-alert-list">
+      @foreach (var item in Model.Items)
+      {
+        var eventDate = StaffingOnboarding.FormatEventDateLabel(item.Event.Kind, item.DisplayDate);
+        <li>
+          <b>@KindLabel(item.Event.Kind)</b> — @item.Event.Person
+          @if (!string.IsNullOrWhiteSpace(eventDate))
+          {
+            <b style="margin-left:4px">(@eventDate)</b>
+          }
+          @if (item.Event.Kind == StaffingChangeKind.Transferred)
+          {
+            @if (!string.IsNullOrWhiteSpace(item.Event.FromOrganization))
+            {
+              <span class="hint">, из «@item.Event.FromOrganization» → в «@item.Event.Organization»</span>
+            }
+            else if (!string.IsNullOrWhiteSpace(item.Event.Organization))
+            {
+              <span class="hint">, в «@item.Event.Organization»</span>
+            }
+          }
+          @if (!string.IsNullOrWhiteSpace(item.Event.NewProfession))
+          {
+            <span class="hint">(@item.Event.NewProfession)</span>
+          }
+          <span class="hint" style="color:#9a3412">— @item.Gap.ModuleGapLabel(Model.ModuleKey)</span>
+          <a class="hint" href="@ModuleActionUrl(item)" style="margin-left:6px">открыть →</a>
+        </li>
+      }
+    </ul>
+  </div>
+  <button type="button" class="home-alert-dismiss" data-dismiss-alert title="Скрыть" aria-label="Скрыть уведомление">×</button>
+</div>

@@ -1,0 +1,130 @@
+@page "/Ppe/SiosCard"
+@model Zashita.Web.Pages.Ppe.SiosCard.IndexModel
+@using Zashita.Core.Ppe
+@{
+    ViewData["Title"] = Model.DocumentName;
+    ViewData["Subtitle"] = $"Шаг {Model.Step} из 3 — {Model.Organization}";
+    ViewData["ActiveModule"] = "спецодежда-и-сиз";
+    ViewData["IsModulePage"] = true;
+}
+
+<div class="panel ppe-panel">
+  @if (!string.IsNullOrWhiteSpace(Model.Message))
+  {
+    <p class="text-danger">@Model.Message</p>
+  }
+  <form method="post" asp-page-handler="Next">
+    <input type="hidden" name="Doc" value="@Model.DocumentName" />
+    <input type="hidden" name="Step" value="@Model.Step" />
+
+    @if (Model.Step == 1)
+    {
+      <h2 class="ppe-step-title">Шаг 1. Профессия</h2>
+      <select name="Profession" class="ppe-input" required>
+        <option value="">— выберите профессию —</option>
+        @foreach (var prof in Model.Professions.Keys)
+        {
+          <option value="@prof" selected="@(prof == Model.Profession)">@prof</option>
+        }
+      </select>
+    }
+    else if (Model.Step == 2)
+    {
+      @if (Model.IsDutyCard)
+      {
+        <h2 class="ppe-step-title">Шаг 2. Ответственные</h2>
+        <p class="hint">Выберите ответственных, за которыми закреплены дежурные СИЗ.</p>
+      }
+      else
+      {
+        <h2 class="ppe-step-title">Шаг 2. Сотрудники</h2>
+      }
+      <input type="hidden" name="Profession" value="@Model.Profession" />
+      <div class="ppe-checklist">
+        @foreach (var emp in Model.EmployeesForProfession)
+        {
+          <label class="ppe-check-item">
+            <input type="checkbox" name="SelectedEmployees" value="@emp"
+                   checked="@Model.SelectedEmployees.Contains(emp)" />
+            <span>@emp</span>
+          </label>
+        }
+      </div>
+    }
+    else if (Model.IsDutyCard)
+    {
+      <h2 class="ppe-step-title">Шаг 3. Позиции дежурных СИЗ</h2>
+      <input type="hidden" name="Profession" value="@Model.Profession" />
+      @foreach (var emp in Model.SelectedEmployees)
+      {
+        <input type="hidden" name="SelectedEmployees" value="@emp" />
+      }
+      <p class="hint">Отметьте позиции для карточки дежурных СИЗ.</p>
+      <div class="ppe-checklist ppe-checklist-tall">
+        @foreach (var item in Model.PickItems)
+        {
+          <label class="ppe-check-item">
+            <input type="checkbox" name="SelectedItems" value="@item.Name"
+                   checked="@Model.SelectedItems.Contains(item.Name)" />
+            <span>@item.Display — @item.Norm</span>
+          </label>
+        }
+      </div>
+    }
+    else
+    {
+      <h2 class="ppe-step-title">Шаг 3. Шаблон выдачи</h2>
+      <input type="hidden" name="Profession" value="@Model.Profession" />
+      @foreach (var emp in Model.SelectedEmployees)
+      {
+        <input type="hidden" name="SelectedEmployees" value="@emp" />
+      }
+      var createTemplateHref = Url.Page(
+          "/Ppe/IssueStandards",
+          values: new
+          {
+            returnTo = "sios",
+            returnDoc = Model.DocumentName,
+            returnStep = 3,
+            profession = Model.Profession
+          }) ?? "/Ppe/IssueStandards";
+      @if (Model.Templates.Count == 0 && string.IsNullOrWhiteSpace(Model.StandardId))
+      {
+        <p class="hint">Нет шаблонов для этой профессии. <a href="@createTemplateHref">Создать новый шаблон</a></p>
+      }
+      else if (Model.Templates.Count == 0 && !string.IsNullOrWhiteSpace(Model.StandardId))
+      {
+        <input type="hidden" name="StandardId" value="@Model.StandardId" />
+        <p class="hint">Используется только что созданный шаблон. <a href="@createTemplateHref">Изменить шаблон</a></p>
+      }
+      else
+      {
+        <select name="StandardId" class="ppe-input" required>
+          <option value="">— выберите шаблон —</option>
+          @foreach (var t in Model.Templates)
+          {
+            if (t.Id == Model.StandardId)
+            {
+              <option value="@t.Id" selected>@t.ListDisplayName — @t.Profession</option>
+            }
+            else
+            {
+              <option value="@t.Id">@t.ListDisplayName — @t.Profession</option>
+            }
+          }
+        </select>
+        <p class="hint">
+          <a href="@createTemplateHref">Создать новый шаблон</a>
+        </p>
+      }
+    }
+
+    <div class="ppe-actions">
+      @if (Model.Step > 1)
+      {
+        <button type="submit" formaction="?handler=Back" class="btn btn-outline">Назад</button>
+      }
+      <button type="submit" class="btn btn-primary">@(Model.Step == 3 ? "Открыть предпросмотр" : "Далее")</button>
+    </div>
+  </form>
+</div>

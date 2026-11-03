@@ -1,0 +1,136 @@
+﻿@page "/Risks/Workplaces/Preview"
+@model Zashita.Web.Pages.Risks.Workplaces.PreviewModel
+@{
+    ViewData["Title"] = Model.NotFound ? "Не найдено" : " ";
+    var historyTitle = Model.NotFound ? "Не найдено" : (Model.Title ?? "Печать");
+    Layout = null;
+    var landscape = Model.Mode is "identification" or "identification-measures" or "assessment";
+}
+
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>@ViewData["Title"]</title>
+    <partial name="_SiteIconLinks" />
+<link rel="stylesheet" href="/css/zashita.css" asp-append-version="true" />
+  <link rel="stylesheet" href="/css/ppe-doc-print.css" asp-append-version="true" />
+  <link rel="stylesheet" href="/css/sout-preparation.css" asp-append-version="true" />
+  <link rel="stylesheet" href="/css/risks-preparation.css" asp-append-version="true" />
+  <style>
+    .risks-a4-landscape {
+      width: 297mm;
+      min-height: 210mm;
+      margin: 0 auto;
+      background: #fff;
+      box-sizing: border-box;
+    }
+    .risks-card-acq-sheet {
+      width: auto;
+      min-height: 0;
+      margin: 12px auto;
+      box-sizing: border-box;
+    }
+    .risks-card-acq-spacer {
+      height: 1.35em;
+      line-height: 1.35em;
+      font-size: 11pt;
+      margin: 0 0 2mm;
+    }
+    @if (landscape)
+    {
+      <text>
+    @@page { size: A4 landscape; margin: 10mm; }
+    @@media print {
+      body { margin: 0; }
+      .sout-preview-shell, .sout-preview-doc-wrap { margin: 0; padding: 0; box-shadow: none; }
+      .risks-a4-landscape { width: auto; min-height: 0 !important; height: auto !important; }
+      .risks-page-break {
+        page-break-before: always;
+        break-before: page;
+        height: 0;
+        margin: 0;
+        padding: 0;
+        border: none;
+      }
+      .risks-card-acq-sheet {
+        page-break-before: auto;
+        break-before: auto;
+        width: auto;
+        min-height: auto;
+        margin: 0;
+        padding: 0;
+      }
+      .risks-card-compiled, .risks-card-page-foot {
+        page-break-before: avoid;
+        page-break-inside: avoid;
+      }
+    }
+      </text>
+    }
+  </style>
+</head>
+<body class="sout-preview-page risks-preview-mode-@Model.Mode">
+@if (Model.NotFound)
+{
+  <div class="sout-preview-missing">
+    <p>Рабочее место не найдено. Выберите рабочее место (не папку) в списке.</p>
+    <a class="btn btn-outline" href="/Risks/Workplaces">К списку</a>
+  </div>
+}
+else
+{
+  <div class="sout-preview-shell">
+    <div class="sout-preview-toolbar ppe-no-print">
+      <div class="sout-preview-toolbar-left">
+        <button type="button" class="btn btn-primary btn-sm" onclick="zashitaRecordPrint({ category: 'risks', title: @Json.Serialize(historyTitle), summary: 'Печать' })">Печать</button>
+        <button type="button" class="btn btn-outline btn-sm" id="risks-doc-word-btn">Word</button>
+        <button type="button" class="btn btn-outline btn-sm" id="risks-workplace-preview-save-btn">Записать</button>
+      </div>
+      <div class="sout-preview-toolbar-right">
+        <a class="btn btn-outline btn-sm" href="/Risks/Workplaces?printId=@Model.Id">К списку</a>
+      </div>
+    </div>
+
+    @if (!string.IsNullOrWhiteSpace(Model.Message))
+    {
+      <p class="sout-preview-message ppe-no-print">@Model.Message</p>
+    }
+
+    <form method="post" asp-page="/Risks/Workplaces/Preview" asp-page-handler="Save" id="risks-workplace-preview-save-form" class="ppe-no-print">
+      <input type="hidden" name="id" value="@Model.Id" />
+      <input type="hidden" name="mode" value="@Model.Mode" />
+      <div id="risks-workplace-preview-overrides"></div>
+    </form>
+
+    <div class="sout-preview-doc-wrap@(landscape ? " risks-export-landscape" : "")" id="risks-workplace-preview-print-area">
+      <div class="@(landscape ? "risks-a4-landscape" : "")">
+        @Html.Raw(Model.PreviewHtml)
+      </div>
+    </div>
+  </div>
+
+  <script src="~/js/risks-doc-list.js" asp-append-version="true"></script>
+  <script src="~/js/risks-doc-export.js" asp-append-version="true"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', function () {
+      initRisksPreparationPreview({
+        saveBtnId: 'risks-workplace-preview-save-btn',
+        saveFormId: 'risks-workplace-preview-save-form',
+        overridesContainerId: 'risks-workplace-preview-overrides',
+        printAreaId: 'risks-workplace-preview-print-area'
+      });
+      if (window.zashitaRisksDocExport) {
+        window.zashitaRisksDocExport.bind({
+          sourceSelector: '#risks-workplace-preview-print-area',
+          fileName: @Json.Serialize(historyTitle),
+          landscape: @(landscape ? "true" : "false")
+        });
+      }
+    });
+  </script>
+}
+  <script src="/js/print-history.js"></script>
+</body>
+</html>

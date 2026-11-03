@@ -1,0 +1,42 @@
+.journal-filters {
+  margin-top: 8px;
+}
+
+.journal-filter-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 10px 14px;
+  align-items: end;
+}
+
+.journal-reason-hint {
+  margin: 10px 0 0;
+}
+
+.journal-reason-hint.is-hidden {
+  display: none;
+}
+
+.journal-table-wrap {
+  overflow-x: auto;
+}
+
+.journal-edit-grid .journal-cell-input {
+  min-width: 7.5rem;
+  width: 100%;
+}
+
+.journal-edit-grid .journal-col-muted,
+.journal-edit-grid td.journal-col-muted {
+  opacity: 0.55;
+}
+
+.journal-edit-grid input[readonly] {
+  background: #f3f5f8;
+  color: #667;
+}
+
+/* снизу таблицы кнопок Сохранить/Печать/DOC быть не должно — только сверху */
+#journal-save-form > .ppe-actions {
+  display: none !important;
+}

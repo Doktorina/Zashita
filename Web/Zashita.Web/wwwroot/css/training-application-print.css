@@ -1,0 +1,398 @@
+.training-preview-page {
+  margin: 0;
+  background: #f3f4f6;
+  color: #000;
+}
+
+.training-preview-shell {
+  max-width: 980px;
+  margin: 0 auto;
+  padding: 16px;
+}
+
+.training-preview-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 12px;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.training-preview-hint {
+  margin: 0 0 12px;
+  font-size: 12px;
+  color: #555;
+}
+
+.training-preview-doc-wrap {
+  background: #fff;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
+  padding: 24px;
+}
+
+.training-app-doc {
+  max-width: none;
+  width: 100%;
+  margin: 0 auto;
+  font-family: "Times New Roman", Times, serif;
+  font-size: 12pt;
+  color: #000;
+  line-height: 1.35;
+}
+
+/* ——— Шапка организации (образец заявки) ——— */
+.training-app-object {
+  text-align: right;
+  font-size: 12pt;
+  margin: 0 0 8px;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.training-app-letterhead {
+  text-align: center;
+  margin: 0 0 16px;
+}
+
+.training-app-letterhead-org {
+  font-weight: 700;
+  font-size: 13pt;
+  line-height: 1.3;
+  padding: 2px 4px 4px;
+}
+
+.training-app-letterhead-details {
+  font-size: 9.5pt;
+  line-height: 1.35;
+  padding: 4px 2px 6px;
+  white-space: pre-line;
+}
+
+.training-app-letterhead-rule {
+  border: none;
+  border-top: 1px solid #000;
+  height: 0;
+  margin: 0;
+  padding: 0;
+}
+
+.training-app-letterhead-rule-double {
+  border-top: 3px double #000;
+  margin-top: 2px;
+}
+
+.training-app-top {
+  width: 100%;
+  border-collapse: collapse;
+  margin-bottom: 18px;
+  border: none !important;
+}
+
+.training-app-top td {
+  border: none !important;
+  padding: 0;
+  vertical-align: top;
+}
+
+.training-app-date {
+  width: 50%;
+  font-size: 12pt;
+  text-align: left;
+}
+
+.training-app-to {
+  width: 50%;
+  text-align: right;
+  line-height: 1.35;
+  font-size: 12pt;
+}
+
+.training-app-title {
+  text-align: center;
+  font-weight: 700;
+  font-size: 14pt;
+  margin: 10px 0 2px;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+}
+
+.training-app-subtitle {
+  text-align: center;
+  margin: 0 0 20px;
+  font-size: 12pt;
+}
+
+.training-app-section {
+  margin: 0 0 14px;
+}
+
+.training-app-label {
+  font-weight: 700;
+  margin-bottom: 4px;
+}
+
+.training-app-section-program {
+  width: 100%;
+  border-collapse: collapse;
+  border: none !important;
+  margin: 0 0 14px;
+}
+
+.training-app-section-program td {
+  border: none !important;
+  padding: 0;
+  vertical-align: bottom;
+}
+
+.training-app-label-inline {
+  font-weight: 700;
+  white-space: nowrap;
+  padding-right: 10px !important;
+  padding-bottom: 2px !important;
+}
+
+/* Специфичнее, чем td { border: none }, иначе линия под программой пропадает */
+.training-app-section-program td.training-app-program {
+  border: none !important;
+  border-bottom: 1px solid #000 !important;
+  min-height: 1.35em;
+  padding: 0 2px 2px !important;
+  font-weight: 400;
+  width: 100%;
+}
+
+.training-app-hint {
+  text-align: center;
+  font-size: 10pt;
+  margin-top: 2px;
+}
+
+.training-app-contact {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 4px;
+}
+
+.training-app-contact td {
+  padding: 3px 0;
+  vertical-align: bottom;
+}
+
+.training-app-contact .k {
+  width: 18%;
+  white-space: nowrap;
+  padding-right: 10px;
+}
+
+.training-app-contact .v {
+  border-bottom: 1px solid #000;
+  min-width: 220px;
+  padding-left: 4px;
+}
+
+.training-app-contact .fill {
+  display: inline-block;
+  min-width: 220px;
+  min-height: 1.1em;
+}
+
+.training-app-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 8px;
+  font-size: 10.5pt;
+  table-layout: fixed;
+}
+
+.training-app-table th,
+.training-app-table td {
+  border: 1px solid #000;
+  padding: 4px 3px;
+  vertical-align: middle;
+  word-wrap: break-word;
+}
+
+.training-app-table th {
+  text-align: center;
+  font-weight: 700;
+  font-size: 10pt;
+}
+
+.training-app-table .c {
+  text-align: center;
+}
+
+.training-app-table-v2 td {
+  font-size: 10pt;
+}
+
+.training-app-foot {
+  margin-top: 28px;
+  line-height: 1.6;
+}
+
+.training-app-foot-split {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 28px;
+  border: none !important;
+}
+
+.training-app-foot-split td {
+  border: none !important;
+  padding: 0;
+  vertical-align: top;
+  line-height: 1.6;
+}
+
+.training-app-foot-left {
+  width: 58%;
+  text-align: left;
+  padding-right: 12px !important;
+}
+
+.training-app-foot-right {
+  width: 42%;
+  text-align: right;
+  vertical-align: bottom !important;
+}
+
+.training-app-sign-row {
+  margin-top: 10px;
+}
+
+.training-app-sign {
+  display: grid;
+  gap: 2px;
+}
+
+.training-app-sign-line {
+  border-bottom: 1px solid #000;
+  min-height: 1.2em;
+  margin-top: 4px;
+}
+
+.training-app-sign-caption {
+  font-size: 10pt;
+  text-align: center;
+  color: #333;
+}
+
+.training-app-org-block {
+  text-align: right;
+  margin-bottom: 18px;
+  line-height: 1.35;
+  white-space: pre-line;
+}
+
+.training-app-h1 {
+  font-size: 15pt;
+  text-align: center;
+  margin: 0 0 10px;
+  text-transform: uppercase;
+}
+
+.training-app-numline {
+  text-align: center;
+  margin: 0 0 16px;
+}
+
+.training-app-variant-note {
+  font-size: 10pt;
+  color: #555;
+  text-align: right;
+  margin: 0 0 8px;
+}
+
+.training-app-worker-title {
+  font-size: 13pt;
+  margin: 16px 0 8px;
+}
+
+.training-app-meta {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 12px 0 16px;
+}
+
+.training-app-meta td {
+  border: 1px solid #333;
+  padding: 6px 8px;
+  vertical-align: top;
+}
+
+.training-app-meta .label {
+  width: 36%;
+  background: #f7f7f7;
+  font-weight: 700;
+}
+
+.training-app-signatures {
+  margin-top: 28px;
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.training-app-signatures td {
+  padding: 10px 0;
+  vertical-align: bottom;
+}
+
+.training-app-edit-hint {
+  margin-top: 14px;
+  font-size: 12px;
+  color: #555;
+  font-family: "Segoe UI", Tahoma, sans-serif;
+}
+
+.training-preview-message {
+  margin: 0;
+  padding: 8px 14px;
+  background: #e8f5e9;
+  border-bottom: 1px solid #a5d6a7;
+  color: #1b5e20;
+  font-size: 13px;
+  font-family: "Segoe UI", Tahoma, sans-serif;
+}
+
+.training-app-doc [contenteditable="true"] {
+  outline: none;
+}
+
+.training-app-doc [contenteditable="true"]:focus {
+  background: #fff8dc;
+}
+
+@media print {
+  .ppe-no-print,
+  .training-preview-toolbar,
+  .training-preview-hint,
+  .training-preview-message,
+  .training-app-edit-hint {
+    display: none !important;
+  }
+
+  .training-preview-page {
+    background: #fff;
+  }
+
+  .training-preview-shell,
+  .training-preview-doc-wrap {
+    margin: 0;
+    padding: 0;
+    box-shadow: none;
+  }
+
+  .training-app-doc {
+    max-width: none;
+  }
+
+  .training-app-doc [contenteditable="true"]:focus {
+    background: transparent;
+  }
+
+  @page {
+    size: A4 landscape;
+    margin: 12mm;
+  }
+}

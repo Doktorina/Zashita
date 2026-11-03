@@ -1,0 +1,40 @@
+@model Zashita.Web.Pages.Training.TrainingKindSectionFilterModel
+
+<div class="training-kind-filter-box training-kind-filter-tree">
+  @if (Model.Groups.Count == 0)
+  {
+    <span class="hint">Нет видов обучения</span>
+  }
+  else
+  {
+    @foreach (var group in Model.Groups)
+    {
+      var groupChecked = group.Programs.All(program => Model.IsSelected(program));
+      <details class="training-kind-section">
+        <summary class="training-kind-section-summary">
+          <span class="training-kind-section-caret" aria-hidden="true">▶</span>
+          <input type="checkbox"
+                 class="js-kind-section-toggle"
+                 @(groupChecked ? "checked" : null)
+                 onclick="event.stopPropagation()"
+                 title="Отметить весь раздел" />
+          <span class="training-kind-section-title">@group.GroupName</span>
+          <span class="training-kind-section-count">@group.Programs.Count</span>
+        </summary>
+        <div class="training-kind-section-body">
+          @foreach (var program in group.Programs)
+          {
+            <label class="training-kind-filter-option">
+              <input type="checkbox"
+                     name="@Model.CheckboxName"
+                     value="@program"
+                     class="js-kind-filter"
+                     @(Model.IsSelected(program) ? "checked" : null) />
+              <span>@program</span>
+            </label>
+          }
+        </div>
+      </details>
+    }
+  }
+</div>

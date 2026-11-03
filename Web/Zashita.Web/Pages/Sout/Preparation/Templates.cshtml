@@ -1,0 +1,430 @@
+@page "/Sout/Preparation/Templates"
+@using Zashita.Core.Risks
+@model Zashita.Web.Pages.Sout.Preparation.TemplatesModel
+@{
+    ViewData["Title"] = " ";
+    ViewData["Subtitle"] = Model.Organization;
+    var isHub = Model.IsHub;
+    var hasExplicitSelection = Model.HasExplicitSelection;
+}
+
+@section Styles {
+  <link rel="stylesheet" href="~/css/risks-preparation.css" asp-append-version="true" />
+  <link rel="stylesheet" href="~/css/sout-preparation.css" asp-append-version="true" />
+  <style>
+    .page-title { display: none; }
+    .sout-templates-preview-wrap {
+      margin-top: 20px;
+      border-top: 1px solid var(--line-100);
+      padding-top: 16px;
+    }
+    .sout-templates-preview-stage {
+      overflow: auto;
+      background: #c5c5c5;
+      padding: 16px;
+      border-radius: var(--radius-sm);
+      display: flex;
+      flex-direction: column;
+      align-items: stretch;
+      gap: 24px;
+    }
+    .sout-templates-preview-stage .sout-a4-info.sout-a3-info {
+      width: 100%;
+      min-width: 420mm;
+      min-height: 297mm;
+      margin: 0 0 24px;
+      background: #fff !important;
+      color: #000 !important;
+      box-shadow: 0 2px 14px rgba(0,0,0,.2);
+      padding: 5mm;
+      box-sizing: border-box;
+      overflow: visible;
+    }
+    .sout-templates-preview-stage .sout-info-tail-sheet.sout-a3-info {
+      width: 100%;
+      min-width: 420mm;
+      min-height: 297mm;
+      margin: 0 0 24px;
+      background: #fff !important;
+      color: #000 !important;
+      box-shadow: 0 2px 14px rgba(0,0,0,.2);
+      padding: 5mm;
+      box-sizing: border-box;
+    }
+    .sout-templates-preview-stage .sout-info-doc,
+    .sout-templates-preview-stage .sout-info-table {
+      width: 100% !important;
+      max-width: none !important;
+    }
+    .sout-templates-preview-stage .sout-info-doc,
+    .sout-templates-preview-stage .sout-info-doc th,
+    .sout-templates-preview-stage .sout-info-doc td {
+      color: #000 !important;
+    }
+    .sout-templates-preview-stage .sout-info-table thead th {
+      background: #f0f0f0 !important;
+      color: #000 !important;
+    }
+    .sout-templates-preview-stage .sout-info-table tbody td {
+      background: #fff !important;
+      color: #000 !important;
+    }
+    .sout-templates-preview-stage .sout-info-v .sout-info-vert {
+      color: #000 !important;
+    }
+    .sout-templates-preview-stage .sout-info-tail-sheet .sout-info-tail {
+      page-break-before: auto;
+      break-before: auto;
+      margin: 0;
+      padding: 0;
+    }
+    @@page sout-info-land {
+      size: A3 landscape;
+      margin: 5mm;
+    }
+    @@page sout-info-port {
+      size: A3 landscape;
+      margin: 5mm;
+    }
+    @@media print {
+      @@page {
+        size: A3 landscape;
+        margin: 5mm;
+      }
+      html, body {
+        background: #fff !important;
+        margin: 0 !important;
+        padding: 0 !important;
+      }
+      /* Печатаем только бланк, не интерфейс */
+      body * {
+        visibility: hidden !important;
+      }
+      #sout-templates-print-area,
+      #sout-templates-print-area * {
+        visibility: visible !important;
+      }
+      #sout-templates-print-area {
+        position: absolute !important;
+        left: 0 !important;
+        top: 0 !important;
+        width: 100% !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        background: #fff !important;
+        box-shadow: none !important;
+        overflow: visible !important;
+        display: block !important;
+      }
+      .sout-templates-preview-wrap {
+        display: block !important;
+      }
+      .sout-templates-preview-stage .sout-a4-info,
+      #sout-templates-print-area .sout-a4-info {
+        page: sout-info-land;
+        width: 100% !important;
+        min-height: 0 !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        box-shadow: none !important;
+      }
+      .sout-info-tail-sheet {
+        page: sout-info-land;
+        page-break-before: always !important;
+        break-before: page !important;
+        width: 100% !important;
+        min-height: 0 !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        box-shadow: none !important;
+      }
+      .sout-info-tail-sheet .sout-info-tail {
+        page-break-before: auto !important;
+        break-before: auto !important;
+      }
+      .sout-info-ok,
+      .sout-info-table td.sout-info-ok,
+      .sout-info-table thead th.sout-info-ok,
+      .sout-info-hl,
+      mark {
+        background: #fff !important;
+        background-color: #fff !important;
+        font-weight: inherit !important;
+      }
+      .sout-info-table thead {
+        display: table-row-group !important;
+        page-break-inside: avoid !important;
+        break-inside: avoid !important;
+      }
+      .sout-info-v span,
+      .sout-info-v .sout-info-vert {
+        display: inline-block !important;
+        writing-mode: vertical-rl !important;
+        transform: rotate(180deg) !important;
+        white-space: nowrap !important;
+        font-size: 5.5pt !important;
+        line-height: 1.05 !important;
+        max-height: 195px !important;
+        overflow: hidden !important;
+        color: #000 !important;
+        background: transparent !important;
+      }
+      .sout-info-table--form thead tr:nth-child(2) th {
+        height: 155px !important;
+        max-height: 155px !important;
+        background: #f0f0f0 !important;
+        color: #000 !important;
+      }
+      .sout-info-table--form thead tr:nth-child(2) .sout-info-v span {
+        max-height: 150px !important;
+        font-size: 5pt !important;
+      }
+      .sout-info-ok,
+      .sout-info-table td.sout-info-ok,
+      .sout-info-table thead th.sout-info-ok,
+      .sout-info-hl,
+      mark {
+        background: transparent !important;
+      }
+      .sout-info-table thead th {
+        background: #f0f0f0 !important;
+        color: #000 !important;
+      }
+      .sout-info-col-numbers th {
+        background: #fff !important;
+        color: #000 !important;
+      }
+      .sout-info-table {
+        width: 100% !important;
+        max-width: 100% !important;
+        table-layout: fixed !important;
+        page-break-inside: auto !important;
+        break-inside: auto !important;
+      }
+      .sout-info-table tbody tr {
+        page-break-inside: avoid !important;
+        break-inside: avoid !important;
+      }
+      .ppe-no-print,
+      .sout-wp-edit-hint {
+        display: none !important;
+        visibility: hidden !important;
+      }
+    }
+  </style>
+}
+
+<div class="panel ppe-panel risks-doc-panel" id="sout-print-templates">
+@if (isHub)
+{
+  <div class="risks-docs-hub" aria-label="Шаблоны для печати СОУТ">
+    <a class="risks-docs-tile"
+       asp-page="/Sout/Preparation/Templates"
+       asp-route-tab="@SoutPreparationPrintModes.InfoNeeded">
+      <span class="risks-docs-tile-title">Информация для проведения СОУТ</span>
+      <span class="risks-docs-tile-hint">Форма с ФИО, СНИЛС, кодами ОК и комиссией</span>
+    </a>
+    <a class="risks-docs-tile" asp-page="/Sout/Commissions/SelectCommission">
+      <span class="risks-docs-tile-title">Приказ о создании комиссии СОУТ</span>
+      <span class="risks-docs-tile-hint">Сначала выбор комиссии, затем печать приказа и графика</span>
+    </a>
+  </div>
+}
+else
+{
+  <div class="risks-docs-section">
+    <div class="ppe-toolbar sout-toolbar" style="flex-wrap:wrap;gap:8px">
+      <a class="btn btn-outline btn-sm" asp-page="/Sout/Preparation/Templates">← К шаблонам</a>
+      <a class="btn btn-outline btn-sm" asp-page="/Sout/Preparation/Edit" asp-route-id="@Model.DocumentId">Документ @Model.DocumentNumber</a>
+      <a class="btn btn-outline btn-sm" asp-page="/Sout/Workplaces" asp-route-view="cards">Карты СОУТ</a>
+      <a class="btn btn-outline btn-sm" asp-page="/Sout/Preparation" asp-route-list="1">Список документов</a>
+    </div>
+
+    <h2 class="ppe-subtitle risks-docs-section-title">@SoutPreparationPrintModes.Title(SoutPreparationPrintModes.InfoNeeded)</h2>
+
+    @if (!string.IsNullOrWhiteSpace(Model.Message))
+    {
+      <p class="text-success">@Model.Message</p>
+    }
+
+    <div class="training-report-panel sout-templates-selection" style="margin-top:8px">
+      <p class="hint">
+        <b>Шаг 1.</b> Отметьте рабочие места из перечня (как в «Карты СОУТ»). Данные для печати подтягиваются из заполненных карт СОУТ.
+      </p>
+
+      <form method="post" asp-page-handler="SaveWorkplaces" id="sout-templates-workplaces-form" style="margin-top:14px">
+        <input type="hidden" name="tab" value="@SoutPreparationPrintModes.InfoNeeded" />
+        <div class="ppe-toolbar" style="margin-bottom:8px;flex-wrap:wrap;gap:8px">
+          <button type="submit" class="btn btn-primary btn-sm">Сформировать предпечать</button>
+          <button type="button" class="btn btn-outline btn-sm" id="sout-templates-select-all">Выбрать все</button>
+          <button type="button" class="btn btn-outline btn-sm" id="sout-templates-select-none">Снять все</button>
+          <span class="hint">
+            @(hasExplicitSelection
+                ? $"Выбрано: {Model.SelectedWorkplaceIds.Count} из {Model.WorkplaceRows.Count}"
+                : $"Всего рабочих мест: {Model.WorkplaceRows.Count}")
+          </span>
+        </div>
+        <div class="training-needs-wrap">
+          <table class="data-grid training-needs-grid grid-selectable" id="sout-templates-workplaces-grid">
+            <thead>
+              <tr>
+                <th class="grid-select-col">
+                  <input type="checkbox" id="sout-templates-workplaces-select-all" aria-label="Выбрать все" />
+                </th>
+                <th>№ РМ</th>
+                <th>Наименование</th>
+                <th>Подразделение</th>
+                <th>Профессия</th>
+                <th>Класс</th>
+                <th>Карта СОУТ</th>
+              </tr>
+            </thead>
+            <tbody>
+              @if (Model.WorkplaceRows.Count == 0)
+              {
+                <tr>
+                  <td colspan="7" class="hint">
+                    Нет рабочих мест. Заполните справочник «Рабочие места» / «Карты СОУТ» или загрузите из штата 1С.
+                  </td>
+                </tr>
+              }
+              @foreach (var row in Model.WorkplaceRows)
+              {
+                var isChecked = !hasExplicitSelection || Model.SelectedWorkplaceIds.Contains(row.Id);
+                <tr>
+                  <td class="grid-select-col">
+                    <input type="checkbox"
+                           class="grid-row-check sout-template-workplace-check"
+                           name="selectedWorkplaceIds"
+                           value="@row.Id"
+                           @(isChecked ? "checked" : null)
+                           aria-label="Выбрать @row.Name" />
+                  </td>
+                  <td>@(string.IsNullOrWhiteSpace(row.WorkplaceNumber) ? "—" : row.WorkplaceNumber)</td>
+                  <td>@row.Name</td>
+                  <td>@(string.IsNullOrWhiteSpace(row.Department) ? "—" : row.Department)</td>
+                  <td>@(string.IsNullOrWhiteSpace(row.Profession) ? "—" : row.Profession)</td>
+                  <td>@(string.IsNullOrWhiteSpace(row.ConditionsClass) ? "—" : row.ConditionsClass)</td>
+                  <td>@(row.HasCardEmployees ? "есть сотрудники" : "—")</td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      </form>
+    </div>
+
+    @if (Model.ShowPreview)
+    {
+      <div class="sout-templates-preview-wrap" id="sout-templates-step2">
+        <div class="ppe-toolbar sout-toolbar ppe-no-print" style="flex-wrap:wrap;gap:8px;margin-bottom:10px">
+          <span class="ppe-subtitle" style="margin:0">Шаг 2. Предпечать</span>
+          <button type="button" class="btn btn-primary btn-sm" id="risks-doc-word-btn">Word</button>
+          <button type="button" class="btn btn-outline btn-sm" id="sout-templates-save-btn">Записать</button>
+          <a class="btn btn-outline btn-sm" href="@Model.PreviewUrl" target="_blank" rel="noopener">Открыть в отдельном окне</a>
+          <span class="hint">Правьте ячейки, затем «Записать». Альбом A3.</span>
+        </div>
+
+        <form method="post" asp-page-handler="SavePreview" id="sout-templates-preview-save-form" class="ppe-no-print">
+          <input type="hidden" name="tab" value="@SoutPreparationPrintModes.InfoNeeded" />
+          <div id="sout-templates-preview-overrides"></div>
+        </form>
+
+        <datalist id="sout-info-employees-dl" class="ppe-no-print">
+          @foreach (var name in Model.EmployeeNames)
+          {
+            <option value="@name"></option>
+          }
+        </datalist>
+        <script type="application/json" id="sout-info-employee-lookup">@Html.Raw(Model.EmployeeLookupJson)</script>
+
+        <div class="sout-templates-preview-stage" id="sout-templates-print-area">
+          <div class="sout-a4-info sout-a3-info sout-a4-page sout-a4-landscape">
+            @Html.Raw(Model.PreviewHtml)
+          </div>
+        </div>
+      </div>
+    }
+    else if (Model.WorkplaceRows.Count > 0)
+    {
+      <p class="hint" style="margin-top:16px">Отметьте рабочие места и нажмите «Сформировать предпечать».</p>
+    }
+  </div>
+}
+</div>
+
+@section Scripts {
+  <script src="~/js/sout-preparation.js" asp-append-version="true"></script>
+  <script src="~/js/vendor/html2pdf.bundle.min.js" asp-append-version="true"></script>
+  <script src="~/js/risks-doc-export.js" asp-append-version="true"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', function () {
+      var form = document.getElementById('sout-templates-workplaces-form');
+      if (form) {
+        var checks = Array.prototype.slice.call(form.querySelectorAll('.sout-template-workplace-check'));
+        var selectAllHeader = document.getElementById('sout-templates-workplaces-select-all');
+        var selectAllBtn = document.getElementById('sout-templates-select-all');
+        var selectNoneBtn = document.getElementById('sout-templates-select-none');
+
+        function syncHeader() {
+          if (!selectAllHeader || checks.length === 0) return;
+          var checkedCount = checks.filter(function (item) { return item.checked; }).length;
+          selectAllHeader.checked = checkedCount > 0 && checkedCount === checks.length;
+          selectAllHeader.indeterminate = checkedCount > 0 && checkedCount < checks.length;
+        }
+
+        if (selectAllHeader) {
+          selectAllHeader.addEventListener('change', function () {
+            checks.forEach(function (item) { item.checked = selectAllHeader.checked; });
+            selectAllHeader.indeterminate = false;
+          });
+        }
+
+        if (selectAllBtn) {
+          selectAllBtn.addEventListener('click', function () {
+            checks.forEach(function (item) { item.checked = true; });
+            syncHeader();
+          });
+        }
+
+        if (selectNoneBtn) {
+          selectNoneBtn.addEventListener('click', function () {
+            checks.forEach(function (item) { item.checked = false; });
+            syncHeader();
+          });
+        }
+
+        checks.forEach(function (item) {
+          item.addEventListener('change', syncHeader);
+        });
+        syncHeader();
+      }
+
+      if (document.getElementById('sout-templates-save-btn')) {
+        initSoutPreparationPreview({
+          saveBtnId: 'sout-templates-save-btn',
+          saveFormId: 'sout-templates-preview-save-form',
+          overridesContainerId: 'sout-templates-preview-overrides',
+          printAreaId: 'sout-templates-print-area'
+        });
+      }
+
+      if (typeof initSoutInfoEmployeeAutofill === 'function') {
+        initSoutInfoEmployeeAutofill({ printAreaId: 'sout-templates-print-area' });
+      }
+
+      if (window.zashitaRisksDocExport && document.getElementById('sout-templates-print-area')) {
+        window.zashitaRisksDocExport.bind({
+          sourceSelector: '#sout-templates-print-area',
+          fileName: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(SoutPreparationPrintModes.Title(SoutPreparationPrintModes.InfoNeeded))),
+          landscape: true
+        });
+      }
+
+      var step2 = document.getElementById('sout-templates-step2');
+      if (step2) {
+        step2.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
+    });
+  </script>
+}

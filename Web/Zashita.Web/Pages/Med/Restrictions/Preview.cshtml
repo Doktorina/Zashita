@@ -1,0 +1,73 @@
+﻿@page "/Med/Restrictions/Preview"
+@model Zashita.Web.Pages.Med.Restrictions.PreviewModel
+@{
+    ViewData["Title"] = Model.NotFound ? "Не найдено" : Model.Title;
+    Layout = null;
+}
+
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>@ViewData["Title"]</title>
+    <partial name="_SiteIconLinks" />
+<link rel="stylesheet" href="/css/zashita.css" asp-append-version="true" />
+  <link rel="stylesheet" href="/css/sout-preparation.css" asp-append-version="true" />
+  <link rel="stylesheet" href="/css/ppe-doc-print.css" asp-append-version="true" />
+  <link rel="stylesheet" href="/css/med-person-list.css" asp-append-version="true" />
+</head>
+<body class="sout-preview-page">
+@if (Model.NotFound)
+{
+  <div class="sout-preview-missing">
+    <p>Документ не найден. Сохраните ограничения и повторите печать.</p>
+    <a class="btn btn-outline" href="/Med/Restrictions">К списку</a>
+  </div>
+}
+else
+{
+  <div class="sout-preview-shell">
+    <div class="sout-preview-toolbar ppe-no-print">
+      <div class="sout-preview-toolbar-left">
+        <button type="button" class="btn btn-primary btn-sm" onclick="zashitaRecordPrint({ category: 'med', title: document.title, summary: 'Печать приказа об отстранении' })">Печать</button>
+        <button type="button" class="btn btn-outline btn-sm" id="med-restriction-preview-save-btn">Записать</button>
+      </div>
+      <div class="sout-preview-toolbar-right">
+        <a class="btn btn-outline btn-sm" href="/Med/Restrictions/Edit?id=@Model.Id">К документу</a>
+        <a class="btn btn-outline btn-sm" href="/Med/Restrictions?printId=@Model.Id">К списку</a>
+      </div>
+    </div>
+
+    @if (!string.IsNullOrWhiteSpace(Model.Message))
+    {
+      <p class="sout-preview-message ppe-no-print">@Model.Message</p>
+    }
+
+    <form method="post" asp-page="/Med/Restrictions/Preview" asp-page-handler="Save" id="med-restriction-preview-save-form" class="ppe-no-print">
+      <input type="hidden" name="id" value="@Model.Id" />
+      <div id="med-restriction-preview-overrides"></div>
+    </form>
+
+    <div class="sout-preview-doc-wrap" id="med-restriction-preview-print-area">
+      <div class="sout-eq-doc med-print-sheet">
+        @Html.Raw(Model.PreviewHtml)
+      </div>
+    </div>
+  </div>
+
+  <script src="~/js/med-doc-list.js" asp-append-version="true"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', function () {
+      initMedPreparationPreview({
+        saveBtnId: 'med-restriction-preview-save-btn',
+        saveFormId: 'med-restriction-preview-save-form',
+        overridesContainerId: 'med-restriction-preview-overrides',
+        printAreaId: 'med-restriction-preview-print-area'
+      });
+    });
+  </script>
+}
+  <script src="/js/print-history.js"></script>
+</body>
+</html>

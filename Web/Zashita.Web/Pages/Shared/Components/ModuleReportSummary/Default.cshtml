@@ -1,0 +1,128 @@
+@model Zashita.Web.Services.ModuleReportSummaryView
+@{
+    var max = Model.Metrics.Count > 0 ? Model.Metrics.Max(m => m.Value) : 0;
+    if (max < 1) max = 1;
+    var charts = Model.FamiliarizationCharts ?? [];
+    var inv = System.Globalization.CultureInfo.InvariantCulture;
+
+    string? BuildPieGradient(Zashita.Core.Risks.FamiliarizationChartData chart)
+    {
+        if (!chart.HasData) return null;
+        var total = chart.Total;
+        var parts = new List<string>();
+        var offset = 0.0;
+        foreach (var slice in chart.Slices)
+        {
+            if (slice.Count <= 0) continue;
+            var start = offset;
+            offset += slice.Count * 100.0 / total;
+            parts.Add($"{slice.Color} {start.ToString("0.###", inv)}% {offset.ToString("0.###", inv)}%");
+        }
+        return parts.Count > 0 ? "conic-gradient(" + string.Join(", ", parts) + ")" : null;
+    }
+}
+
+<section class="panel module-report-summary">
+  <div class="panel-head-row" style="margin-bottom:4px;align-items:flex-start;gap:12px;flex-wrap:wrap">
+    <div style="min-width:0;flex:1">
+      <h2 class="panel-title" style="margin-bottom:4px">Сводка данных из отчетов</h2>
+      <p class="hint" style="margin:0">
+        @Model.Title — по сотрудникам и профессиям / рабочим местам выбранной организации.
+        @if (!string.IsNullOrWhiteSpace(Model.ScopeHint))
+        {
+          <br />@Model.ScopeHint
+        }
+      </p>
+    </div>
+    @if (!string.IsNullOrWhiteSpace(Model.ReportUrl))
+    {
+      <a class="btn btn-primary" href="@Model.ReportUrl">@Model.ReportButtonLabel</a>
+    }
+  </div>
+
+  <div class="module-summary-kpi-row" style="margin-top:12px">
+    @foreach (var metric in Model.Metrics)
+    {
+      var toneClass = metric.Tone switch
+      {
+        "danger" => "module-summary-kpi-danger",
+        "warn" => "module-summary-kpi-warn",
+        "success" => "module-summary-kpi-success",
+        _ => ""
+      };
+      var pct = metric.Value * 100 / max;
+      if (!string.IsNullOrWhiteSpace(metric.FilterUrl))
+      {
+        <a class="module-summary-kpi module-summary-kpi-link @toneClass" href="@metric.FilterUrl" title="Открыть в планировании с фильтром «@metric.Label»">
+          <div class="module-summary-kpi-value">@metric.Value</div>
+          <div class="module-summary-kpi-label">@metric.Label</div>
+          <div class="module-summary-kpi-bar" aria-hidden="true">
+            <div class="module-summary-kpi-bar-fill" style="width:@pct%"></div>
+          </div>
+        </a>
+      }
+      else
+      {
+        <article class="module-summary-kpi @toneClass">
+          <div class="module-summary-kpi-value">@metric.Value</div>
+          <div class="module-summary-kpi-label">@metric.Label</div>
+          <div class="module-summary-kpi-bar" aria-hidden="true">
+            <div class="module-summary-kpi-bar-fill" style="width:@pct%"></div>
+          </div>
+        </article>
+      }
+    }
+  </div>
+
+  @if (charts.Count > 0)
+  {
+    <div class="module-fam-charts" style="margin-top:18px">
+      @if (string.Equals(Model.ModuleKey, "risks", StringComparison.OrdinalIgnoreCase))
+      {
+        <h3 class="module-fam-charts-heading">
+          @(charts.Count > 1 ? "Ознакомление с картами рисков по объектам" : "Ознакомление с картами рисков")
+        </h3>
+        <p class="hint" style="margin:0 0 12px">
+          @(charts.Count > 1
+              ? "На каждом объекте своя оценка — ознакомление считается отдельно."
+              : "По выбранному объекту. Переключите объект сверху, чтобы увидеть другую аналитику.")
+        </p>
+      }
+      <div class="module-fam-charts-grid">
+        @foreach (var chart in charts)
+        {
+          var pieGradient = BuildPieGradient(chart);
+          var chartTotal = chart.Total;
+          <div class="module-fam-chart">
+            <h3 class="module-fam-chart-title">@chart.Title</h3>
+            @if (!string.IsNullOrWhiteSpace(chart.Subtitle) && charts.Count > 1)
+            {
+              <p class="module-fam-chart-subtitle">@chart.Subtitle</p>
+            }
+            @if (chart.HasData && !string.IsNullOrWhiteSpace(pieGradient))
+            {
+              <div class="module-fam-chart-body">
+                <div class="module-fam-pie" style="background:@pieGradient" role="img" aria-label="@chart.Title, всего @chartTotal"></div>
+                <ul class="module-fam-legend">
+                  @foreach (var slice in chart.Slices)
+                  {
+                    var slicePct = chartTotal > 0 ? Math.Round(slice.Count * 100.0 / chartTotal) : 0;
+                    <li>
+                      <span class="module-fam-swatch" style="background:@slice.Color" aria-hidden="true"></span>
+                      <span class="module-fam-legend-label">@slice.Label</span>
+                      <span class="module-fam-legend-value">@slice.Count <span class="module-fam-legend-pct">(@slicePct%)</span></span>
+                    </li>
+                  }
+                </ul>
+              </div>
+            }
+            else
+            {
+              <p class="hint" style="margin:8px 0 0">Нет данных об ознакомлении.</p>
+            }
+          </div>
+        }
+      </div>
+    </div>
+  }
+</section>

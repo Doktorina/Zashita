@@ -1,0 +1,106 @@
+@page "/Ppe/Acceptance/Edit"
+@model Zashita.Web.Pages.Ppe.Acceptance.EditModel
+@{
+    ViewData["Title"] = Model.IsNew ? "Приемка спецодежды, СИЗ (создание)" : "Приемка спецодежды, СИЗ";
+    ViewData["Subtitle"] = Model.Organization;
+    var doc = Model.Document;
+}
+
+@if (!string.IsNullOrWhiteSpace(Model.Message))
+{
+  <p class="@(Model.IsError ? "form-error" : "text-success")">@Model.Message</p>
+}
+
+<div class="panel ppe-panel sout-assignment-doc">
+  <div class="sout-assignment-toolbar">
+    <div class="sout-assignment-toolbar-left">
+      <a class="btn btn-outline btn-sm"
+         href="@Url.Content("~/Ppe/Acceptance")"
+         title="Назад к списку"
+         aria-label="Назад к списку приёмок">←</a>
+      <button type="submit" form="ppe-acceptance-edit-form" formaction="?handler=PostAndClose" class="btn btn-primary btn-sm">Провести и закрыть</button>
+      <button type="submit" form="ppe-acceptance-edit-form" formaction="?handler=Save" class="btn btn-outline btn-sm">Записать</button>
+      <button type="submit" form="ppe-acceptance-edit-form" formaction="?handler=Post" class="btn btn-outline btn-sm">Провести</button>
+      @if (!Model.IsNew)
+      {
+        <button type="submit" form="ppe-acceptance-edit-form" formaction="?handler=Delete" class="btn btn-outline btn-sm" formnovalidate onclick="return confirm('Удалить документ?');">Удалить</button>
+      }
+    </div>
+    <div class="sout-assignment-toolbar-right">
+      <span class="hint sout-assignment-status">@(doc.IsPosted ? "Проведён" : "Новый *")</span>
+    </div>
+  </div>
+
+  <form method="post" asp-page="/Ppe/Acceptance/Edit" id="ppe-acceptance-edit-form">
+    <input type="hidden" asp-for="Id" />
+
+    <div class="sout-assignment-header">
+      <div class="sout-assignment-header-col">
+        <label class="ppe-field">
+          <span>Склад</span>
+          <input name="Warehouse" value="@Model.Warehouse" class="ppe-input" />
+        </label>
+        @await Html.PartialAsync("~/Pages/Shared/_DepartmentSelect.cshtml", new Zashita.Web.Pages.Shared.DepartmentSelectModel
+        {
+            Name = "Department",
+            Value = Model.Department,
+            Options = Model.Departments,
+            Optional = true
+        })
+      </div>
+      <div class="sout-assignment-header-col">
+        <label class="ppe-field">
+          <span>Номер</span>
+          <input name="Number" value="@(string.IsNullOrWhiteSpace(Model.Number) ? "<Авто>" : Model.Number)" class="ppe-input" />
+        </label>
+        <label class="ppe-field">
+          <span>от</span>
+          <input type="date" name="Date" value="@Model.Date.ToString("yyyy-MM-dd")" class="ppe-input" />
+        </label>
+        <label class="ppe-field">
+          <span>Организация</span>
+          <input class="ppe-input" value="@Model.Organization" readonly />
+        </label>
+      </div>
+    </div>
+
+    <h3 class="ppe-subtitle">Строки</h3>
+    <div class="ppe-actions ppe-actions-top ppe-actions-inline">
+      <button type="button" class="btn btn-outline btn-sm" id="ppe-acceptance-add-line-btn">Добавить строку</button>
+    </div>
+    <table class="data-grid ppe-edit-grid">
+      <thead>
+        <tr>
+          <th>Табельный №</th>
+          <th>Сотрудник</th>
+          <th>Номенклатура</th>
+          <th>Кол-во</th>
+          <th>Ед.</th>
+          <th>Цена</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody id="ppe-acceptance-lines-tbody">
+        @for (var i = 0; i < Model.LineNomenclature.Count; i++)
+        {
+          <tr class="ppe-line-row">
+            <td><input name="LineTabNumber[@i]" value="@Model.LineTabNumber[i]" class="ppe-input ppe-input-sm" /></td>
+            <td><input name="LineEmployeeName[@i]" value="@Model.LineEmployeeName[i]" class="ppe-input" /></td>
+            <td><input name="LineNomenclature[@i]" value="@Model.LineNomenclature[i]" class="ppe-input" /></td>
+            <td><input name="LineQuantity[@i]" value="@Model.LineQuantity[i]" class="ppe-input ppe-input-sm" /></td>
+            <td><input name="LineUnit[@i]" value="@Model.LineUnit[i]" class="ppe-input ppe-input-sm" /></td>
+            <td><input name="LinePrice[@i]" value="@Model.LinePrice[i]" class="ppe-input ppe-input-sm" /></td>
+            <td class="ppe-line-actions">
+              <button type="button" class="suot-action" data-action="remove-line" title="Удалить строку">✕</button>
+            </td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  </form>
+</div>
+
+@section Scripts {
+  <script src="/js/ppe-acceptance-lines.js" asp-append-version="true"></script>
+}
+

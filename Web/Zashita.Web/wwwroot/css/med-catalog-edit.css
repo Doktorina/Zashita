@@ -1,0 +1,132 @@
+.med-catalog-edit-top {
+  display: grid;
+  grid-template-columns: 120px 1fr 120px;
+  gap: 0.75rem 1rem;
+  margin-bottom: 1rem;
+}
+
+.med-catalog-edit-top .med-catalog-edit-name {
+  grid-column: 2;
+}
+
+.med-catalog-edit-grid {
+  display: grid;
+  grid-template-columns: 1fr 160px;
+  gap: 0.75rem 1rem;
+  margin-bottom: 0.75rem;
+}
+
+.med-catalog-edit-body,
+.med-catalog-edit-content .ppe-field {
+  margin-bottom: 0.75rem;
+}
+
+.med-catalog-textarea {
+  min-height: 5rem;
+  resize: vertical;
+}
+
+.med-catalog-edit-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem 1rem;
+  margin-bottom: 0.75rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid var(--border, #d8dee8);
+  font-size: 13px;
+}
+
+.med-catalog-edit-link-active {
+  color: var(--accent, #1f6b42);
+  font-weight: 600;
+}
+
+.med-catalog-edit-link-disabled {
+  color: var(--muted, #6b7c93);
+}
+
+.med-catalog-edit-layout {
+  display: grid;
+  grid-template-columns: 180px 1fr;
+  gap: 1rem;
+  min-height: 320px;
+}
+
+.med-catalog-edit-nav {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  border-right: 1px solid var(--border, #d8dee8);
+  padding-right: 0.75rem;
+}
+
+.med-catalog-edit-nav-item {
+  text-align: left;
+  border: none;
+  background: transparent;
+  padding: 0.45rem 0.6rem;
+  border-radius: 4px;
+  cursor: pointer;
+  font: inherit;
+  color: inherit;
+}
+
+.med-catalog-edit-nav-item:hover,
+.med-catalog-edit-nav-active {
+  background: rgba(31, 107, 66, 0.08);
+  color: var(--accent, #1f6b42);
+}
+
+.med-catalog-edit-section {
+  display: none;
+}
+
+.med-catalog-edit-section-active {
+  display: block;
+}
+
+.med-catalog-edit-tabs .med-catalog-edit-tab-disabled {
+  opacity: 0.55;
+  cursor: default;
+}
+
+.med-link-field {
+  color: var(--accent, #1f6b42);
+  text-decoration: none;
+}
+
+.med-tree-edit-link {
+  color: inherit;
+  text-decoration: none;
+}
+
+.med-tree-edit-link:hover {
+  color: var(--accent, #1f6b42);
+  text-decoration: underline;
+}
+
+.ppe-input-invalid {
+  border-color: #c0392b;
+  box-shadow: 0 0 0 1px rgba(192, 57, 43, 0.2);
+}
+
+@media (max-width: 900px) {
+  .med-catalog-edit-top,
+  .med-catalog-edit-grid,
+  .med-catalog-edit-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .med-catalog-edit-top .med-catalog-edit-name {
+    grid-column: auto;
+  }
+
+  .med-catalog-edit-nav {
+    flex-direction: row;
+    flex-wrap: wrap;
+    border-right: none;
+    border-bottom: 1px solid var(--border, #d8dee8);
+    padding-right: 0;
+    padding-bottom: 0.5rem;
+  }
+}

@@ -1,0 +1,91 @@
+@page "/Med/Registry"
+@model Zashita.Web.Pages.Med.RegistryModel
+@{
+    ViewData["Title"] = Model.PageTitle;
+    ViewData["Subtitle"] = Model.Organization;
+}
+
+<div class="ppe-split">
+    <div class="panel ppe-panel ppe-split-side">
+        <div class="ppe-toolbar">
+            <a class="btn btn-outline" asp-page="/Med/Registry" asp-route-kind="@Model.Kind" asp-route-title="@Model.Title">Новая запись</a>
+        </div>
+        <table class="data-grid">
+            <thead>
+                <tr>
+                    <th>Дата</th>
+                    <th>Сотрудник</th>
+                    <th>Статус</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var row in Model.Rows)
+                {
+                    <tr>
+                        <td>
+                            <a asp-page="/Med/Registry" asp-route-kind="@Model.Kind" asp-route-title="@Model.Title" asp-route-editId="@row.Id">
+                                @row.Date.ToString("dd.MM.yyyy")
+                            </a>
+                        </td>
+                        <td>@row.EmployeeName</td>
+                        <td>@row.Status</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+
+    <div class="panel ppe-panel ppe-split-main">
+        <h2 class="ppe-step-title">@Model.PageTitle</h2>
+        <form method="post" asp-page-handler="Save">
+            <input type="hidden" name="kind" value="@Model.Kind" />
+            <input type="hidden" asp-for="EditId" />
+            <input type="hidden" asp-for="Title" />
+            <label class="ppe-field">
+                <span>Дата</span>
+                <input asp-for="Date" type="date" class="ppe-input" />
+            </label>
+            <label class="ppe-field">
+                <span>Подразделение</span>
+                <input asp-for="Department" class="ppe-input" />
+            </label>
+            <label class="ppe-field">
+                <span>Сотрудник</span>
+                @if (Model.Employees.Count == 0)
+                {
+                    <input asp-for="EmployeeName" class="ppe-input" placeholder="ФИО сотрудника" list="med-employee-suggestions" />
+                    <datalist id="med-employee-suggestions"></datalist>
+                    <p class="hint">Список пуст. Добавьте сотрудников в «Организации» или загрузите Excel из 1С.</p>
+                }
+                else
+                {
+                    <input asp-for="EmployeeName" class="ppe-input" list="med-employee-list" placeholder="Начните вводить ФИО" required />
+                    <datalist id="med-employee-list">
+                        @foreach (var name in Model.Employees)
+                        {
+                            <option value="@name"></option>
+                        }
+                    </datalist>
+                    <p class="hint">Доступно сотрудников: @Model.Employees.Count. Список из «Организации», Excel и файла Кристины.</p>
+                }
+            </label>
+            <label class="ppe-field">
+                <span>Статус</span>
+                <input asp-for="Status" class="ppe-input" />
+            </label>
+            <label class="ppe-field">
+                <span>Комментарий</span>
+                <input asp-for="Comment" class="ppe-input" />
+            </label>
+            <div class="ppe-actions">
+                <button type="submit" class="btn btn-primary">Сохранить</button>
+                @if (!string.IsNullOrWhiteSpace(Model.EditId))
+                {
+                    <button type="submit" class="btn btn-outline" formaction="?handler=Delete" name="deleteId" value="@Model.EditId">Удалить</button>
+                    <input type="hidden" name="kind" value="@Model.Kind" />
+                }
+            </div>
+        </form>
+        <p class="hint">Локальный реестр без Excel и 1С. Данные сохраняются в App_Data/med/.</p>
+    </div>
+</div>

@@ -1,0 +1,952 @@
+@page "/Med/ContingentLists"
+@using Zashita.Core.Med
+@model Zashita.Web.Pages.Med.ContingentListsModel
+@{
+    ViewData["Title"] = "Списки контингентов";
+    ViewData["Subtitle"] = Model.Organization;
+    var isContingents = Model.ActiveTab == "contingents";
+    var isNamed = Model.ActiveTab == "named";
+}
+
+@section Styles {
+  <link rel="stylesheet" href="~/css/med-person-list.css" asp-append-version="true" />
+}
+
+<div class="panel ppe-panel med-doc-panel">
+  @if (!string.IsNullOrWhiteSpace(Model.Message))
+  {
+    <p class="@(Model.IsError ? "form-error" : "text-success")">@Model.Message</p>
+  }
+
+  <div class="sout-assignment-tabs" role="tablist" aria-label="Списки контингентов">
+    <a class="sout-assignment-tab @(isContingents ? "sout-assignment-tab-active" : "")"
+       asp-page="/Med/ContingentLists"
+       asp-route-tab="contingents"
+       role="tab"
+       aria-selected="@isContingents">Контингенты</a>
+    <a class="sout-assignment-tab @(isNamed ? "sout-assignment-tab-active" : "")"
+       asp-page="/Med/ContingentLists"
+       asp-route-tab="named"
+       role="tab"
+       aria-selected="@isNamed">Поименный список (ЛПУ)</a>
+  </div>
+
+  @if (isContingents)
+  {
+    var totals = Model.ContingentTotals;
+    <div class="sout-assignment-tab-panel sout-assignment-tab-panel-active" role="tabpanel">
+      <form method="post" asp-page-handler="SaveContingent" id="med-contingent-form">
+        <input type="hidden" name="tab" value="contingents" />
+        <div id="med-contingent-hint-root" class="med-contingent-hint-block ppe-no-print">
+          <div class="training-format-toolbar med-contingent-format-toolbar" title="Кликните в ячейку таблицы или выделите текст над таблицей, затем Ж или цвет">
+            <span class="hint">Оформление:</span>
+            <button type="button" class="btn btn-outline js-format-bold" title="Жирный">Ж</button>
+            <button type="button" class="btn btn-outline js-format-color" data-color="#b91c1c" title="Красный" style="color:#b91c1c">А</button>
+            <button type="button" class="btn btn-outline js-format-color" data-color="#1d4ed8" title="Синий" style="color:#1d4ed8">А</button>
+            <button type="button" class="btn btn-outline js-format-color" data-color="#0e7c5a" title="Зелёный" style="color:#0e7c5a">А</button>
+            <button type="button" class="btn btn-outline js-format-color" data-color="#a16207" title="Коричневый" style="color:#a16207">А</button>
+            <button type="button" class="btn btn-outline js-format-reset" title="Сбросить оформление">Сброс</button>
+          </div>
+          <div class="hint med-person-list-hint js-contingent-hint"
+               contenteditable="true"
+               spellcheck="false"
+               data-empty="@(string.IsNullOrWhiteSpace(Model.HintDisplayText) ? "1" : "0")">@Html.Raw(Model.HintDisplayText)</div>
+          <input type="hidden" class="js-contingent-hint-text" name="HintText" value="@Model.HintDisplayText" />
+          <input type="hidden" class="js-contingent-hint-style" name="HintStyle" value="" />
+          <input type="hidden" name="HintTab" value="contingents" />
+        </div>
+
+        <div class="ppe-toolbar sout-toolbar">
+          @if (Model.ContingentTableRows.Count > 0)
+          {
+            <button type="submit" class="btn btn-primary btn-sm">Сохранить</button>
+          }
+          else
+          {
+            <button type="submit" formaction="?handler=SaveHint" class="btn btn-outline btn-sm">Сохранить текст</button>
+          }
+          <a class="btn btn-outline btn-sm" href="/Med/ContingentLists/Print?kind=contingents" target="_blank">Печать / предпросмотр</a>
+        </div>
+
+        <div class="med-contingent-scroll">
+          <table class="med-contingent-table">
+            <colgroup>
+              <col class="med-cg-num" />
+              <col class="med-cg-dept" />
+              <col class="med-cg-prof" />
+              <col class="med-cg-factors" />
+              <col class="med-cg-pick" />
+              <col class="med-cg-code" />
+              @for (var c = 7; c <= 24; c++)
+              {
+                <col class="med-cg-n" />
+              }
+            </colgroup>
+            <thead>
+              <tr>
+                <th rowspan="4" class="med-contingent-num">№</th>
+                <th rowspan="4">Цех, участок, отдел, производство</th>
+                <th rowspan="4">Профессия</th>
+                <th rowspan="4">Факторы производственной среды</th>
+                <th rowspan="4">№ прил. и пункта приказа №&nbsp;988н</th>
+                <th rowspan="4">№ прил. и пункта приказа №&nbsp;29н</th>
+                <th colspan="2">Численность работающих</th>
+                <th colspan="16">Количество лиц, подлежащих осмотру</th>
+              </tr>
+              <tr>
+                <th rowspan="3" class="med-contingent-vcell"><span class="med-contingent-vtext">Всего</span></th>
+                <th rowspan="3" class="med-contingent-vcell"><span class="med-contingent-vtext">в т.ч. жен</span></th>
+                <th colspan="2">Всего</th>
+                <th colspan="2">в ЛПУ</th>
+                <th colspan="12" class="med-contingent-pathology-head">В Центре профессиональной патологии</th>
+              </tr>
+              <tr>
+                <th rowspan="2" class="med-contingent-vcell"><span class="med-contingent-vtext">всего</span></th>
+                <th rowspan="2" class="med-contingent-vcell"><span class="med-contingent-vtext">в т.ч. жен</span></th>
+                <th rowspan="2" class="med-contingent-vcell"><span class="med-contingent-vtext">всего</span></th>
+                <th rowspan="2" class="med-contingent-vcell"><span class="med-contingent-vtext">в т.ч. жен</span></th>
+                <th colspan="2" class="med-contingent-pathology-head med-contingent-cat">Всего</th>
+                <th colspan="2" class="med-contingent-pathology-head med-contingent-cat">Участники аварийных ситуаций или инцидентов</th>
+                <th colspan="2" class="med-contingent-pathology-head med-contingent-cat">Работники, занятые на работах с ФПС и ФТП с разовым или многократным превышением ПДК (ПДУ) по действующему фактору</th>
+                <th colspan="2" class="med-contingent-pathology-head med-contingent-cat">Работники, имеющие (имевшие) заключение о предварительном диагнозе профессионального заболевания, лица со стойкими последствиями несчастных случаев на производстве, лица из группы повышенного риска развития профессиональных заболеваний</th>
+                <th colspan="2" class="med-contingent-pathology-head med-contingent-cat">Работники, имеющие решения врачебной комиссией о специальных условиях проведения ПМО (иная периодичность, объём исследований, уровень медицинской организации и пр.)</th>
+                <th colspan="2" class="med-contingent-pathology-head med-contingent-cat">Работники, на рабочих местах которых отсутствует информация о концентрациях, уровнях, параметрах ФПС и ФТП 1 год и более</th>
+              </tr>
+              <tr>
+                <th class="med-contingent-pathology-head">всего</th>
+                <th class="med-contingent-pathology-head">в т.ч. жен</th>
+                <th class="med-contingent-pathology-head">всего</th>
+                <th class="med-contingent-pathology-head">в т.ч. жен</th>
+                <th class="med-contingent-pathology-head">всего</th>
+                <th class="med-contingent-pathology-head">в т.ч. жен</th>
+                <th class="med-contingent-pathology-head">всего</th>
+                <th class="med-contingent-pathology-head">в т.ч. жен</th>
+                <th class="med-contingent-pathology-head">всего</th>
+                <th class="med-contingent-pathology-head">в т.ч. жен</th>
+                <th class="med-contingent-pathology-head">всего</th>
+                <th class="med-contingent-pathology-head">в т.ч. жен</th>
+              </tr>
+              <tr class="med-contingent-col-numbers">
+                @for (var i = 1; i <= 24; i++)
+                {
+                  <th class="@(i is >= 13 and <= 24 ? "med-contingent-pathology-head" : null)">@i</th>
+                }
+              </tr>
+            </thead>
+            <tbody id="med-contingent-tbody">
+              @if (Model.ContingentTableRows.Count == 0)
+              {
+                <tr>
+                  <td colspan="24" class="hint">Нет активных сотрудников с профессией. Загрузите штат из 1С.</td>
+                </tr>
+              }
+              @for (var i = 0; i < Model.ContingentTableRows.Count; i++)
+              {
+                var row = Model.ContingentTableRows[i];
+                var factors = MedContingentFactorLines.Split(row.EnvironmentFactors);
+                var codes988 = MedContingentFactorLines.Split(row.Order988n);
+                var codes29 = MedContingentFactorLines.Split(row.Order29n);
+                var lineCount = Math.Max(1, Math.Max(factors.Count, Math.Max(codes988.Count, codes29.Count)));
+                for (var li = 0; li < lineCount; li++)
+                {
+                  <tr class="med-contingent-data-row" data-group="@i" data-line="@li">
+                    @if (li == 0)
+                    {
+                      <td class="med-contingent-num med-contingent-span" rowspan="@lineCount">@row.RowNumber</td>
+                      <td class="med-contingent-span" rowspan="@lineCount">
+                        @row.Department
+                        <input type="hidden" name="ContingentEdits[@i].Department" value="@row.Department" />
+                      </td>
+                      <td class="med-contingent-span med-contingent-prof-cell" rowspan="@lineCount">
+                        @row.Profession
+                        <input type="hidden" name="ContingentEdits[@i].Profession" value="@row.Profession" />
+                        <input type="hidden" class="js-joined-factors" name="ContingentEdits[@i].EnvironmentFactors" value="@row.EnvironmentFactors" />
+                        <input type="hidden" class="js-joined-988" name="ContingentEdits[@i].Order988n" value="@row.Order988n" />
+                        <input type="hidden" class="js-joined-29" name="ContingentEdits[@i].Order29n" value="@row.Order29n" />
+                        <input type="hidden" class="js-cell-styles" name="ContingentEdits[@i].CellStylesJson" value="@System.Text.Json.JsonSerializer.Serialize(row.CellStyles)" />
+                        <button type="button" class="btn btn-outline btn-sm med-contingent-add-line js-add-factor-line" title="Добавить строку фактора">+</button>
+                      </td>
+                    }
+                    @{
+                      var lineFactor = MedContingentFactorLines.At(factors, li);
+                      var line988 = MedContingentFactorLines.At(codes988, li);
+                      var line29 = MedContingentFactorLines.At(codes29, li);
+                      var selectedFactorId = Model.ResolveSelectedFactorId(line988, line29, lineFactor) ?? string.Empty;
+                    }
+                    <td class="med-contingent-edit-cell med-contingent-factor-cell">
+                      <div class="med-contingent-factor-line-wrap">
+                        <textarea class="med-contingent-text-input js-line-factor js-auto-textarea js-format-cell"
+                                  data-format-key="f@li"
+                                  rows="1"
+                                  readonly
+                                  title="Подставляется из выбранного фактора (Приказ № 29н)"
+                                  style="@row.StyleFor($"f{li}")">@lineFactor</textarea>
+                        <button type="button" class="btn btn-outline btn-sm med-contingent-remove-line js-remove-factor-line" title="Убрать строку фактора" @(lineCount <= 1 ? "disabled" : null)>×</button>
+                      </div>
+                    </td>
+                    <td class="med-contingent-edit-cell">
+                      @{
+                        var selectedOpt = Model.FactorOptions.FirstOrDefault(o =>
+                            string.Equals(o.Id, selectedFactorId, StringComparison.OrdinalIgnoreCase));
+                        var selectTitle = selectedOpt is not null
+                            ? selectedOpt.Label
+                            : "Фактор из перечня факторов и видов работ";
+                      }
+                      <select class="med-contingent-factor-select js-line-988 js-format-cell"
+                              data-format-key="a@li"
+                              style="@row.StyleFor($"a{li}")"
+                              title="@selectTitle">
+                        <option value="">—</option>
+                        @foreach (var opt in Model.FactorOptions)
+                        {
+                          var optText = string.IsNullOrWhiteSpace(opt.ShortLabel) ? opt.Label : opt.ShortLabel;
+                          if (string.Equals(opt.Id, selectedFactorId, StringComparison.OrdinalIgnoreCase))
+                          {
+                            <option value="@opt.Id" selected
+                                    title="@opt.Label"
+                                    data-item="@opt.ItemNumber"
+                                    data-name="@opt.Name">@optText</option>
+                          }
+                          else
+                          {
+                            <option value="@opt.Id"
+                                    title="@opt.Label"
+                                    data-item="@opt.ItemNumber"
+                                    data-name="@opt.Name">@optText</option>
+                          }
+                        }
+                      </select>
+                    </td>
+                    <td class="med-contingent-edit-cell">
+                      <input class="med-contingent-num-input med-contingent-code-input js-line-29 js-format-cell"
+                             data-format-key="b@li"
+                             type="text"
+                             readonly
+                             title="№ п/п выбранного фактора (Приказ № 29н)"
+                             style="@row.StyleFor($"b{li}")"
+                             value="@line29" />
+                    </td>
+                    @if (li == 0)
+                    {
+                      <td class="med-c med-contingent-span" rowspan="@lineCount">
+                        @row.WorkersTotal
+                        <input type="hidden" class="js-workers-total" name="ContingentEdits[@i].WorkersTotal" value="@row.WorkersTotal" />
+                      </td>
+                      <td class="med-c med-contingent-span" rowspan="@lineCount">
+                        @row.WorkersWomen
+                        <input type="hidden" class="js-workers-women" name="ContingentEdits[@i].WorkersWomen" value="@row.WorkersWomen" />
+                      </td>
+                      <td class="med-c med-contingent-edit-cell med-contingent-span" rowspan="@lineCount"><input class="med-contingent-num-input js-exam-input js-exam-total" type="number" min="0" name="ContingentEdits[@i].ExamTotal" value="@row.ExamTotal" data-total-col="exam-total" title="Можно править вручную; по умолчанию из кол. 7 при пункте в 5/6" /></td>
+                      <td class="med-c med-contingent-edit-cell med-contingent-span" rowspan="@lineCount"><input class="med-contingent-num-input js-exam-input js-exam-women" type="number" min="0" name="ContingentEdits[@i].ExamWomen" value="@row.ExamWomen" data-total-col="exam-women" title="Можно править вручную; по умолчанию из кол. 8 при пункте в 5/6" /></td>
+                      <td class="med-c med-contingent-edit-cell med-contingent-span" rowspan="@lineCount"><input class="med-contingent-num-input js-exam-input js-lpu-total" type="number" min="0" name="ContingentEdits[@i].LpuTotal" value="@row.LpuTotal" data-total-col="lpu-total" title="Можно править вручную" /></td>
+                      <td class="med-c med-contingent-edit-cell med-contingent-span" rowspan="@lineCount"><input class="med-contingent-num-input js-exam-input js-lpu-women" type="number" min="0" name="ContingentEdits[@i].LpuWomen" value="@row.LpuWomen" data-total-col="lpu-women" title="Можно править вручную" /></td>
+                      <td class="med-c med-contingent-edit-cell med-contingent-span" rowspan="@lineCount"><input class="med-contingent-num-input js-pathology-input" type="number" min="0" name="ContingentEdits[@i].PathologyTotal" value="@row.PathologyTotal" data-total-col="pathology-total" /></td>
+                      <td class="med-c med-contingent-edit-cell med-contingent-span" rowspan="@lineCount"><input class="med-contingent-num-input js-pathology-input" type="number" min="0" name="ContingentEdits[@i].PathologyWomen" value="@row.PathologyWomen" data-total-col="pathology-women" /></td>
+                      <td class="med-c med-contingent-edit-cell med-contingent-span" rowspan="@lineCount"><input class="med-contingent-num-input js-pathology-input" type="number" min="0" name="ContingentEdits[@i].AccidentTotal" value="@row.AccidentTotal" data-total-col="accident-total" /></td>
+                      <td class="med-c med-contingent-edit-cell med-contingent-span" rowspan="@lineCount"><input class="med-contingent-num-input js-pathology-input" type="number" min="0" name="ContingentEdits[@i].AccidentWomen" value="@row.AccidentWomen" data-total-col="accident-women" /></td>
+                      <td class="med-c med-contingent-edit-cell med-contingent-span" rowspan="@lineCount"><input class="med-contingent-num-input js-pathology-input" type="number" min="0" name="ContingentEdits[@i].ExceedLimitTotal" value="@row.ExceedLimitTotal" data-total-col="exceed-total" /></td>
+                      <td class="med-c med-contingent-edit-cell med-contingent-span" rowspan="@lineCount"><input class="med-contingent-num-input js-pathology-input" type="number" min="0" name="ContingentEdits[@i].ExceedLimitWomen" value="@row.ExceedLimitWomen" data-total-col="exceed-women" /></td>
+                      <td class="med-c med-contingent-edit-cell med-contingent-span" rowspan="@lineCount"><input class="med-contingent-num-input js-pathology-input" type="number" min="0" name="ContingentEdits[@i].OccupationalDiseaseTotal" value="@row.OccupationalDiseaseTotal" data-total-col="disease-total" /></td>
+                      <td class="med-c med-contingent-edit-cell med-contingent-span" rowspan="@lineCount"><input class="med-contingent-num-input js-pathology-input" type="number" min="0" name="ContingentEdits[@i].OccupationalDiseaseWomen" value="@row.OccupationalDiseaseWomen" data-total-col="disease-women" /></td>
+                      <td class="med-c med-contingent-edit-cell med-contingent-span" rowspan="@lineCount"><input class="med-contingent-num-input js-pathology-input" type="number" min="0" name="ContingentEdits[@i].SpecialConditionsTotal" value="@row.SpecialConditionsTotal" data-total-col="special-total" /></td>
+                      <td class="med-c med-contingent-edit-cell med-contingent-span" rowspan="@lineCount"><input class="med-contingent-num-input js-pathology-input" type="number" min="0" name="ContingentEdits[@i].SpecialConditionsWomen" value="@row.SpecialConditionsWomen" data-total-col="special-women" /></td>
+                      <td class="med-c med-contingent-edit-cell med-contingent-span" rowspan="@lineCount"><input class="med-contingent-num-input js-pathology-input" type="number" min="0" name="ContingentEdits[@i].Experience5YearsTotal" value="@row.Experience5YearsTotal" data-total-col="exp5-total" /></td>
+                      <td class="med-c med-contingent-edit-cell med-contingent-span" rowspan="@lineCount"><input class="med-contingent-num-input js-pathology-input" type="number" min="0" name="ContingentEdits[@i].Experience5YearsWomen" value="@row.Experience5YearsWomen" data-total-col="exp5-women" /></td>
+                    }
+                  </tr>
+                }
+              }
+            </tbody>
+            @if (Model.ContingentTableRows.Count > 0)
+            {
+              <tfoot>
+                <tr class="med-contingent-total">
+                  <td></td>
+                  <td colspan="5"><strong>ИТОГО</strong></td>
+                  <td class="med-c"><strong>@totals.WorkersTotal</strong></td>
+                  <td class="med-c"><strong>@totals.WorkersWomen</strong></td>
+                  <td class="med-c"><strong data-pathology-total="exam-total">@totals.ExamTotal</strong></td>
+                  <td class="med-c"><strong data-pathology-total="exam-women">@totals.ExamWomen</strong></td>
+                  <td class="med-c"><strong data-pathology-total="lpu-total">@totals.LpuTotal</strong></td>
+                  <td class="med-c"><strong data-pathology-total="lpu-women">@totals.LpuWomen</strong></td>
+                  <td class="med-c"><strong data-pathology-total="pathology-total">@totals.PathologyTotal</strong></td>
+                  <td class="med-c"><strong data-pathology-total="pathology-women">@totals.PathologyWomen</strong></td>
+                  <td class="med-c"><strong data-pathology-total="accident-total">@totals.AccidentTotal</strong></td>
+                  <td class="med-c"><strong data-pathology-total="accident-women">@totals.AccidentWomen</strong></td>
+                  <td class="med-c"><strong data-pathology-total="exceed-total">@totals.ExceedLimitTotal</strong></td>
+                  <td class="med-c"><strong data-pathology-total="exceed-women">@totals.ExceedLimitWomen</strong></td>
+                  <td class="med-c"><strong data-pathology-total="disease-total">@totals.OccupationalDiseaseTotal</strong></td>
+                  <td class="med-c"><strong data-pathology-total="disease-women">@totals.OccupationalDiseaseWomen</strong></td>
+                  <td class="med-c"><strong data-pathology-total="special-total">@totals.SpecialConditionsTotal</strong></td>
+                  <td class="med-c"><strong data-pathology-total="special-women">@totals.SpecialConditionsWomen</strong></td>
+                  <td class="med-c"><strong data-pathology-total="exp5-total">@totals.Experience5YearsTotal</strong></td>
+                  <td class="med-c"><strong data-pathology-total="exp5-women">@totals.Experience5YearsWomen</strong></td>
+                </tr>
+              </tfoot>
+            }
+          </table>
+        </div>
+      </form>
+    </div>
+  }
+  else
+  {
+    <div class="sout-assignment-tab-panel sout-assignment-tab-panel-active" role="tabpanel">
+      <form method="post" asp-page-handler="SaveNamed" id="med-contingent-named-form">
+        <input type="hidden" name="tab" value="named" />
+        <div id="med-contingent-hint-root" class="med-contingent-hint-block ppe-no-print">
+          <div class="training-format-toolbar med-contingent-format-toolbar" title="Кликните в ячейку таблицы или выделите текст над таблицей, затем Ж или цвет">
+            <span class="hint">Оформление:</span>
+            <button type="button" class="btn btn-outline js-format-bold" title="Жирный">Ж</button>
+            <button type="button" class="btn btn-outline js-format-color" data-color="#b91c1c" title="Красный" style="color:#b91c1c">А</button>
+            <button type="button" class="btn btn-outline js-format-color" data-color="#1d4ed8" title="Синий" style="color:#1d4ed8">А</button>
+            <button type="button" class="btn btn-outline js-format-color" data-color="#0e7c5a" title="Зелёный" style="color:#0e7c5a">А</button>
+            <button type="button" class="btn btn-outline js-format-color" data-color="#a16207" title="Коричневый" style="color:#a16207">А</button>
+            <button type="button" class="btn btn-outline js-format-reset" title="Сбросить оформление">Сброс</button>
+          </div>
+          <div class="hint med-person-list-hint js-contingent-hint"
+               contenteditable="true"
+               spellcheck="false"
+               data-empty="@(string.IsNullOrWhiteSpace(Model.HintDisplayText) ? "1" : "0")">@Html.Raw(Model.HintDisplayText)</div>
+          <input type="hidden" class="js-contingent-hint-text" name="HintText" value="@Model.HintDisplayText" />
+          <input type="hidden" class="js-contingent-hint-style" name="HintStyle" value="" />
+          <input type="hidden" name="HintTab" value="named" />
+        </div>
+        <div class="ppe-toolbar sout-toolbar">
+          <button type="submit" class="btn btn-primary btn-sm">Сохранить список</button>
+          <a class="btn btn-outline btn-sm" href="/Med/ContingentLists/Print?kind=named" target="_blank">Печать / предпросмотр</a>
+          <a class="btn btn-outline btn-sm" asp-page="/Med/ContingentLists" asp-route-tab="contingents">К контингентам</a>
+        </div>
+
+        <div id="med-named-removed-keys"></div>
+
+        <div class="med-contingent-scroll">
+          <table class="med-contingent-table med-contingent-named-table med-contingent-named-edit">
+            <colgroup>
+              <col class="med-named-act" />
+              <col class="med-named-c1" />
+              <col class="med-named-c2" />
+              <col class="med-named-c3" />
+              <col class="med-named-c4" />
+              <col class="med-named-c5" />
+              <col class="med-named-c6" />
+              <col class="med-named-c7" />
+              <col class="med-named-c8" />
+              <col class="med-named-c9" />
+              <col class="med-named-c10" />
+              <col class="med-named-c11" />
+              <col class="med-named-c12" />
+              <col class="med-named-c13" />
+              <col class="med-named-c14" />
+              <col class="med-named-c15" />
+            </colgroup>
+            <thead>
+              <tr>
+                <th class="ppe-no-print med-named-act-th" title="Удалить строку"></th>
+                <th>п/п</th>
+                <th>Фамилия, Имя, Отчество</th>
+                <th>Дата рождения</th>
+                <th>СНИЛС</th>
+                <th>Структурное подразделение</th>
+                <th>Профессия</th>
+                <th>Стаж (общий)</th>
+                <th>Стаж (в организации)</th>
+                <th>Вредные и опасные производственные факторы</th>
+                <th>Фактический уровень фактора</th>
+                <th>Класс условий труда</th>
+                <th>Пункт 988н</th>
+                <th>Пункт 29н</th>
+                <th>Дата медосмотра в ЛПУ</th>
+                <th>Дата медосмотра в ЦПП</th>
+              </tr>
+              <tr class="med-contingent-col-numbers">
+                <th class="ppe-no-print"></th>
+                @for (var i = 1; i <= 15; i++)
+                {
+                  <th>@i</th>
+                }
+              </tr>
+            </thead>
+            <tbody id="med-named-tbody">
+              @if (Model.NamedListRows.Count == 0)
+              {
+                <tr class="med-named-empty-row">
+                  <td colspan="16" class="hint">
+                    Нет строк: в перечне контингентов у всех профессий колонка 11 (в ЛПУ) равна 0.
+                    Укажите число подлежащих осмотру и сохраните первую таблицу.
+                  </td>
+                </tr>
+              }
+              @for (var ni = 0; ni < Model.NamedListRows.Count; ni++)
+              {
+                var row = Model.NamedListRows[ni];
+                var factors = MedContingentFactorLines.Split(row.HarmfulFactors);
+                var codes988 = MedContingentFactorLines.Split(row.Order988n);
+                var codes29 = MedContingentFactorLines.Split(row.Order29n);
+                var lineCount = Math.Max(1, Math.Max(factors.Count, Math.Max(codes988.Count, codes29.Count)));
+                for (var li = 0; li < lineCount; li++)
+                {
+                  var isFirst = li == 0;
+                  <tr class="med-named-data-row@(isFirst ? " med-named-person-start" : "")"
+                      data-person-key="@row.PersonKey"
+                      data-group="@ni"
+                      data-line="@li">
+                    @if (isFirst)
+                    {
+                      <td class="med-c ppe-no-print med-named-act-cell med-named-span" rowspan="@lineCount">
+                        <button type="button" class="btn btn-outline btn-sm med-named-remove-btn js-named-remove"
+                                title="Удалить из списка">×</button>
+                        <input type="hidden" name="NamedEdits[@ni].PersonKey" value="@row.PersonKey" class="js-named-key" />
+                        <input type="hidden" class="js-named-joined-factors" name="NamedEdits[@ni].HarmfulFactors" value="@row.HarmfulFactors" />
+                        <input type="hidden" class="js-named-joined-988" name="NamedEdits[@ni].Order988n" value="@row.Order988n" />
+                        <input type="hidden" class="js-named-joined-29" name="NamedEdits[@ni].Order29n" value="@row.Order29n" />
+                      </td>
+                      <td class="med-c med-named-num med-named-span" rowspan="@lineCount">@row.RowNumber</td>
+                      <td class="med-contingent-edit-cell med-named-span" rowspan="@lineCount">
+                        <textarea class="med-contingent-text-input js-auto-textarea" name="NamedEdits[@ni].FullName" rows="1">@row.FullName</textarea>
+                      </td>
+                      <td class="med-contingent-edit-cell med-named-span" rowspan="@lineCount">
+                        <input class="med-contingent-code-input" name="NamedEdits[@ni].BirthDate" value="@row.BirthDate" />
+                      </td>
+                      <td class="med-contingent-edit-cell med-named-span" rowspan="@lineCount">
+                        <input class="med-contingent-code-input" name="NamedEdits[@ni].Snils" value="@row.Snils" />
+                      </td>
+                      <td class="med-contingent-edit-cell med-named-span" rowspan="@lineCount">
+                        <textarea class="med-contingent-text-input js-auto-textarea" name="NamedEdits[@ni].Department" rows="1">@row.Department</textarea>
+                      </td>
+                      <td class="med-contingent-edit-cell med-named-span" rowspan="@lineCount">
+                        <textarea class="med-contingent-text-input js-auto-textarea" name="NamedEdits[@ni].Profession" rows="1">@row.Profession</textarea>
+                      </td>
+                      <td class="med-contingent-edit-cell med-named-span" rowspan="@lineCount">
+                        <input class="med-contingent-code-input" name="NamedEdits[@ni].ExperienceTotal" value="@row.ExperienceTotal" />
+                      </td>
+                      <td class="med-c med-named-span" rowspan="@lineCount" title="Считается от даты трудоустройства">
+                        @(string.IsNullOrWhiteSpace(row.ExperienceInOrg) ? "—" : row.ExperienceInOrg)
+                      </td>
+                    }
+                    <td class="med-contingent-edit-cell med-named-factors">
+                      <textarea class="med-contingent-text-input js-auto-textarea js-named-line-factor" rows="1">@MedContingentFactorLines.At(factors, li)</textarea>
+                    </td>
+                    <td class="med-contingent-edit-cell">
+                      @if (isFirst)
+                      {
+                        <input class="med-contingent-code-input" name="NamedEdits[@ni].ActualLevel" value="@row.ActualLevel" />
+                      }
+                    </td>
+                    <td class="med-contingent-edit-cell">
+                      @if (isFirst)
+                      {
+                        <input class="med-contingent-code-input" name="NamedEdits[@ni].ConditionsClass" value="@row.ConditionsClass" />
+                      }
+                    </td>
+                    <td class="med-contingent-edit-cell">
+                      <textarea class="med-contingent-text-input js-auto-textarea js-named-line-988" rows="1">@MedContingentFactorLines.At(codes988, li)</textarea>
+                    </td>
+                    <td class="med-contingent-edit-cell">
+                      <textarea class="med-contingent-text-input js-auto-textarea js-named-line-29" rows="1">@MedContingentFactorLines.At(codes29, li)</textarea>
+                    </td>
+                    @if (isFirst)
+                    {
+                      <td class="med-contingent-edit-cell med-named-span" rowspan="@lineCount">
+                        <input class="med-contingent-code-input" name="NamedEdits[@ni].LastExamLpu" value="@row.LastExamLpu" />
+                      </td>
+                      <td class="med-contingent-edit-cell med-named-span" rowspan="@lineCount">
+                        <input class="med-contingent-code-input" name="NamedEdits[@ni].LastExamCpp" value="@row.LastExamCpp" />
+                      </td>
+                    }
+                  </tr>
+                }
+              }
+            </tbody>
+          </table>
+        </div>
+      </form>
+    </div>
+  }
+</div>
+
+@section Scripts {
+  <script src="~/js/med-contingent-hint-format.js" asp-append-version="true"></script>
+  @if (isContingents)
+  {
+    <script>
+      window.__medFactorOptions = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(
+        Model.FactorOptions.Select(o => new
+        {
+          id = o.Id,
+          itemNumber = o.ItemNumber,
+          name = o.Name,
+          label = o.Label,
+          shortLabel = o.ShortLabel
+        })));
+    </script>
+    <script>
+      (function () {
+        function recalculate() {
+          var cols = {};
+          document.querySelectorAll('.js-pathology-input, .js-exam-input').forEach(function (input) {
+            var key = input.getAttribute('data-total-col');
+            if (!key) return;
+            var n = parseInt(input.value, 10);
+            if (isNaN(n) || n < 0) n = 0;
+            cols[key] = (cols[key] || 0) + n;
+          });
+          Object.keys(cols).forEach(function (key) {
+            var el = document.querySelector('[data-pathology-total="' + key + '"]');
+            if (el) el.textContent = String(cols[key]);
+          });
+        }
+
+        function groupRows(group) {
+          return Array.prototype.slice.call(
+            document.querySelectorAll('#med-contingent-tbody tr.med-contingent-data-row[data-group="' + group + '"]')
+          );
+        }
+
+        function hasOrderCode(text) {
+          return String(text || '').split(/[\n|]/).some(function (part) {
+            var t = String(part || '').trim();
+            return t.length > 0 && t !== '-' && t !== '—' && t !== '–';
+          });
+        }
+
+        function setExamIfAuto(el, value) {
+          if (!el || el.getAttribute('data-manual') === '1') return;
+          el.value = value;
+        }
+
+        function syncExamAndLpu(group) {
+          var rows = groupRows(group);
+          if (!rows.length) return;
+          var first = rows[0];
+          var joined988 = first.querySelector('.js-joined-988');
+          var joined29 = first.querySelector('.js-joined-29');
+          var workersTotal = first.querySelector('.js-workers-total');
+          var workersWomen = first.querySelector('.js-workers-women');
+          var examTotal = first.querySelector('.js-exam-total');
+          var examWomen = first.querySelector('.js-exam-women');
+          var lpuTotal = first.querySelector('.js-lpu-total');
+          var lpuWomen = first.querySelector('.js-lpu-women');
+          var active = hasOrderCode(joined988 && joined988.value) || hasOrderCode(joined29 && joined29.value);
+          var wTotal = workersTotal ? String(parseInt(workersTotal.value, 10) || 0) : '0';
+          var wWomen = workersWomen ? String(parseInt(workersWomen.value, 10) || 0) : '0';
+          setExamIfAuto(examTotal, active ? wTotal : '0');
+          setExamIfAuto(examWomen, active ? wWomen : '0');
+          setExamIfAuto(lpuTotal, active ? (examTotal ? examTotal.value : '0') : '0');
+          setExamIfAuto(lpuWomen, active ? (examWomen ? examWomen.value : '0') : '0');
+        }
+
+        function syncGroup(group, opts) {
+          opts = opts || {};
+          var rows = groupRows(group);
+          if (!rows.length) return;
+          var factors = [];
+          var codes988 = [];
+          var codes29 = [];
+          rows.forEach(function (tr) {
+            var f = tr.querySelector('.js-line-factor');
+            var a = tr.querySelector('.js-line-988');
+            var b = tr.querySelector('.js-line-29');
+            factors.push(f ? String(f.value || '').trim() : '');
+            codes988.push(line988StoredValue(a));
+            codes29.push(b ? String(b.value || '').trim() : '');
+          });
+          var first = rows[0];
+          var join = function (parts) {
+            return parts.filter(function (x) { return x && x.length; }).join('\n');
+          };
+          var hf = first.querySelector('.js-joined-factors');
+          var h988 = first.querySelector('.js-joined-988');
+          var h29 = first.querySelector('.js-joined-29');
+          var prev988 = h988 ? h988.value : '';
+          var prev29 = h29 ? h29.value : '';
+          if (hf) hf.value = join(factors) || 'Отсутствуют';
+          if (h988) h988.value = join(codes988) || '-';
+          if (h29) h29.value = join(codes29) || '-';
+
+          var count = rows.length;
+          first.querySelectorAll('.med-contingent-span').forEach(function (td) {
+            td.rowSpan = count;
+          });
+          rows.forEach(function (tr, idx) {
+            tr.setAttribute('data-line', String(idx));
+            var rm = tr.querySelector('.js-remove-factor-line');
+            if (rm) rm.disabled = count <= 1;
+            var f = tr.querySelector('.js-line-factor');
+            var a = tr.querySelector('.js-line-988');
+            var b = tr.querySelector('.js-line-29');
+            if (f) {
+              f.classList.add('js-format-cell', 'js-auto-textarea');
+              f.setAttribute('data-format-key', 'f' + idx);
+            }
+            if (a) {
+              a.classList.add('js-format-cell');
+              a.setAttribute('data-format-key', 'a' + idx);
+            }
+            if (b) {
+              b.classList.add('js-format-cell');
+              b.setAttribute('data-format-key', 'b' + idx);
+            }
+          });
+
+          var codesChanged = (h988 && h988.value !== prev988) || (h29 && h29.value !== prev29);
+          if (opts.syncExam || codesChanged) {
+            syncExamAndLpu(group);
+          }
+
+          var stylesInput = first.querySelector('.js-cell-styles');
+          if (stylesInput) {
+            var rebuilt = {};
+            rows.forEach(function (tr) {
+              tr.querySelectorAll('.js-format-cell[data-format-key]').forEach(function (el) {
+                var key = el.getAttribute('data-format-key');
+                if (!key) return;
+                var style = String(el.getAttribute('style') || '');
+                var parts = [];
+                style.split(';').forEach(function (chunk) {
+                  var i = chunk.indexOf(':');
+                  if (i <= 0) return;
+                  var prop = chunk.slice(0, i).trim().toLowerCase();
+                  var val = chunk.slice(i + 1).trim().replace(/\s*!important\s*$/i, '').trim();
+                  if (prop === 'font-weight' || prop === 'color') parts.push(prop + ': ' + val);
+                });
+                if (parts.length) rebuilt[key] = parts.join('; ');
+              });
+            });
+            stylesInput.value = JSON.stringify(rebuilt);
+          }
+          recalculate();
+        }
+
+        function syncAll() {
+          var seen = {};
+          document.querySelectorAll('#med-contingent-tbody tr.med-contingent-data-row[data-group]').forEach(function (tr) {
+            var g = tr.getAttribute('data-group');
+            if (g == null || seen[g]) return;
+            seen[g] = true;
+            syncGroup(g);
+          });
+        }
+
+        function resizeFactorTextarea(el) {
+          if (!el || el.tagName !== 'TEXTAREA') return;
+          el.style.height = 'auto';
+          el.style.height = Math.max(el.scrollHeight, 36) + 'px';
+        }
+
+        function resizeAllFactorTextareas(scope) {
+          (scope || document).querySelectorAll('.js-line-factor.js-auto-textarea').forEach(resizeFactorTextarea);
+        }
+
+        function line988StoredValue(el) {
+          if (!el) return '';
+          if (el.tagName === 'SELECT') {
+            if (!el.value) return '';
+            var opt = el.options[el.selectedIndex];
+            var item = opt ? String(opt.getAttribute('data-item') || '').trim() : '';
+            return item || String(el.value || '').trim();
+          }
+          return String(el.value || '').trim();
+        }
+
+        function displayItemNumber(item) {
+          var t = String(item || '').trim();
+          if (!t || t === '-' || t === '—' || t === '–') return '-';
+          return /^п\./i.test(t) ? t : ('п.' + t);
+        }
+
+        function applyFactorFromSelect(select) {
+          var tr = select && select.closest ? select.closest('tr') : null;
+          if (!tr) return;
+          var opt = select.options[select.selectedIndex];
+          var item = opt && select.value ? String(opt.getAttribute('data-item') || '').trim() : '';
+          var name = opt && select.value ? String(opt.getAttribute('data-name') || '').trim() : '';
+          var label = opt && select.value ? String(opt.text || '').trim() : '';
+          var f = tr.querySelector('.js-line-factor');
+          var b = tr.querySelector('.js-line-29');
+          if (f) {
+            f.value = select.value ? (name || 'Отсутствуют') : 'Отсутствуют';
+            resizeFactorTextarea(f);
+          }
+          if (b) {
+            b.value = select.value ? displayItemNumber(item) : '-';
+          }
+          select.title = select.value
+            ? (label || 'Фактор из перечня факторов и видов работ')
+            : 'Фактор из перечня факторов и видов работ';
+        }
+
+        function buildFactorSelectHtml(formatKey, selectedId) {
+          var title = 'Фактор из перечня факторов и видов работ';
+          var opts = window.__medFactorOptions || [];
+          if (selectedId) {
+            for (var i = 0; i < opts.length; i++) {
+              if (String(opts[i].id) === String(selectedId)) {
+                title = String(opts[i].label || title);
+                break;
+              }
+            }
+          }
+          var html = '<select class="med-contingent-factor-select js-line-988 js-format-cell" data-format-key="' + formatKey + '" title="' + String(title).replace(/"/g, '&quot;') + '">';
+          html += '<option value="">—</option>';
+          opts.forEach(function (opt) {
+            var sel = selectedId && String(opt.id) === String(selectedId) ? ' selected' : '';
+            var text = String(opt.shortLabel || opt.label || '').replace(/</g, '&lt;');
+            var full = String(opt.label || opt.shortLabel || '').replace(/"/g, '&quot;');
+            html += '<option value="' + String(opt.id).replace(/"/g, '&quot;') + '"' +
+              ' title="' + full + '"' +
+              ' data-item="' + String(opt.itemNumber || '').replace(/"/g, '&quot;') + '"' +
+              ' data-name="' + String(opt.name || '').replace(/"/g, '&quot;') + '"' +
+              sel + '>' + text + '</option>';
+          });
+          html += '</select>';
+          return html;
+        }
+
+        function bindLineInputs(tr) {
+          tr.querySelectorAll('.js-line-factor, .js-line-988, .js-line-29').forEach(function (el) {
+            el.addEventListener('input', function () {
+              if (el.classList.contains('js-auto-textarea')) {
+                resizeFactorTextarea(el);
+              }
+              syncGroup(tr.getAttribute('data-group'));
+            });
+            el.addEventListener('change', function () {
+              if (el.classList.contains('js-line-988') && el.tagName === 'SELECT') {
+                applyFactorFromSelect(el);
+              }
+              syncGroup(tr.getAttribute('data-group'));
+            });
+          });
+        }
+
+        function addFactorLine(group) {
+          var rows = groupRows(group);
+          if (!rows.length) return;
+          var last = rows[rows.length - 1];
+          var tr = document.createElement('tr');
+          tr.className = 'med-contingent-data-row';
+          tr.setAttribute('data-group', group);
+          var idx = rows.length;
+          tr.innerHTML =
+            '<td class="med-contingent-edit-cell med-contingent-factor-cell">' +
+              '<div class="med-contingent-factor-line-wrap">' +
+                '<textarea class="med-contingent-text-input js-line-factor js-auto-textarea js-format-cell" data-format-key="f' + idx + '" rows="1" readonly title="Подставляется из выбранного фактора (Приказ № 29н)">Отсутствуют</textarea>' +
+                '<button type="button" class="btn btn-outline btn-sm med-contingent-remove-line js-remove-factor-line" title="Убрать строку фактора">×</button>' +
+              '</div>' +
+            '</td>' +
+            '<td class="med-contingent-edit-cell">' + buildFactorSelectHtml('a' + idx, '') + '</td>' +
+            '<td class="med-contingent-edit-cell">' +
+              '<input class="med-contingent-num-input med-contingent-code-input js-line-29 js-format-cell" data-format-key="b' + idx + '" type="text" readonly value="-" title="№ п/п выбранного фактора (Приказ № 29н)" />' +
+            '</td>';
+          last.insertAdjacentElement('afterend', tr);
+          bindLineInputs(tr);
+          resizeAllFactorTextareas(tr);
+          syncGroup(group);
+        }
+
+        function removeFactorLine(tr) {
+          var group = tr.getAttribute('data-group');
+          var rows = groupRows(group);
+          if (rows.length <= 1) return;
+          if (tr.querySelector('.med-contingent-span')) {
+            // Удаляем первую строку группы: переносим span-ячейки на следующую.
+            var next = rows[1];
+            tr.querySelectorAll('.med-contingent-span').forEach(function (td) {
+              next.insertBefore(td, next.firstChild);
+            });
+          }
+          tr.remove();
+          syncGroup(group);
+        }
+
+        document.querySelectorAll('#med-contingent-tbody tr.med-contingent-data-row').forEach(bindLineInputs);
+
+        var tbody = document.getElementById('med-contingent-tbody');
+        if (tbody) {
+          tbody.addEventListener('focusin', function (e) {
+            if (e.target && e.target.classList && e.target.classList.contains('js-auto-textarea')) {
+              resizeFactorTextarea(e.target);
+            }
+          });
+          tbody.addEventListener('paste', function (e) {
+            var el = e.target;
+            if (el && el.classList && el.classList.contains('js-auto-textarea')) {
+              setTimeout(function () { resizeFactorTextarea(el); }, 0);
+            }
+          });
+        }
+
+        document.getElementById('med-contingent-tbody')?.addEventListener('click', function (e) {
+          var add = e.target.closest('.js-add-factor-line');
+          if (add) {
+            e.preventDefault();
+            var g = add.closest('tr')?.getAttribute('data-group');
+            if (g != null) addFactorLine(g);
+            return;
+          }
+          var rm = e.target.closest('.js-remove-factor-line');
+          if (rm && !rm.disabled) {
+            e.preventDefault();
+            var tr = rm.closest('tr');
+            if (tr) removeFactorLine(tr);
+          }
+        });
+
+        var form = document.getElementById('med-contingent-form');
+        if (form) {
+          form.addEventListener('submit', function () { syncAll(); });
+        }
+
+        document.querySelectorAll('.js-pathology-input, .js-exam-input').forEach(function (input) {
+          input.addEventListener('input', function () {
+            if (input.classList.contains('js-exam-input')) {
+              input.setAttribute('data-manual', '1');
+            }
+            recalculate();
+          });
+          input.addEventListener('change', function () {
+            if (input.classList.contains('js-exam-input')) {
+              input.setAttribute('data-manual', '1');
+            }
+            recalculate();
+          });
+        });
+
+        // Только склеить строки факторов; 9–12 не перезаписываем при загрузке.
+        syncAll();
+        resizeAllFactorTextareas();
+        window.addEventListener('resize', function () {
+          resizeAllFactorTextareas();
+        });
+      })();
+    </script>
+  }
+  else if (isNamed)
+  {
+    <script>
+      (function () {
+        var tbody = document.getElementById('med-named-tbody');
+        var removedBox = document.getElementById('med-named-removed-keys');
+        var form = document.getElementById('med-contingent-named-form');
+        if (!tbody) return;
+
+        function resizeTa(el) {
+          if (!el) return;
+          el.style.height = 'auto';
+          el.style.height = Math.max(36, el.scrollHeight) + 'px';
+        }
+
+        function resizeAll() {
+          tbody.querySelectorAll('textarea.js-auto-textarea').forEach(resizeTa);
+        }
+
+        function groupRows(group) {
+          return Array.prototype.slice.call(
+            tbody.querySelectorAll('tr.med-named-data-row[data-group="' + group + '"]')
+          );
+        }
+
+        function personGroups() {
+          var seen = {};
+          var groups = [];
+          tbody.querySelectorAll('tr.med-named-data-row').forEach(function (tr) {
+            var g = tr.getAttribute('data-group');
+            if (g == null || seen[g]) return;
+            seen[g] = true;
+            groups.push(g);
+          });
+          return groups;
+        }
+
+        function joinLines(rows, selector) {
+          return rows.map(function (tr) {
+            var el = tr.querySelector(selector);
+            return el ? String(el.value || '').trim() : '';
+          }).filter(function (x) { return x.length > 0; }).join('\n');
+        }
+
+        function syncGroup(group) {
+          var rows = groupRows(group);
+          if (!rows.length) return;
+          var first = rows[0];
+          var factors = first.querySelector('.js-named-joined-factors');
+          var c988 = first.querySelector('.js-named-joined-988');
+          var c29 = first.querySelector('.js-named-joined-29');
+          if (factors) factors.value = joinLines(rows, '.js-named-line-factor');
+          if (c988) c988.value = joinLines(rows, '.js-named-line-988');
+          if (c29) c29.value = joinLines(rows, '.js-named-line-29');
+        }
+
+        function syncAll() {
+          personGroups().forEach(syncGroup);
+        }
+
+        function reindex() {
+          var groups = personGroups();
+          groups.forEach(function (g, i) {
+            var rows = groupRows(g);
+            rows.forEach(function (tr) {
+              tr.setAttribute('data-group', String(i));
+            });
+            var num = rows[0] && rows[0].querySelector('.med-named-num');
+            if (num) num.textContent = String(i + 1);
+            rows[0] && rows[0].querySelectorAll('[name^="NamedEdits["]').forEach(function (el) {
+              el.name = el.name.replace(/NamedEdits\[\d+]/, 'NamedEdits[' + i + ']');
+            });
+          });
+        }
+
+        function addRemovedKey(key) {
+          if (!removedBox || !key) return;
+          var input = document.createElement('input');
+          input.type = 'hidden';
+          input.name = 'NamedRemovedKeys';
+          input.value = key;
+          removedBox.appendChild(input);
+        }
+
+        tbody.addEventListener('click', function (e) {
+          var btn = e.target.closest('.js-named-remove');
+          if (!btn) return;
+          e.preventDefault();
+          var tr = btn.closest('tr.med-named-data-row');
+          if (!tr) return;
+          var group = tr.getAttribute('data-group');
+          var rows = groupRows(group);
+          var nameEl = rows[0] && rows[0].querySelector('[name$=".FullName"]');
+          var label = nameEl ? String(nameEl.value || '').trim() : '';
+          if (!confirm(label ? ('Удалить «' + label + '» из поименного списка?') : 'Удалить строку из поименного списка?')) {
+            return;
+          }
+          var keyEl = rows[0] && rows[0].querySelector('.js-named-key');
+          addRemovedKey(keyEl ? keyEl.value : tr.getAttribute('data-person-key'));
+          rows.forEach(function (r) { r.remove(); });
+          reindex();
+          if (!tbody.querySelector('tr.med-named-data-row') && !tbody.querySelector('.med-named-empty-row')) {
+            var empty = document.createElement('tr');
+            empty.className = 'med-named-empty-row';
+            empty.innerHTML = '<td colspan="16" class="hint">Все строки удалены. Нажмите «Сохранить список», чтобы зафиксировать.</td>';
+            tbody.appendChild(empty);
+          }
+        });
+
+        tbody.addEventListener('input', function (e) {
+          if (e.target && e.target.classList && e.target.classList.contains('js-auto-textarea')) {
+            resizeTa(e.target);
+            var tr = e.target.closest('tr.med-named-data-row');
+            if (tr) syncGroup(tr.getAttribute('data-group'));
+          }
+        });
+
+        if (form) {
+          form.addEventListener('submit', function () { syncAll(); });
+        }
+
+        syncAll();
+        resizeAll();
+        window.addEventListener('resize', resizeAll);
+      })();
+    </script>
+  }
+}

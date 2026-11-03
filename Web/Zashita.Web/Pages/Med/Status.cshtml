@@ -1,0 +1,765 @@
+@page "/Med/Status"
+@model Zashita.Web.Pages.Med.StatusModel
+@using Zashita.Core.Employees
+@using Zashita.Core.Med
+@{
+    ViewData["Title"] = "Отчет по медосмотрам";
+    ViewData["Subtitle"] = string.IsNullOrWhiteSpace(Model.SelectedOrganization)
+        ? "Все организации"
+        : Model.SelectedOrganization;
+}
+
+@if (!string.IsNullOrWhiteSpace(Model.Message))
+{
+  <p class="@(TempData["IsError"] is string ? "form-error" : "text-success")">@Model.Message</p>
+}
+
+@await Component.InvokeAsync("StaffingOnboardingAlerts", new { organization = Model.Organization, moduleKey = "медосмотры" })
+
+<div class="panel training-report-panel">
+  <div class="training-report-toolbar" style="margin-bottom:8px;flex-wrap:wrap;gap:8px;align-items:center">
+    <a class="btn btn-outline" href="/module/медосмотры">Все разделы модуля</a>
+  </div>
+  @if (Model.StandardsMissing)
+  {
+    <p class="form-error" style="margin-top:8px">
+      Стандарты медосмотров не найдены (файл пуст или отсутствует). Без них отчёт не подтягивает
+      психиатрию и внеочередной. Откройте <a asp-page="/Med/Standards">Стандарты медосмотров</a>,
+      создайте стандарт по профессии, отметьте «Психиатрическое освидетельствование» / «Внеочередной» и сохраните.
+    </p>
+  }
+
+  <form method="get" class="training-report-filters" id="med-status-filters">
+    <div class="training-filter-grid">
+      <label class="ppe-field">
+        <span>Подразделение</span>
+        <select asp-for="Department" class="ppe-input js-auto-filter">
+          <option value="">все</option>
+          @foreach (var item in Model.DepartmentOptions)
+          {
+            <option value="@item">@item</option>
+          }
+        </select>
+      </label>
+      <label class="ppe-field">
+        <span>Профессия</span>
+        <select asp-for="Profession" class="ppe-input js-auto-filter">
+          <option value="">все</option>
+          @foreach (var item in Model.ProfessionOptions)
+          {
+            <option value="@item">@item</option>
+          }
+        </select>
+      </label>
+      <label class="ppe-field">
+        <span>Вид осмотра</span>
+        <select asp-for="ExamType" class="ppe-input js-auto-filter">
+          <option value="">все</option>
+          @foreach (var item in Model.ExamTypeOptions)
+          {
+            <option value="@item">@item</option>
+          }
+        </select>
+      </label>
+      <label class="ppe-field">
+        <span>Статус</span>
+        <select asp-for="StatusFilter" class="ppe-input js-auto-filter">
+          <option value="">все</option>
+          @foreach (var item in Model.StatusOptions)
+          {
+            <option value="@item">@item</option>
+          }
+        </select>
+      </label>
+    </div>
+
+    <div class="training-report-toolbar">
+      <button type="submit" class="btn btn-primary">Сформировать</button>
+      <button type="button" class="btn btn-outline" onclick="window.print()">Печать</button>
+      <a class="btn btn-outline" asp-page="/Med/Status">Сбросить</a>
+    </div>
+  </form>
+
+  <div class="training-status-wrap">
+    <div class="training-report-toolbar training-status-save-bar report-save-bar" style="margin-bottom:8px">
+      <button type="submit" form="med-status-save" class="btn btn-primary">Сохранить даты и медзаключения</button>
+      <span class="hint" title="Людей = карточки штата 1С (человек×компания). Строк = осмотры в таблице.">
+        Людей: @Model.PeopleCount · строк: @Model.Rows.Count
+      </span>
+    </div>
+
+    <form method="post" asp-page-handler="Save" id="med-status-save">
+      <input type="hidden" name="ReportDate" value="@Model.ReportDate.ToString("yyyy-MM-dd")" />
+      <input type="hidden" name="SelectedOrganization" value="@Model.SelectedOrganization" />
+      <input type="hidden" name="Department" value="@Model.Department" />
+      <input type="hidden" name="Profession" value="@Model.Profession" />
+      <input type="hidden" name="ExamType" value="@Model.ExamType" />
+      <input type="hidden" name="StatusFilter" value="@Model.StatusFilter" />
+    </form>
+
+    <table class="data-grid training-status-grid training-catalog-grid training-sticky-head-grid report-sticky-head-grid" id="med-status-grid">
+      <thead>
+        <tr>
+          <th class="col-tree">Структура / Работник</th>
+          <th>Номер вредного и (или) опасного производственного фактора</th>
+          <th>Периодичность</th>
+          <th>Дата трудоустройства</th>
+          <th>Дата последнего осмотра</th>
+          <th>Дата очередного осмотра</th>
+          <th>Заключение</th>
+        </tr>
+      </thead>
+      <tbody id="med-status-body">
+        @if (Model.TreeLines.Count == 0)
+        {
+          <tr>
+            <td colspan="7" class="hint">
+              Нет сотрудников для выбранной организации. Добавьте людей в справочник сотрудников.
+            </td>
+          </tr>
+        }
+        @foreach (var line in Model.TreeLines)
+        {
+          if (line.IsGroup)
+          {
+            <tr class="training-tree-row training-tree-folder training-tree-group training-tree-open level-@line.Level @(line.IsPerson ? "med-status-person" : "") @(line.IsPerson && Model.HrStatusByName.TryGetValue(line.Label, out var mhr) && EmployeeHrStatus.IsAbsence(mhr) ? "emp-absence-row" : "")"
+                data-id="@line.Id"
+                data-parent-id="@(line.ParentId ?? "")"
+                data-is-group="true"
+                data-depth="@line.Level">
+              <td colspan="7">
+                <div class="training-tree-name med-status-person-row" style="--tree-depth:@line.Level">
+                  <button type="button" class="training-tree-toggle" aria-expanded="true" title="Свернуть / развернуть">
+                    <span class="training-tree-caret">▼</span>
+                  </button>
+                  <span>@line.Label</span>
+                  @if (line.IsPerson)
+                  {
+                    var hr = Model.HrStatusByName.TryGetValue(line.Label, out var hs) ? hs : "";
+                    if (!string.IsNullOrWhiteSpace(hr))
+                    {
+                      <span class="@EmployeeHrStatus.CssClass(hr)" style="margin-left:0.4rem">@hr</span>
+                    }
+                    <a class="btn btn-outline btn-sm med-status-issue-btn"
+                       asp-page="/Med/Directions"
+                       asp-route-employeeName="@line.Label"
+                       asp-route-examType="Периодический"
+                       title="Открыть направление с данными сотрудника">Выдать направление</a>
+                  }
+                </div>
+              </td>
+            </tr>
+          }
+          else if (line.Row is { } row)
+          {
+            var cls = row.Traffic switch
+            {
+              "green" => "traffic-green",
+              "yellow" => "traffic-yellow",
+              "red" => "traffic-red",
+              "blue" => "traffic-blue",
+              _ => ""
+            };
+            var examIso = row.ExamDate?.ToString("yyyy-MM-dd") ?? "";
+            var nextIso = row.ExpiresOn?.ToString("yyyy-MM-dd") ?? "";
+            var hireText = row.EmploymentDate?.ToString("dd.MM.yyyy") ?? "—";
+
+            <tr class="@cls training-tree-row training-tree-file training-tree-data"
+                id="med-exam-@row.Id"
+                data-exam-id="@row.Id"
+                data-id="@line.Id"
+                data-parent-id="@(line.ParentId ?? "")"
+                data-is-group="false"
+                data-depth="@line.Level">
+              <td class="col-tree">
+                <div class="training-tree-name" style="--tree-depth:@line.Level">
+                  <span class="training-tree-toggle-spacer"></span>
+                  <span class="training-tree-label">● @line.Label</span>
+                </div>
+                <input form="med-status-save" type="hidden" name="examId" value="@row.Id" />
+                <input form="med-status-save" type="hidden" name="organization" value="@row.Organization" />
+                <input form="med-status-save" type="hidden" name="department" value="@row.Department" />
+                <input form="med-status-save" type="hidden" name="profession" value="@row.Profession" />
+                <input form="med-status-save" type="hidden" name="employeeName" value="@row.EmployeeName" />
+                <input form="med-status-save" type="hidden" name="examType" value="@row.ExamType" />
+                <input form="med-status-save" type="hidden" name="isPsychiatric" value="@(MedStandardAssignmentBuilder.IsPsychiatricKind(row.ExamType) ? "true" : "false")" />
+                <input type="hidden" class="js-med-employment-date" value="@(row.EmploymentDate?.ToString("yyyy-MM-dd") ?? "")" />
+                <input type="hidden" class="js-med-has-direction" value="@(string.Equals(row.DisplayStatus, MedExamStatuses.Planned, StringComparison.OrdinalIgnoreCase) ? "true" : "false")" />
+                <input form="med-status-save" type="hidden" name="status" value="@row.Status" />
+              </td>
+              <td>
+                @if (MedStandardAssignmentBuilder.IsPsychiatricKind(row.ExamType))
+                {
+                  <input form="med-status-save" type="hidden" name="itemNumber" value="" />
+                  <span class="hint" title="Психиатрия без пункта приказа">—</span>
+                }
+                else
+                {
+                  <input form="med-status-save" type="text" name="itemNumber" value="@MedItemNumber.Normalize(row.ItemNumber)" class="ppe-input" style="min-width:4rem" placeholder="п.4.2.5" autocomplete="off" title="Номер пункта (можно с префиксом п.)" />
+                }
+              </td>
+              <td>
+                <select form="med-status-save" name="periodicity" class="ppe-input js-med-periodicity">
+                  @foreach (var opt in MedPeriodicity.CatalogOptions)
+                  {
+                    if (string.Equals(opt, row.Periodicity, StringComparison.OrdinalIgnoreCase))
+                    {
+                      <option value="@opt" selected>@opt</option>
+                    }
+                    else
+                    {
+                      <option value="@opt">@opt</option>
+                    }
+                  }
+                </select>
+              </td>
+              <td>@hireText</td>
+              <td>
+                <input form="med-status-save" type="date" name="examDate" value="@examIso" class="ppe-input js-med-exam-date" />
+              </td>
+              <td>
+                <input form="med-status-save" type="date" name="nextExamDate" value="@nextIso" class="ppe-input js-med-next-date" title="Считается автоматически от даты последнего осмотра" />
+              </td>
+              <td>
+                <div class="med-status-conclusion-cell">
+                  <select form="med-status-save" name="conclusion" class="ppe-input js-med-conclusion">
+                    <option value="">—</option>
+                    @foreach (var opt in Model.ConclusionOptions)
+                    {
+                      if (string.Equals(opt, row.Conclusion, StringComparison.OrdinalIgnoreCase))
+                      {
+                        <option value="@opt" selected>@opt</option>
+                      }
+                      else
+                      {
+                        <option value="@opt">@opt</option>
+                      }
+                    }
+                  </select>
+                  <div class="med-status-scan">
+                    @if (!string.IsNullOrWhiteSpace(row.ConclusionScanFileName))
+                    {
+                      var scanExt = System.IO.Path.GetExtension(row.ConclusionScanFileName).ToLowerInvariant();
+                      var scanIsPdf = scanExt == ".pdf";
+                      var scanUrl = Url.Page("/Med/Status", "PreviewConclusionScan", new
+                      {
+                          examId = row.Id,
+                          reportDate = Model.ReportDate.ToString("yyyy-MM-dd"),
+                          selectedOrganization = Model.SelectedOrganization,
+                          department = Model.Department,
+                          profession = Model.Profession,
+                          examType = Model.ExamType,
+                          statusFilter = Model.StatusFilter
+                      });
+                      <button type="button"
+                              class="btn btn-outline btn-sm js-med-scan-preview"
+                              data-scan-url="@scanUrl"
+                              data-scan-pdf="@(scanIsPdf ? "1" : "0")"
+                              data-scan-title="Скан: @row.EmployeeName"
+                              title="Предпросмотр скана заключения">Скан</button>
+                      <form method="post" asp-page-handler="DeleteConclusionScan" class="ppe-inline-form med-status-scan-delete">
+                        <input type="hidden" name="examId" value="@row.Id" />
+                        <input type="hidden" name="organization" value="@row.Organization" />
+                        <input type="hidden" name="rowDepartment" value="@row.Department" />
+                        <input type="hidden" name="rowProfession" value="@row.Profession" />
+                        <input type="hidden" name="employeeName" value="@row.EmployeeName" />
+                        <input type="hidden" name="rowExamType" value="@row.ExamType" />
+                        <input type="hidden" name="itemNumber" value="@row.ItemNumber" />
+                        <input type="hidden" asp-for="ReportDate" />
+                        <input type="hidden" asp-for="SelectedOrganization" />
+                        <button type="submit" class="btn btn-outline btn-sm" title="Удалить скан" onclick="return confirm('Удалить скан заключения?');">×</button>
+                      </form>
+                    }
+                    <form method="post" asp-page-handler="UploadConclusionScan" enctype="multipart/form-data" class="med-status-scan-upload">
+                      <input type="hidden" name="examId" value="@row.Id" />
+                      <input type="hidden" name="organization" value="@row.Organization" />
+                      <input type="hidden" name="rowDepartment" value="@row.Department" />
+                      <input type="hidden" name="rowProfession" value="@row.Profession" />
+                      <input type="hidden" name="employeeName" value="@row.EmployeeName" />
+                      <input type="hidden" name="rowExamType" value="@row.ExamType" />
+                      <input type="hidden" name="itemNumber" value="@row.ItemNumber" />
+                      <input type="hidden" asp-for="ReportDate" />
+                      <input type="hidden" asp-for="SelectedOrganization" />
+                      <label class="med-status-scan-label" title="PDF или JPG/PNG: подставит заключение, дату выдачи и факторы (нужен русский OCR Windows).">
+                        <span class="btn btn-outline btn-sm">@(string.IsNullOrWhiteSpace(row.ConclusionScanFileName) ? "Загрузить" : "Заменить")</span>
+                        <input type="file" name="scanFile" accept=".pdf,.jpg,.jpeg,.png,.webp,application/pdf,image/jpeg,image/png,image/webp" class="med-status-scan-input" />
+                      </label>
+                    </form>
+                  </div>
+                </div>
+              </td>
+            </tr>
+          }
+        }
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<div id="med-scan-preview-modal" class="med-scan-modal" hidden>
+  <div class="med-scan-modal-backdrop js-med-scan-close"></div>
+  <div class="med-scan-modal-dialog" role="dialog" aria-modal="true" aria-labelledby="med-scan-preview-title">
+    <div class="med-scan-modal-head">
+      <h3 id="med-scan-preview-title" class="med-scan-modal-title">Скан заключения</h3>
+      <div class="med-scan-modal-actions">
+        <a id="med-scan-preview-open" class="btn btn-outline btn-sm" href="#" target="_blank" rel="noopener">Открыть в новой вкладке</a>
+        <button type="button" class="btn btn-outline btn-sm js-med-scan-close" title="Закрыть">×</button>
+      </div>
+    </div>
+    <div class="med-scan-modal-body">
+      <iframe id="med-scan-preview-frame" class="med-scan-preview-frame" title="Предпросмотр PDF" hidden></iframe>
+      <img id="med-scan-preview-image" class="med-scan-preview-image" alt="Скан заключения" hidden />
+    </div>
+  </div>
+</div>
+
+<style>
+  /* Таблица отчёта по МО должна влезать в окно (в т.ч. масштаб ~90%). */
+  .training-report-panel:has(#med-status-grid) > .training-status-wrap {
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
+    min-height: calc(100dvh - 11rem);
+    height: calc(100dvh - 11rem);
+    max-height: calc(100dvh - 11rem);
+  }
+
+  #med-status-grid.training-sticky-head-grid,
+  #med-status-grid.report-sticky-head-grid {
+    width: 100% !important;
+    min-width: 100% !important;
+    max-width: 100% !important;
+    table-layout: fixed;
+  }
+
+  #med-status-grid th,
+  #med-status-grid td {
+    white-space: normal;
+    overflow-wrap: anywhere;
+    word-break: break-word;
+    font-size: 0.82rem;
+    padding: 4px 5px;
+    vertical-align: top;
+  }
+
+  #med-status-grid th.col-tree,
+  #med-status-grid td.col-tree { width: 20%; }
+  #med-status-grid th:nth-child(2),
+  #med-status-grid td:nth-child(2) { width: 14%; }
+  #med-status-grid th:nth-child(3),
+  #med-status-grid td:nth-child(3) { width: 11%; }
+  #med-status-grid th:nth-child(4),
+  #med-status-grid td:nth-child(4) { width: 9%; }
+  #med-status-grid th:nth-child(5),
+  #med-status-grid td:nth-child(5),
+  #med-status-grid th:nth-child(6),
+  #med-status-grid td:nth-child(6) { width: 12%; }
+  #med-status-grid th:nth-child(7),
+  #med-status-grid td:nth-child(7) { width: 22%; }
+
+  #med-status-grid .ppe-input,
+  #med-status-grid input[type="date"].ppe-input,
+  #med-status-grid select.ppe-input,
+  #med-status-grid input[type="text"].ppe-input {
+    min-width: 0 !important;
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
+    font-size: 0.82rem;
+  }
+
+  .med-status-person-row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+  .med-status-issue-btn { margin-left: auto; white-space: nowrap; }
+  .med-status-conclusion-cell { display: flex; flex-direction: column; gap: 4px; min-width: 0; width: 100%; }
+  .med-status-scan { display: flex; align-items: center; gap: 4px; flex-wrap: wrap; }
+  .med-status-scan-label { margin: 0; cursor: pointer; }
+  .med-status-scan-input { position: absolute; width: 1px; height: 1px; opacity: 0; overflow: hidden; clip: rect(0, 0, 0, 0); }
+  .med-status-scan-delete { margin: 0; }
+  tr.med-status-focus-row > td {
+    outline: 2px solid #2f6fed;
+    outline-offset: -2px;
+  }
+  .med-scan-modal {
+    position: fixed; inset: 0; z-index: 1200;
+    display: flex; align-items: center; justify-content: center;
+    padding: 1.25rem;
+  }
+  .med-scan-modal[hidden] { display: none !important; }
+  .med-scan-modal-backdrop {
+    position: absolute; inset: 0; background: rgba(15, 26, 21, 0.55);
+  }
+  .med-scan-modal-dialog {
+    position: relative; z-index: 1;
+    width: min(960px, 96vw); height: min(88vh, 900px);
+    background: var(--panel, #fff); color: inherit;
+    border-radius: 10px; box-shadow: 0 16px 48px rgba(0,0,0,.28);
+    display: flex; flex-direction: column; overflow: hidden;
+  }
+  .med-scan-modal-head {
+    display: flex; align-items: center; justify-content: space-between; gap: 12px;
+    padding: 0.75rem 1rem; border-bottom: 1px solid rgba(15,26,21,.12);
+  }
+  .med-scan-modal-title { margin: 0; font-size: 1rem; font-weight: 600; }
+  .med-scan-modal-actions { display: flex; align-items: center; gap: 6px; }
+  .med-scan-modal-body { flex: 1; min-height: 0; background: #111; display: flex; align-items: center; justify-content: center; }
+  .med-scan-preview-frame { width: 100%; height: 100%; border: 0; background: #fff; }
+  .med-scan-preview-image { max-width: 100%; max-height: 100%; object-fit: contain; }
+  @@media print { .med-status-issue-btn, .med-status-scan, .med-scan-modal { display: none !important; } }
+</style>
+
+<script>
+  (function () {
+    var form = document.getElementById('med-status-filters');
+    if (form) {
+      form.querySelectorAll('.js-auto-filter').forEach(function (el) {
+        el.addEventListener('change', function () { form.submit(); });
+      });
+    }
+
+    function yearsFromPeriodicity(text) {
+      var t = String(text || '').toLowerCase();
+      if (t.indexOf('никогда') >= 0 || t.indexOf('нет') >= 0) return 0;
+      if (t.indexOf('при') >= 0 && (t.indexOf('прием') >= 0 || t.indexOf('приём') >= 0 || t.indexOf('принят') >= 0)) return 0;
+      if (t.indexOf('однократ') >= 0) return 0;
+      if (t.indexOf('2') >= 0 || t.indexOf('два') >= 0) return 2;
+      return 1;
+    }
+
+    function addYearsIso(iso, years) {
+      if (!iso || !years) return '';
+      var parts = String(iso).split('-');
+      if (parts.length !== 3) return '';
+      var y = parseInt(parts[0], 10) + years;
+      var m = parts[1];
+      var d = parts[2];
+      var dt = new Date(y, parseInt(m, 10) - 1, parseInt(d, 10));
+      if (isNaN(dt.getTime())) return '';
+      var mm = String(dt.getMonth() + 1).padStart(2, '0');
+      var dd = String(dt.getDate()).padStart(2, '0');
+      return dt.getFullYear() + '-' + mm + '-' + dd;
+    }
+
+    function syncNextDate(row) {
+      if (!row) return;
+      var exam = row.querySelector('.js-med-exam-date');
+      var period = row.querySelector('.js-med-periodicity');
+      var next = row.querySelector('.js-med-next-date');
+      if (!exam || !period || !next) return;
+      var years = yearsFromPeriodicity(period.value);
+      next.value = years ? addYearsIso(exam.value, years) : '';
+    }
+
+    function parseIsoDate(iso) {
+      if (!iso) return null;
+      var parts = String(iso).split('-');
+      if (parts.length !== 3) return null;
+      var dt = new Date(parseInt(parts[0], 10), parseInt(parts[1], 10) - 1, parseInt(parts[2], 10));
+      return isNaN(dt.getTime()) ? null : dt;
+    }
+
+    function isOnceOnHire(periodicity, isPsychiatric) {
+      if (isPsychiatric) return true;
+      var t = String(periodicity || '').toLowerCase();
+      return t.indexOf('никогда') >= 0 || t.indexOf('нет') >= 0 ||
+        (t.indexOf('при') >= 0 && (t.indexOf('прием') >= 0 || t.indexOf('приём') >= 0 || t.indexOf('принят') >= 0)) ||
+        t.indexOf('однократ') >= 0;
+    }
+
+    function reportAsOfDate() {
+      var asOf = new Date();
+      return new Date(asOf.getFullYear(), asOf.getMonth(), asOf.getDate());
+    }
+
+    function resolveRowTraffic(row) {
+      if (!row) return 'blue';
+      var select = row.querySelector('.js-med-conclusion');
+      var exam = row.querySelector('.js-med-exam-date');
+      var next = row.querySelector('.js-med-next-date');
+      var period = row.querySelector('.js-med-periodicity');
+      var psychInput = row.querySelector('input[name="isPsychiatric"]');
+      var hireInput = row.querySelector('.js-med-employment-date');
+      var statusInput = row.querySelector('input[name="status"]');
+      var asOf = reportAsOfDate();
+
+      var conclusion = String(select ? select.value : '').trim().toLowerCase();
+      var status = String(statusInput ? statusInput.value : '').trim().toLowerCase();
+      var isPsychiatric = psychInput && String(psychInput.value).toLowerCase() === 'true';
+      var periodicity = period ? period.value : '';
+      var examDate = parseIsoDate(exam ? exam.value : '');
+      var nextDate = parseIsoDate(next ? next.value : '');
+      var hireDate = parseIsoDate(hireInput ? hireInput.value : '');
+
+      if (conclusion === 'не пройден' || status === 'не пройден') {
+        return 'red';
+      }
+
+      if (isOnceOnHire(periodicity, isPsychiatric)) {
+        if (examDate && (status === 'пройден' || conclusion === 'годен' || conclusion === 'ограниченно годен')) {
+          return 'green';
+        }
+        var due = hireDate || asOf;
+        return due <= asOf ? 'red' : 'blue';
+      }
+
+      var hasLastExam = !!examDate;
+      if (!nextDate && hasLastExam && exam) {
+        var years = yearsFromPeriodicity(periodicity);
+        nextDate = parseIsoDate(years ? addYearsIso(exam.value, years) : '');
+      }
+
+      if (status === 'запланирован' && !hasLastExam) {
+        var plannedDue = hireDate || asOf;
+        return plannedDue <= asOf ? 'red' : 'blue';
+      }
+
+      if (!nextDate) {
+        return status === 'пройден' ? 'green' : 'blue';
+      }
+
+      if (nextDate < asOf) {
+        return 'red';
+      }
+
+      var warnUntil = new Date(asOf.getTime());
+      warnUntil.setDate(warnUntil.getDate() + 30);
+      if (nextDate <= warnUntil) {
+        return 'yellow';
+      }
+
+      return 'green';
+    }
+
+    function syncConclusionTraffic(row) {
+      if (!row) return;
+      var select = row.querySelector('.js-med-conclusion');
+      var exam = row.querySelector('.js-med-exam-date');
+      if (!select) return;
+      var value = String(select.value || '').trim().toLowerCase();
+      var hasExamDate = !!(exam && String(exam.value || '').trim());
+      var statusInput = row.querySelector('input[name="status"]');
+      var traffic = resolveRowTraffic(row);
+      row.classList.remove('traffic-red', 'traffic-green', 'traffic-yellow', 'traffic-blue');
+      row.classList.add('traffic-' + traffic);
+
+      if (value === 'не пройден') {
+        if (statusInput) statusInput.value = 'Не пройден';
+        return;
+      }
+
+      if (value === 'годен' || value === 'ограниченно годен' || value === 'не годен') {
+        if (statusInput) {
+          statusInput.value = hasExamDate
+            ? 'Пройден'
+            : (row.querySelector('.js-med-has-direction')?.value === 'true' ? 'Запланирован' : '');
+        }
+        return;
+      }
+
+      if (statusInput) {
+        statusInput.value = hasExamDate
+          ? 'Пройден'
+          : (row.querySelector('.js-med-has-direction')?.value === 'true' ? 'Запланирован' : '');
+      }
+    }
+
+    var treeBody = document.getElementById('med-status-body');
+    if (treeBody) {
+      treeBody.addEventListener('change', function (event) {
+        var target = event.target;
+        if (!target || !target.classList) return;
+        if (target.classList.contains('js-med-exam-date') || target.classList.contains('js-med-periodicity')) {
+          var trafficRow = target.closest('tr');
+          syncNextDate(trafficRow);
+          syncConclusionTraffic(trafficRow);
+        }
+        if (target.classList.contains('js-med-next-date')) {
+          syncConclusionTraffic(target.closest('tr'));
+        }
+        if (target.classList.contains('js-med-conclusion')) {
+          syncConclusionTraffic(target.closest('tr'));
+        }
+      });
+    }
+
+    if (!treeBody) return;
+
+    getRows().forEach(function (row) {
+      if (row.classList.contains('training-tree-data')) {
+        syncConclusionTraffic(row);
+      }
+    });
+
+    function getRows() {
+      return Array.prototype.slice.call(treeBody.querySelectorAll('.training-tree-row'));
+    }
+
+    function getChildren(folderRow) {
+      var id = folderRow.getAttribute('data-id') || '';
+      return getRows().filter(function (row) {
+        return (row.getAttribute('data-parent-id') || '') === id;
+      });
+    }
+
+    function collapseDescendants(row) {
+      getChildren(row).forEach(function (child) {
+        child.classList.add('training-tree-hidden');
+        child.classList.remove('training-tree-open');
+        var toggle = child.querySelector('.training-tree-toggle');
+        if (toggle) {
+          toggle.setAttribute('aria-expanded', 'false');
+          var caret = toggle.querySelector('.training-tree-caret');
+          if (caret) caret.textContent = '▶';
+        }
+        collapseDescendants(child);
+      });
+    }
+
+    function expandChildren(row) {
+      getChildren(row).forEach(function (child) {
+        child.classList.remove('training-tree-hidden');
+      });
+    }
+
+    // Дерево развёрнуто по умолчанию
+    function expandAllFolders() {
+      getRows().forEach(function (row) {
+        row.classList.remove('training-tree-hidden');
+        if (row.classList.contains('training-tree-folder')) {
+          row.classList.add('training-tree-open');
+          var toggle = row.querySelector('.training-tree-toggle');
+          if (toggle) {
+            toggle.setAttribute('aria-expanded', 'true');
+            var caret = toggle.querySelector('.training-tree-caret');
+            if (caret) caret.textContent = '▼';
+          }
+        }
+      });
+    }
+    expandAllFolders();
+
+    treeBody.addEventListener('click', function (event) {
+      var toggle = event.target.closest('.training-tree-toggle');
+      if (!toggle) return;
+      event.preventDefault();
+      var folder = toggle.closest('.training-tree-folder');
+      if (!folder) return;
+      var open = folder.classList.toggle('training-tree-open');
+      toggle.setAttribute('aria-expanded', open ? 'true' : 'false');
+      var caret = toggle.querySelector('.training-tree-caret');
+      if (caret) caret.textContent = open ? '▼' : '▶';
+      if (open) expandChildren(folder);
+      else collapseDescendants(folder);
+    });
+
+    document.querySelectorAll('.med-status-scan-input').forEach(function (input) {
+      input.addEventListener('change', function () {
+        if (!input.files || input.files.length === 0) return;
+        var form = input.closest('form');
+        if (!form) return;
+        saveMedStatusScroll(form);
+        form.submit();
+      });
+    });
+
+    document.querySelectorAll('form.med-status-scan-delete').forEach(function (form) {
+      form.addEventListener('submit', function () {
+        saveMedStatusScroll(form);
+      });
+    });
+
+    function saveMedStatusScroll(form) {
+      try {
+        var wrap = document.querySelector('.training-report-panel .training-status-wrap')
+          || document.querySelector('.training-status-wrap');
+        var examInput = form.querySelector('input[name="examId"]');
+        sessionStorage.setItem('medStatusScroll', JSON.stringify({
+          top: wrap ? wrap.scrollTop : (window.scrollY || 0),
+          examId: examInput ? examInput.value : '',
+          at: Date.now()
+        }));
+      } catch (e) { /* ignore */ }
+    }
+
+    (function restoreMedStatusScroll() {
+      var focusId = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.FocusExamId ?? ""));
+      var wrap = document.querySelector('.training-report-panel .training-status-wrap')
+        || document.querySelector('.training-status-wrap');
+      var saved = null;
+      try {
+        var raw = sessionStorage.getItem('medStatusScroll');
+        if (raw) {
+          saved = JSON.parse(raw);
+          sessionStorage.removeItem('medStatusScroll');
+        }
+      } catch (e) { saved = null; }
+
+      function apply() {
+        var examId = focusId || (saved && saved.examId) || '';
+        var row = examId ? document.getElementById('med-exam-' + examId) : null;
+        if (row && wrap) {
+          var y = row.getBoundingClientRect().top - wrap.getBoundingClientRect().top + wrap.scrollTop - 64;
+          wrap.scrollTop = Math.max(0, y);
+          row.classList.add('med-status-focus-row');
+          return;
+        }
+        if (saved && typeof saved.top === 'number') {
+          if (wrap) wrap.scrollTop = saved.top;
+          else window.scrollTo(0, saved.top);
+        }
+      }
+
+      apply();
+      requestAnimationFrame(function () {
+        apply();
+        setTimeout(apply, 50);
+      });
+    })();
+
+    var scanModal = document.getElementById('med-scan-preview-modal');
+    var scanFrame = document.getElementById('med-scan-preview-frame');
+    var scanImage = document.getElementById('med-scan-preview-image');
+    var scanTitle = document.getElementById('med-scan-preview-title');
+    var scanOpen = document.getElementById('med-scan-preview-open');
+
+    function closeScanPreview() {
+      if (!scanModal) return;
+      scanModal.hidden = true;
+      if (scanFrame) { scanFrame.hidden = true; scanFrame.removeAttribute('src'); }
+      if (scanImage) { scanImage.hidden = true; scanImage.removeAttribute('src'); }
+    }
+
+    function openScanPreview(btn) {
+      if (!scanModal || !btn) return;
+      var url = btn.getAttribute('data-scan-url');
+      if (!url) return;
+      var isPdf = btn.getAttribute('data-scan-pdf') === '1';
+      var title = btn.getAttribute('data-scan-title') || 'Скан заключения';
+      if (scanTitle) scanTitle.textContent = title;
+      if (scanOpen) scanOpen.href = url;
+      if (isPdf) {
+        if (scanImage) { scanImage.hidden = true; scanImage.removeAttribute('src'); }
+        if (scanFrame) { scanFrame.hidden = false; scanFrame.src = url; }
+      } else {
+        if (scanFrame) { scanFrame.hidden = true; scanFrame.removeAttribute('src'); }
+        if (scanImage) { scanImage.hidden = false; scanImage.src = url; }
+      }
+      scanModal.hidden = false;
+    }
+
+    document.addEventListener('click', function (event) {
+      var previewBtn = event.target.closest('.js-med-scan-preview');
+      if (previewBtn) {
+        event.preventDefault();
+        openScanPreview(previewBtn);
+        return;
+      }
+      if (event.target.closest('.js-med-scan-close')) {
+        closeScanPreview();
+      }
+    });
+
+    document.addEventListener('keydown', function (event) {
+      if (event.key === 'Escape') closeScanPreview();
+    });
+  })();
+</script>

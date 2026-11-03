@@ -1,0 +1,116 @@
+@page "/Med/Factors"
+@using Zashita.Core.Med
+@model Zashita.Web.Pages.Med.FactorsModel
+@{
+    ViewData["Title"] = "Перечень факторов и видов работ";
+    ViewData["Subtitle"] = Model.Organization;
+    var groupNames = Model.Nodes
+        .Where(n => n.IsGroup)
+        .ToDictionary(n => n.Id, n => n.Name, StringComparer.Ordinal);
+}
+
+@section Styles {
+  <link rel="stylesheet" href="~/css/med-factors.css" asp-append-version="true" />
+}
+
+@if (!string.IsNullOrWhiteSpace(Model.Message))
+{
+  <p class="@(Model.IsError ? "form-error" : "text-success")">@Model.Message</p>
+}
+
+<div class="panel ppe-panel med-doc-panel">
+  <div class="ppe-toolbar sout-toolbar">
+    <a class="btn btn-primary btn-sm" asp-page="/Med/Factors/Edit">Создать</a>
+    <a class="btn btn-outline btn-sm" asp-page="/Med/Factors/Edit" asp-route-isGroup="true">Создать группу</a>
+    <a class="btn btn-outline btn-sm" asp-page="/Med/Factors/Preview">Печать</a>
+  </div>
+
+  <form method="get" class="sout-workplaces-filters" id="med-factors-filter-form">
+    <label class="sout-workplaces-search">
+      <span class="visually-hidden">Поиск</span>
+      <input type="search" name="q" value="@Model.Q" class="ppe-input" placeholder="Поиск: группа, номер, наименование" autocomplete="off" />
+    </label>
+  </form>
+
+  <table class="data-grid med-factors-grid" id="med-factors-grid">
+    <thead>
+      <tr>
+        <th class="med-factors-col-group">Наименование группы</th>
+        <th class="med-factors-col-num">№ п/п</th>
+        <th class="med-factors-col-name">Наименование вредного и (или) опасного производственных факторов, согласно Приказу №&nbsp;29н</th>
+        <th class="med-factors-col-period">Периодичность</th>
+        <th class="med-factors-col-actions"></th>
+      </tr>
+    </thead>
+    <tbody>
+      @if (Model.TreeItems.Count == 0)
+      {
+        <tr>
+          <td colspan="5" class="hint">Записей нет. Нажмите «Создать» или «Создать группу».</td>
+        </tr>
+      }
+      @foreach (var item in Model.TreeItems)
+      {
+        var node = item.Node;
+        if (node.IsGroup)
+        {
+          <tr class="med-factors-row med-factors-row-group" data-id="@node.Id">
+            <td class="med-factors-col-group">
+              <span class="med-factors-indent" style="--depth:@item.Depth"></span>
+              <strong>@node.Name</strong>
+            </td>
+            <td class="med-factors-col-num">@(string.IsNullOrWhiteSpace(node.ItemNumber) ? "—" : node.ItemNumber)</td>
+            <td class="med-factors-col-name hint">группа</td>
+            <td class="med-factors-col-period">—</td>
+            <td class="med-factors-col-actions">
+              <a class="btn btn-outline btn-sm" asp-page="/Med/Factors/Edit" asp-route-id="@node.Id">Редактировать</a>
+              <form method="post" asp-page="/Med/Factors" asp-page-handler="Delete" class="ppe-inline-form"
+                    onsubmit="return confirm('Удалить группу «@node.Name» и все вложенные элементы?');">
+                <input type="hidden" name="id" value="@node.Id" />
+                <input type="hidden" name="q" value="@Model.Q" />
+                <button type="submit" class="btn btn-outline btn-sm">Удалить</button>
+              </form>
+            </td>
+          </tr>
+        }
+        else
+        {
+          var groupName = !string.IsNullOrWhiteSpace(node.ParentId) && groupNames.TryGetValue(node.ParentId, out var gn)
+              ? gn
+              : "—";
+          <tr class="med-factors-row" data-id="@node.Id">
+            <td class="med-factors-col-group">
+              <span class="med-factors-indent" style="--depth:@item.Depth"></span>
+              @groupName
+            </td>
+            <td class="med-factors-col-num">@(string.IsNullOrWhiteSpace(node.ItemNumber) ? "—" : node.ItemNumber)</td>
+            <td class="med-factors-col-name">
+              <a asp-page="/Med/Factors/Edit" asp-route-id="@node.Id">@node.Name</a>
+            </td>
+            <td class="med-factors-col-period">@(string.IsNullOrWhiteSpace(node.Periodicity) ? "—" : node.Periodicity)</td>
+            <td class="med-factors-col-actions">
+              <a class="btn btn-outline btn-sm" asp-page="/Med/Factors/Edit" asp-route-id="@node.Id">Редактировать</a>
+              <form method="post" asp-page="/Med/Factors" asp-page-handler="Delete" class="ppe-inline-form"
+                    onsubmit="return confirm('Удалить «@node.Name»?');">
+                <input type="hidden" name="id" value="@node.Id" />
+                <input type="hidden" name="q" value="@Model.Q" />
+                <button type="submit" class="btn btn-outline btn-sm">Удалить</button>
+              </form>
+            </td>
+          </tr>
+        }
+      }
+    </tbody>
+  </table>
+</div>
+
+@section Scripts {
+  <script src="~/js/sout-workplaces.js" asp-append-version="true"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', function () {
+      if (typeof initSoutWorkplaces === 'function') {
+        initSoutWorkplaces({ filterFormId: 'med-factors-filter-form' });
+      }
+    });
+  </script>
+}

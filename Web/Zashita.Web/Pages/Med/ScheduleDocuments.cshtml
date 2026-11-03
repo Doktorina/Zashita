@@ -1,0 +1,100 @@
+@page "/Med/Schedule/Documents"
+@model Zashita.Web.Pages.Med.ScheduleDocumentsModel
+@{
+    ViewData["Title"] = "Документы графика медосмотров";
+    ViewData["Subtitle"] = Model.Organization;
+}
+
+@section Styles {
+  <link rel="stylesheet" href="~/css/med-person-list.css" asp-append-version="true" />
+}
+
+<div class="panel ppe-panel med-doc-panel">
+  <div class="ppe-toolbar sout-toolbar">
+    <a class="btn btn-outline btn-sm" asp-page="/Med/Schedule">← К потребностям</a>
+    <a class="btn btn-primary btn-sm" asp-page="/Med/Schedule/Edit">Создать</a>
+    @if (!string.IsNullOrWhiteSpace(Model.PrintId))
+    {
+      <a class="btn btn-outline btn-sm" asp-page="/Med/Schedule/Edit" asp-route-id="@Model.PrintId">Перейти</a>
+    }
+    <details class="ppe-print-menu" id="med-schedule-print-menu">
+      <summary class="btn btn-outline btn-sm">Печать ▾</summary>
+      <div class="ppe-print-dropdown">
+        @foreach (var mode in new[] {
+          Zashita.Core.Med.MedSchedulePrintModes.General,
+          Zashita.Core.Med.MedSchedulePrintModes.Named,
+          Zashita.Core.Med.MedSchedulePrintModes.NamedByDepartment,
+          Zashita.Core.Med.MedSchedulePrintModes.Acknowledgement,
+          Zashita.Core.Med.MedSchedulePrintModes.PsychiatricDirection })
+        {
+          <a class="med-print-link @(string.IsNullOrWhiteSpace(Model.PrintId) ? "training-print-disabled" : "")"
+             data-href-template="/Med/Schedule/Preview?id={id}&amp;mode=@mode"
+             href="@(string.IsNullOrWhiteSpace(Model.PrintId) ? "#" : $"/Med/Schedule/Preview?id={Uri.EscapeDataString(Model.PrintId!)}&mode={mode}")">
+            @Zashita.Core.Med.MedSchedulePrintModes.Title(mode)
+          </a>
+        }
+      </div>
+    </details>
+  </div>
+
+  <form method="get" id="med-schedule-filter-form" class="training-report-filters">
+    <input type="hidden" name="printId" id="med-schedule-print-id" value="@Model.PrintId" />
+    <div class="training-planning-filter-grid">
+      <label class="training-planning-filter-item"><span>Подразделение</span><input name="department" value="@Model.Department" class="ppe-input" placeholder="все" /></label>
+      <label class="training-planning-filter-item"><span>Вид медосмотра</span><input name="examType" value="@Model.ExamType" class="ppe-input" placeholder="все" /></label>
+      <label class="training-planning-filter-item"><span>Поиск</span><input name="q" value="@Model.Q" class="ppe-input" /></label>
+      <div class="training-planning-filter-item med-filter-actions">
+        <span>&nbsp;</span>
+        <button type="submit" class="btn btn-primary btn-sm">Показать</button>
+      </div>
+    </div>
+  </form>
+
+  <table class="data-grid sout-preparation-grid med-person-list-grid" id="med-schedule-grid">
+    <thead>
+      <tr>
+        <th class="med-status-col"></th>
+        <th>Дата</th>
+        <th>Номер</th>
+        <th>Вид медосмотра</th>
+        <th>Организация</th>
+        <th>Мед. учреждение</th>
+      </tr>
+    </thead>
+    <tbody>
+      @foreach (var row in Model.Rows)
+      {
+        var isSelected = !string.IsNullOrWhiteSpace(Model.PrintId) && Model.PrintId == row.Id;
+        <tr class="med-person-list-row @(isSelected ? "training-row-active" : "")" data-id="@row.Id" data-number="@row.Number">
+          <td class="med-status-col"><span class="med-doc-status @(row.IsPosted ? "med-doc-status-posted" : "med-doc-status-draft")"></span></td>
+          <td>@row.Date.ToString("dd.MM.yyyy")</td>
+          <td><a asp-page="/Med/Schedule/Edit" asp-route-id="@row.Id">@row.Number</a></td>
+          <td>@row.ExamType</td>
+          <td>@row.Organization</td>
+          <td>@row.MedicalInstitution</td>
+        </tr>
+      }
+      @if (Model.Rows.Count == 0)
+      {
+        <tr><td colspan="6" class="hint">Документов пока нет.</td></tr>
+      }
+    </tbody>
+  </table>
+</div>
+
+@section Scripts {
+  <script src="~/js/med-doc-list.js" asp-append-version="true"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', function () {
+      if (window.MedDocList) {
+        window.MedDocList.init({
+          gridId: 'med-schedule-grid',
+          printIdInputId: 'med-schedule-print-id',
+          filterFormId: 'med-schedule-filter-form',
+          printMenuId: 'med-schedule-print-menu',
+          selectedHintId: null
+        });
+      }
+    });
+  </script>
+}

@@ -1,0 +1,267 @@
+﻿@page "/Risks/Preparation/Preview"
+@model Zashita.Web.Pages.Risks.Preparation.PreviewModel
+@{
+    ViewData["Title"] = Model.NotFound ? "Не найдено" : " ";
+    var historyTitle = Model.NotFound ? "Не найдено" : $"Подготовка к проведению оценки рисков {Model.Title}";
+    Layout = null;
+    var isSchedule = string.Equals(Model.Mode, "schedule", StringComparison.OrdinalIgnoreCase)
+                     || string.Equals(Model.Mode, "schedule-weekly", StringComparison.OrdinalIgnoreCase);
+    var paperClass = isSchedule ? "risks-a4-landscape" : "risks-a4-portrait";
+}
+
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>@ViewData["Title"]</title>
+    <partial name="_SiteIconLinks" />
+<link rel="stylesheet" href="/css/risks-preparation.css" asp-append-version="true" />
+  <style>
+    /* Локальный сброс — без zashita/sout, чтобы не ломать ширину листа */
+    * { box-sizing: border-box; }
+    html, body {
+      margin: 0;
+      padding: 0;
+      background: #c5c5c5;
+      font-family: "Times New Roman", Times, serif;
+      color: #000;
+    }
+    .risks-preview-toolbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 8px 12px;
+      background: #ece9d8;
+      border-bottom: 1px solid #a0a0a0;
+      font-family: "Segoe UI", Tahoma, sans-serif;
+      position: sticky;
+      top: 0;
+      z-index: 20;
+    }
+    .risks-preview-toolbar-left,
+    .risks-preview-toolbar-right {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+    .btn {
+      display: inline-block;
+      padding: 6px 12px;
+      border: 1px solid #888;
+      background: #fff;
+      cursor: pointer;
+      text-decoration: none;
+      color: #222;
+      font-size: 13px;
+      border-radius: 3px;
+    }
+    .btn-primary { background: #2f6b3a; color: #fff; border-color: #245530; }
+    .hint { font-size: 12px; color: #444; }
+    .risks-preview-stage {
+      padding: 20px;
+      display: block;
+      overflow: auto;
+    }
+    /* Жёсткий лист A4 на экране */
+    .risks-a4-page {
+      background: #fff;
+      margin: 0 auto 24px;
+      box-shadow: 0 2px 14px rgba(0,0,0,.25);
+      color: #000;
+    }
+    .risks-a4-portrait {
+      width: 210mm;
+      min-height: 297mm;
+      padding: 15mm 18mm;
+    }
+    .risks-a4-landscape {
+      width: 297mm;
+      min-height: 210mm;
+      padding: 8mm 10mm;
+    }
+    .risks-a4-page .risks-order-sheet,
+    .risks-a4-page .risks-workplaces-sheet,
+    .risks-a4-page .risks-schedule-sheet {
+      width: 100% !important;
+      max-width: none !important;
+      margin: 0 !important;
+      padding: 0 !important;
+      box-shadow: none !important;
+      min-height: 0 !important;
+    }
+    /* График — компактная шапка месяцев (короткие подписи, без высокой вертикали) */
+    .risks-print-approve {
+      min-height: 0 !important;
+      margin: 0 0 4px !important;
+    }
+    .risks-print-org-center,
+    .risks-print-main-title {
+      margin: 2px 0 !important;
+      font-size: 12pt !important;
+    }
+    .risks-print-main-title { font-size: 11pt !important; }
+    .risks-print-months th,
+    .risks-print-months td {
+      padding: 2px 1px !important;
+      font-size: 9pt !important;
+    }
+    .risks-print-month-names th {
+      height: auto !important;
+      padding: 3px 1px !important;
+    }
+    .risks-month-label {
+      writing-mode: horizontal-tb !important;
+      transform: none !important;
+      display: inline !important;
+      font-size: 8pt !important;
+      white-space: nowrap;
+    }
+    .risks-print-footer-sign {
+      margin-top: 10px !important;
+      font-size: 10pt !important;
+    }
+    .ppe-no-print { }
+    @@media print {
+      @@page {
+        size: @(isSchedule ? "A4 landscape" : "A4 portrait");
+        margin: @(isSchedule ? "8mm" : "12mm");
+      }
+      html, body {
+        background: #fff !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        width: auto !important;
+      }
+      .ppe-no-print,
+      .risks-preview-toolbar,
+      .risks-print-edit-hint {
+        display: none !important;
+      }
+      .risks-preview-stage {
+        padding: 0 !important;
+        margin: 0 !important;
+        overflow: visible !important;
+      }
+      .risks-a4-page {
+        width: auto !important;
+        min-height: auto !important;
+        max-width: none !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        box-shadow: none !important;
+      }
+      .risks-a4-page .risks-order-sheet,
+      .risks-a4-page .risks-workplaces-sheet,
+      .risks-a4-page .risks-schedule-sheet {
+        width: 100% !important;
+        max-width: none !important;
+      }
+      /* Вся форма графика на одном листе */
+      .risks-schedule-sheet,
+      .risks-schedule-sheet table {
+        page-break-inside: avoid !important;
+        break-inside: avoid !important;
+      }
+      .risks-schedule-sheet tr {
+        page-break-inside: avoid !important;
+        break-inside: avoid !important;
+      }
+      .risks-wp-table {
+        width: 100% !important;
+      }
+      .risks-wp-table thead th {
+        background: #2f6b3a !important;
+        color: #fff !important;
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+      }
+      .risks-wp-table th,
+      .risks-wp-table td {
+        writing-mode: horizontal-tb !important;
+        transform: none !important;
+      }
+    }
+  </style>
+</head>
+<body class="risks-preview-mode-@Model.Mode">
+@if (Model.NotFound)
+{
+  <div style="padding:2rem;font-family:Segoe UI,sans-serif">
+    <p>Документ не найден. Сохраните документ в списке и повторите печать.</p>
+    <a class="btn" href="/Risks/Documents?tab=preparation">← К документам</a>
+  </div>
+}
+else
+{
+  <div class="risks-docs-back-row ppe-no-print" style="padding:8px 12px 0">
+    <a class="btn btn-outline btn-sm" href="/Risks/Documents?tab=preparation">← К документам</a>
+  </div>
+  <div class="risks-preview-toolbar ppe-no-print">
+    <div class="risks-preview-toolbar-left">
+      <button type="button" class="btn btn-primary" id="risks-preview-print-btn">Печать</button>
+      <button type="button" class="btn" id="risks-doc-word-btn">Word</button>
+      <button type="button" class="btn" id="risks-preview-save-btn">Записать</button>
+      <span class="hint">Правьте текст, затем «Записать». В диалоге печати: бумага A4@(isSchedule ? ", альбомная" : "")</span>
+    </div>
+    <div class="risks-preview-toolbar-right">
+      <a class="btn" href="/Risks/Preparation/Edit?id=@Model.Id">К документу</a>
+    </div>
+  </div>
+
+  @if (!string.IsNullOrWhiteSpace(Model.Message))
+  {
+    <p class="hint ppe-no-print" style="padding:8px 12px;background:#e8f5e9;margin:0">@Model.Message</p>
+  }
+
+  <form method="post" asp-page="/Risks/Preparation/Preview" asp-page-handler="Save" id="risks-preview-save-form" class="ppe-no-print">
+    <input type="hidden" name="id" value="@Model.Id" />
+    <input type="hidden" name="mode" value="@Model.Mode" />
+    <div id="risks-preview-overrides"></div>
+  </form>
+
+  <div class="risks-preview-stage">
+    <div class="risks-a4-page @paperClass" id="risks-preview-print-area">
+      @Html.Raw(Model.PreviewHtml)
+    </div>
+  </div>
+
+  <script src="~/js/risks-doc-list.js" asp-append-version="true"></script>
+  <script src="~/js/risks-doc-export.js" asp-append-version="true"></script>
+  <script src="/js/print-history.js" asp-append-version="true"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', function () {
+      initRisksPreparationPreview({
+        saveBtnId: 'risks-preview-save-btn',
+        saveFormId: 'risks-preview-save-form',
+        overridesContainerId: 'risks-preview-overrides',
+        printAreaId: 'risks-preview-print-area'
+      });
+      if (window.zashitaRisksDocExport) {
+        window.zashitaRisksDocExport.bind({
+          sourceSelector: '#risks-preview-print-area',
+          fileName: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(historyTitle)),
+          landscape: @(isSchedule ? "true" : "false")
+        });
+      }
+      var printBtn = document.getElementById('risks-preview-print-btn');
+      if (printBtn) {
+        printBtn.addEventListener('click', function () {
+          if (typeof zashitaRecordPrint === 'function') {
+            zashitaRecordPrint({
+              category: 'risks',
+              title: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(historyTitle)),
+              summary: 'Печать'
+            });
+          } else {
+            window.print();
+          }
+        });
+      }
+    });
+  </script>
+}
+</body>
+</html>

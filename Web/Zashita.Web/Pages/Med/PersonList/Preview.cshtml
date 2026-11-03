@@ -1,0 +1,97 @@
+﻿@page "/Med/PersonList/Preview"
+@using Zashita.Core.Med
+@model Zashita.Web.Pages.Med.PersonList.PreviewModel
+@{
+    ViewData["Title"] = Model.NotFound ? "Не найдено" : Model.Title;
+    Layout = null;
+}
+
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>@ViewData["Title"]</title>
+    <partial name="_SiteIconLinks" />
+<link rel="stylesheet" href="/css/zashita.css" asp-append-version="true" />
+  <link rel="stylesheet" href="/css/sout-preparation.css" asp-append-version="true" />
+  <link rel="stylesheet" href="/css/ppe-doc-print.css" asp-append-version="true" />
+  <link rel="stylesheet" href="/css/med-person-list.css" asp-append-version="true" />
+</head>
+<body class="sout-preview-page med-preview-mode-@Model.Mode">
+@if (Model.NotFound)
+{
+  <div class="sout-preview-missing">
+    <p>Документ не найден. Сохраните документ в списке и повторите печать.</p>
+    <a class="btn btn-outline" href="/Med/ContingentLists?tab=named">К списку</a>
+  </div>
+}
+else
+{
+  <div class="sout-preview-shell">
+    <div class="sout-preview-toolbar ppe-no-print">
+      <div class="sout-preview-toolbar-left">
+        <button type="button" class="btn btn-primary btn-sm" onclick="zashitaRecordPrint({ category: 'med', title: document.title, summary: 'Печать' })">Печать</button>
+        <button type="button" class="btn btn-outline btn-sm" id="med-person-preview-save-btn">Записать</button>
+        <details class="ppe-print-menu med-print-menu-open">
+          <summary class="btn btn-outline btn-sm">Форма ▾</summary>
+          <div class="ppe-print-dropdown">
+            @foreach (var mode in new[]
+            {
+              MedPersonListPrintModes.Standard,
+              MedPersonListPrintModes.ByDepartment,
+              MedPersonListPrintModes.Moscow,
+              MedPersonListPrintModes.FullFactors,
+              MedPersonListPrintModes.WorkplacesByDepartment,
+              MedPersonListPrintModes.Dispensary,
+              MedPersonListPrintModes.Psychiatric,
+              MedPersonListPrintModes.DirectionSverdlovsk
+            })
+            {
+              <a href="/Med/PersonList/Preview?id=@Uri.EscapeDataString(Model.Id)&amp;mode=@mode"
+                 class="@(string.Equals(Model.Mode, mode, StringComparison.OrdinalIgnoreCase) ? "training-row-active" : null)">
+                @MedPersonListPrintModes.Title(mode)
+              </a>
+            }
+          </div>
+        </details>
+      </div>
+      <div class="sout-preview-toolbar-right">
+        <a class="btn btn-outline btn-sm" href="/Med/PersonList/Edit?id=@Model.Id">К документу</a>
+        <a class="btn btn-outline btn-sm" href="/Med/ContingentLists?tab=named&amp;printId=@Model.Id">К списку</a>
+      </div>
+    </div>
+
+    @if (!string.IsNullOrWhiteSpace(Model.Message))
+    {
+      <p class="sout-preview-message ppe-no-print">@Model.Message</p>
+    }
+
+    <form method="post" asp-page="/Med/PersonList/Preview" asp-page-handler="Save" id="med-person-preview-save-form" class="ppe-no-print">
+      <input type="hidden" name="id" value="@Model.Id" />
+      <input type="hidden" name="mode" value="@Model.Mode" />
+      <div id="med-person-preview-overrides"></div>
+    </form>
+
+    <div class="sout-preview-doc-wrap" id="med-person-preview-print-area">
+      <div class="sout-eq-doc med-print-sheet">
+        @Html.Raw(Model.PreviewHtml)
+      </div>
+    </div>
+  </div>
+
+  <script src="~/js/med-doc-list.js" asp-append-version="true"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', function () {
+      initMedPreparationPreview({
+        saveBtnId: 'med-person-preview-save-btn',
+        saveFormId: 'med-person-preview-save-form',
+        overridesContainerId: 'med-person-preview-overrides',
+        printAreaId: 'med-person-preview-print-area'
+      });
+    });
+  </script>
+}
+  <script src="/js/print-history.js"></script>
+</body>
+</html>

@@ -1,0 +1,8 @@
+@page "/Training/Archive"
+@model Zashita.Web.Pages.Training.ArchiveModel
+@{
+    ViewData["Title"] = "Архив обучений";
+    ViewData["Subtitle"] = Model.Organization;
+}
+
+<partial name="_TrainingStatusReport" model="Model" />

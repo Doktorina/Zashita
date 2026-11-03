@@ -1,0 +1,351 @@
+@page "/Med/Directions"
+@model Zashita.Web.Pages.Med.DirectionsModel
+@using Zashita.Core.Med
+@{
+    ViewData["Title"] = "Направления на медосмотр";
+    ViewData["Subtitle"] = Model.Organization;
+    var catalogJson = System.Text.Json.JsonSerializer.Serialize(
+        Model.FactorCatalog.Select(f => new
+        {
+            id = f.Id,
+            item = f.ItemNumber,
+            name = f.Name,
+            period = f.Periodicity,
+            group = f.GroupName
+        }));
+    var standardsJson = System.Text.Json.JsonSerializer.Serialize(
+        Model.StandardsForProfession.Select(s => new
+        {
+            id = s.Id,
+            name = s.Name,
+            profession = s.Profession,
+            department = s.Department,
+            rules = s.Rules.Select(r => new
+            {
+                item = r.ItemNumber,
+                name = r.FactorName,
+                period = r.Periodicity,
+                kind = r.ExamKind
+            })
+        }));
+}
+
+@section Styles {
+  <link rel="stylesheet" href="~/css/med-person-list.css" asp-append-version="true" />
+  <link rel="stylesheet" href="~/css/med-direction-print.css" asp-append-version="true" />
+  <link rel="stylesheet" href="~/css/med-standards.css" asp-append-version="true" />
+}
+
+<div class="ppe-split med-directions-split">
+  <div class="panel ppe-panel ppe-split-side med-doc-panel med-directions-side">
+    <div class="ppe-toolbar sout-toolbar med-directions-toolbar">
+      <a class="btn btn-outline btn-sm" asp-page="/Med/Directions">Новое</a>
+      <form method="post" asp-page-handler="AutoPeriodicDirections" class="ppe-inline-form">
+        <button type="submit" class="btn btn-outline btn-sm" onclick="return confirm('Создать направления по периодическим стандартам?');">Автосоздать</button>
+      </form>
+      @if (!string.IsNullOrWhiteSpace(Model.EditId))
+      {
+        <a class="btn btn-primary btn-sm" href="/Med/Directions/Preview?id=@Uri.EscapeDataString(Model.EditId)">Печать</a>
+        <a class="btn btn-outline btn-sm" href="/Med/Directions/Preview?handler=Download&amp;id=@Uri.EscapeDataString(Model.EditId)">Word</a>
+        <a class="btn btn-outline btn-sm" href="/Med/Directions/Preview?handler=DownloadPdf&amp;id=@Uri.EscapeDataString(Model.EditId)">PDF</a>
+      }
+      else
+      {
+        <button type="button" class="btn btn-outline btn-sm" disabled title="Выберите направление в списке или сохраните новое">Печать</button>
+        <button type="button" class="btn btn-outline btn-sm" disabled title="Сначала сохраните направление">Скачать</button>
+      }
+    </div>
+    @if (!string.IsNullOrWhiteSpace(Model.Message))
+    {
+      <p class="@(Model.Message.Contains("Не удалось", StringComparison.OrdinalIgnoreCase) || Model.Message.StartsWith("Укажите", StringComparison.OrdinalIgnoreCase) ? "form-error" : "hint")">@Model.Message</p>
+    }
+    <div class="med-directions-list-wrap">
+      <table class="data-grid med-directions-list">
+        <thead>
+          <tr>
+            <th>Дата</th>
+            <th>Сотрудник</th>
+            <th>Вид</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+        @if (Model.Rows.Count == 0)
+        {
+          <tr><td colspan="4" class="hint">Пока нет направлений. Нажмите «Новое».</td></tr>
+        }
+        else
+        {
+          foreach (var row in Model.Rows)
+          {
+            var fio = string.Join(' ', new[] { row.LastName, row.FirstName, row.MiddleName }.Where(x => !string.IsNullOrWhiteSpace(x)));
+            <tr class="@(string.Equals(Model.EditId, row.Id, StringComparison.OrdinalIgnoreCase) ? "training-row-active" : null)">
+              <td class="med-dir-col-date">
+                <a asp-page="/Med/Directions" asp-route-editId="@row.Id">@row.Date.ToString("dd.MM.yyyy")</a>
+              </td>
+              <td class="med-dir-col-name" title="@fio">
+                <a asp-page="/Med/Directions" asp-route-editId="@row.Id">@fio</a>
+              </td>
+              <td class="med-dir-col-type" title="@row.ExamType">@row.ExamType</td>
+              <td class="med-dir-col-actions">
+                <form method="post" asp-page-handler="Delete" class="ppe-inline-form"
+                      onsubmit="return confirm('Удалить направление от @row.Date.ToString("dd.MM.yyyy") — @fio?');">
+                  <input type="hidden" name="deleteId" value="@row.Id" />
+                  <button type="submit" class="btn btn-outline btn-sm" title="Удалить">×</button>
+                </form>
+              </td>
+            </tr>
+          }
+        }
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="panel ppe-panel ppe-split-main med-directions-main">
+    <div class="ppe-toolbar med-directions-main-toolbar">
+      @if (!string.IsNullOrWhiteSpace(Model.EditId))
+      {
+        <a class="btn btn-primary btn-sm" href="/Med/Directions/Preview?id=@Uri.EscapeDataString(Model.EditId)">Печать / предпечать</a>
+        <span class="hint">Откроется печатная форма направления</span>
+      }
+      else
+      {
+        <span class="hint">Сохраните направление — появится кнопка печати</span>
+      }
+    </div>
+    <h2 class="ppe-step-title">Направление на медосмотр</h2>
+    <form method="post" asp-page-handler="Save" id="med-direction-form" enctype="multipart/form-data">
+      <input type="hidden" asp-for="EditId" />
+      <div class="training-filter-grid">
+        <label class="ppe-field"><span>Дата направления</span><input asp-for="Date" type="date" class="ppe-input" /></label>
+        <label class="ppe-field">
+          <span>Вид осмотра</span>
+          <select asp-for="ExamType" class="ppe-input">
+            @foreach (var opt in Model.ExamTypeOptions)
+            {
+              <option value="@opt">@opt</option>
+            }
+          </select>
+        </label>
+      </div>
+
+      <label class="ppe-field">
+        <span>Медорганизация</span>
+        <select asp-for="MedicalOrgId" class="ppe-input">
+          <option value="">— по умолчанию —</option>
+          @foreach (var item in Model.MedicalOrganizations)
+          {
+            <option value="@item.Id">@item.Name</option>
+          }
+        </select>
+      </label>
+
+      <div class="med-dir-person-block">
+        <h3 class="ppe-subtitle">Данные человека</h3>
+        <p class="hint">Можно выбрать из штата или вписать вручную (кандидат / нетрудоустроенный).</p>
+
+        <label class="ppe-field">
+          <span>Из штата (подстановка)</span>
+          <div class="med-std-combo" id="med-dir-employee-combo">
+            <input type="text"
+                   asp-for="EmployeeName"
+                   class="ppe-input"
+                   id="med-dir-employee-input"
+                   placeholder="Начните вводить ФИО из штата или оставьте пустым"
+                   autocomplete="off"
+                   autocorrect="off"
+                   autocapitalize="off"
+                   spellcheck="false"
+                   data-lpignore="true"
+                   data-form-type="other"
+                   role="combobox"
+                   aria-expanded="false"
+                   aria-controls="med-dir-employee-list" />
+            <button type="button" class="btn btn-outline btn-sm med-std-combo-toggle" id="med-dir-employee-toggle" aria-label="Открыть список сотрудников">▾</button>
+            <ul class="med-std-combo-list" id="med-dir-employee-list" role="listbox" hidden></ul>
+          </div>
+        </label>
+
+        <div class="training-filter-grid">
+          <label class="ppe-field"><span>Фамилия</span><input asp-for="LastName" class="ppe-input" autocomplete="off" /></label>
+          <label class="ppe-field"><span>Имя</span><input asp-for="FirstName" class="ppe-input" autocomplete="off" /></label>
+          <label class="ppe-field"><span>Отчество</span><input asp-for="MiddleName" class="ppe-input" autocomplete="off" /></label>
+        </div>
+        <div class="training-filter-grid">
+          <label class="ppe-field">
+            <span>Пол</span>
+            <select asp-for="Gender" class="ppe-input">
+              <option value="">—</option>
+              <option value="Мужской">Мужской</option>
+              <option value="Женский">Женский</option>
+            </select>
+          </label>
+          <label class="ppe-field"><span>Дата рождения</span><input asp-for="BirthDate" type="date" class="ppe-input" /></label>
+          <label class="ppe-field"><span>СНИЛС</span><input asp-for="Snils" class="ppe-input" autocomplete="off" placeholder="000-000-000 00" maxlength="14" /></label>
+        </div>
+      </div>
+
+      <div class="training-filter-grid">
+        <label class="ppe-field"><span>Подразделение</span><input asp-for="Department" class="ppe-input" /></label>
+        <label class="ppe-field">
+          <span>Профессия / вид работ</span>
+          <input asp-for="ProfessionOrWorkType" class="ppe-input" list="med-direction-professions" placeholder="из штата или вручную" autocomplete="off" />
+        </label>
+        <label class="ppe-field" id="med-dir-hire-profession-field">
+          <span>Профессия (на которую принимается)*</span>
+          <input asp-for="HireProfession" class="ppe-input" placeholder="только для предварительного" />
+        </label>
+      </div>
+      <p class="hint" id="med-dir-hire-hint">* П.10 заполняется только при виде осмотра «Предварительный».</p>
+      <datalist id="med-direction-professions">
+        @foreach (var profession in Model.ProfessionOptions)
+        {
+          <option value="@profession"></option>
+        }
+      </datalist>
+      <p class="hint" id="med-dir-standard-hint">
+        При выборе ФИО из штата или профессии подставляются факторы из стандарта медосмотра (лишние можно убрать).
+        @if (Model.StandardsForProfession.Count == 0)
+        {
+          <br /><span class="form-error">Стандарты медосмотра ещё не созданы — сначала заполните <a asp-page="/Med/Standards">Стандарты медосмотров</a>.</span>
+        }
+        else
+        {
+          <br /><span>Доступно стандартов: @Model.StandardsForProfession.Count.</span>
+        }
+      </p>
+
+      <div class="training-filter-grid">
+        <label class="ppe-field"><span>Полис</span><input asp-for="PolicyNumber" class="ppe-input" /></label>
+        <label class="ppe-field"><span>Домашний адрес</span><input asp-for="HomeAddress" class="ppe-input" /></label>
+      </div>
+      <div class="training-filter-grid">
+        <label class="ppe-field"><span>Контакты работодателя</span><input asp-for="EmployerContacts" class="ppe-input" /></label>
+        <label class="ppe-field"><span>Собственность / ОКВЭД</span><input asp-for="OwnershipOkved" class="ppe-input" /></label>
+        <label class="ppe-field"><span>Должность уполномоченного</span><input asp-for="AuthorizedRepresentativePosition" class="ppe-input" placeholder="Специалист по охране труда" /></label>
+        <label class="ppe-field"><span>Фамилия и инициалы уполномоченного</span><input asp-for="AuthorizedRepresentative" class="ppe-input" placeholder="Е.О. Чудинова" /></label>
+        <label class="ppe-field">
+          <span>Подпись (картинка)</span>
+          <input asp-for="SignatureFile" type="file" accept=".png,.jpg,.jpeg,.webp,image/png,image/jpeg,image/webp" class="ppe-input" />
+          @if (!string.IsNullOrWhiteSpace(Model.SignatureImageUrl))
+          {
+            <span class="hint" style="display:flex;align-items:center;gap:8px;margin-top:4px;">
+              <img src="@Model.SignatureImageUrl" alt="Подпись" style="max-height:36px;max-width:120px;object-fit:contain;border:1px solid #ccc;background:#fff;" />
+              <label style="display:inline-flex;align-items:center;gap:4px;font-weight:400;">
+                <input asp-for="ClearSignature" type="checkbox" /> удалить
+              </label>
+            </span>
+          }
+        </label>
+      </div>
+      <div class="training-filter-grid">
+        <label class="ppe-field"><span>Стаж общий (года)</span><input asp-for="ExperienceTotal" class="ppe-input" placeholder="не заполняется автоматически" /></label>
+        <label class="ppe-field"><span>Стаж в профессии (года)</span><input asp-for="ExperienceProfession" class="ppe-input" placeholder="от даты приёма" /></label>
+        <label class="ppe-field"><span>Стаж во вредных условиях (года)</span><input asp-for="ExperienceHazardous" class="ppe-input" placeholder="не заполняется автоматически" /></label>
+      </div>
+
+      <div class="med-std-rules">
+        <div class="med-std-rules-head">
+          <h3 class="ppe-subtitle">Факторы направления</h3>
+          <span class="hint">Из стандарта по профессии или вручную из <a asp-page="/Med/Factors">Перечня факторов</a> — лишние можно убрать</span>
+        </div>
+
+        <div class="med-std-picker">
+          <label class="ppe-field med-std-picker-field">
+            <span>Добавить фактор из перечня</span>
+            <div class="med-std-combo" id="med-dir-combo">
+              <input type="text"
+                     id="med-dir-combo-input"
+                     class="ppe-input"
+                     placeholder="Начните вводить пункт или название…"
+                     autocomplete="off"
+                     role="combobox"
+                     aria-expanded="false"
+                     aria-controls="med-dir-combo-list" />
+              <button type="button" class="btn btn-outline btn-sm med-std-combo-toggle" id="med-dir-combo-toggle" aria-label="Открыть список">▾</button>
+              <ul class="med-std-combo-list" id="med-dir-combo-list" role="listbox" hidden></ul>
+            </div>
+          </label>
+        </div>
+
+        <div id="med-dir-selected-wrap" class="med-std-selected-wrap">
+          <table class="data-grid med-std-selected-table" id="med-dir-selected-table">
+            <thead>
+              <tr>
+                <th>№ п/п</th>
+                <th>Фактор</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody id="med-dir-selected-body">
+              @foreach (var factor in Model.SelectedFactors)
+              {
+                var itemDisplay = string.IsNullOrWhiteSpace(factor.Code29n)
+                    ? "—"
+                    : MedItemNumber.Display(factor.Code29n);
+                var itemValue = MedItemNumber.Normalize(factor.Code29n);
+                <tr data-item="@(string.IsNullOrWhiteSpace(itemValue) ? "—" : itemValue)" data-name="@factor.FactorName">
+                  <td>
+                    <input type="hidden" name="FactorName" value="@factor.FactorName" />
+                    <input type="hidden" name="FactorCode988" value="@factor.Code988" />
+                    <input type="hidden" name="FactorCode29n" value="@itemValue" />
+                    <input type="hidden" name="FactorLevel" value="@factor.Level" />
+                    <input type="hidden" name="FactorClass" value="@factor.ConditionsClass" />
+                    <span class="med-dir-item-label">@itemDisplay</span>
+                  </td>
+                  <td class="med-dir-name-label">@factor.FactorName</td>
+                  <td><button type="button" class="btn btn-outline btn-sm med-dir-remove">Убрать</button></td>
+                </tr>
+              }
+            </tbody>
+          </table>
+          <p class="hint" id="med-dir-empty" style="@(Model.SelectedFactors.Count == 0 ? null : "display:none")">Факторы ещё не добавлены.</p>
+        </div>
+      </div>
+
+      <div class="ppe-actions">
+        <button type="submit" class="btn btn-primary">Сохранить</button>
+        @if (!string.IsNullOrWhiteSpace(Model.EditId))
+        {
+          <a class="btn btn-outline" href="/Med/Directions/Preview?id=@Uri.EscapeDataString(Model.EditId)">Печать</a>
+          <button type="submit" class="btn btn-outline" formaction="?handler=Delete" name="deleteId" value="@Model.EditId">Удалить</button>
+        }
+      </div>
+    </form>
+  </div>
+</div>
+
+<template id="med-dir-row-template">
+  <tr>
+    <td>
+      <input type="hidden" name="FactorName" value="" />
+      <input type="hidden" name="FactorCode988" value="" />
+      <input type="hidden" name="FactorCode29n" value="" />
+      <input type="hidden" name="FactorLevel" value="" />
+      <input type="hidden" name="FactorClass" value="" />
+      <span class="med-dir-item-label"></span>
+    </td>
+    <td class="med-dir-name-label"></td>
+    <td><button type="button" class="btn btn-outline btn-sm med-dir-remove">Убрать</button></td>
+  </tr>
+</template>
+
+<script>
+  window.medDirectionCatalog = @Html.Raw(catalogJson);
+  window.medDirectionStandards = @Html.Raw(standardsJson);
+  window.medDirectionEmployees = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(
+    Model.EmployeeLookup.Select(e => new {
+      name = e.Name,
+      last = e.LastName,
+      first = e.FirstName,
+      middle = e.MiddleName,
+      gender = e.Gender,
+      birth = e.BirthDate?.ToString("yyyy-MM-dd"),
+      snils = e.Snils,
+      department = e.Department,
+      profession = e.Profession,
+      address = e.HomeAddress
+    })));
+</script>
+<script src="~/js/med-directions.js" asp-append-version="true"></script>

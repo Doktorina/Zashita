@@ -1,0 +1,50 @@
+## Build
+[Bb]in/
+[Oo]bj/
+[Ll]og/
+[Ll]ogs/
+[Dd]ebug/
+[Rr]elease/
+artifacts/
+*.user
+*.suo
+*.userosscache
+.vs/
+.idea/
+
+## Publish / archives
+publish/
+publish-linux/
+*.zip
+
+## Secrets
+**/appsettings.Production.json
+.env
+*.pem
+id_rsa*
+id_ed25519*
+
+## Runtime / PII
+**/App_Data/backups/
+**/App_Data/**/*.csv
+**/App_Data/**/*.xlsx
+**/App_Data/**/*.docx
+**/App_Data/**/*.log
+**/App_Data/wok/
+**/App_Data/med/
+**/App_Data/risks/
+**/App_Data/training/
+**/App_Data/electrical/
+**/App_Data/incidents/
+**/App_Data/compliance/
+**/App_Data/suot/
+**/App_Data/templates/
+**/App_Data/training-conduct.json
+**/App_Data/one-c-sync-log.json
+**/App_Data/manual-data-sync.json
+**/App_Data/_startup-maintenance.stamp
+
+## Temp
+_tmp_*/
+tmp-*
+*.swp

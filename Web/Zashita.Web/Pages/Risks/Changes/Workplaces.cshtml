@@ -1,0 +1,63 @@
+@page "/Risks/Changes/Workplaces"
+@model Zashita.Web.Pages.Risks.Changes.WorkplacesModel
+@{
+    ViewData["Title"] = "Внесение изменений — выбор рабочего места";
+}
+
+<div class="panel ppe-panel">
+  <div class="ppe-toolbar" style="flex-wrap:wrap;gap:8px">
+    <a class="btn btn-outline btn-sm" asp-page="/Risks/HazardCatalog" asp-route-flow="changes">← Назад к реестру</a>
+    <span class="hint">Шаг 2 из 3: выберите рабочее место — откроется карта оценки рисков</span>
+  </div>
+
+  <form method="get" class="ppe-filter-bar">
+    <label>
+      Поиск
+      <input type="search" name="q" value="@Model.Q" class="ppe-input" placeholder="наименование, профессия, №…" autocomplete="off" />
+    </label>
+    <button type="submit" class="btn btn-outline">Найти</button>
+  </form>
+
+  <table class="data-grid training-catalog-grid">
+    <thead>
+      <tr>
+        <th>Наименование</th>
+        <th>№ РМ</th>
+        <th>Профессия</th>
+        <th>Подразделение</th>
+        <th></th>
+      </tr>
+    </thead>
+    <tbody>
+      @if (Model.TreeItems.Count == 0)
+      {
+        <tr><td colspan="5" class="hint">Нет рабочих мест. Добавьте их в «Перечень рабочих мест».</td></tr>
+      }
+      @foreach (var item in Model.TreeItems)
+      {
+        var node = item.Node;
+        if (node.IsGroup)
+        {
+          <tr class="training-tree-group">
+            <td colspan="5" style="padding-left:@(item.Depth * 16)px"><b>@node.Name</b></td>
+          </tr>
+        }
+        else
+        {
+          <tr>
+            <td style="padding-left:@(item.Depth * 16)px">@node.Name</td>
+            <td>@(string.IsNullOrWhiteSpace(node.WorkplaceNumber) ? "—" : node.WorkplaceNumber)</td>
+            <td>@(string.IsNullOrWhiteSpace(node.Profession) ? "—" : node.Profession)</td>
+            <td>@(string.IsNullOrWhiteSpace(node.Department) ? "—" : node.Department)</td>
+            <td>
+              <a class="btn btn-primary btn-sm"
+                 asp-page="/Risks/Workplaces/Assessment"
+                 asp-route-id="@node.Id"
+                 asp-route-flow="changes">Выбрать</a>
+            </td>
+          </tr>
+        }
+      }
+    </tbody>
+  </table>
+</div>

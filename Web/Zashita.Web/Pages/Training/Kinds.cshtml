@@ -1,0 +1,200 @@
+@page "/Training/Kinds"
+@model Zashita.Web.Pages.Training.KindsModel
+@{
+    ViewData["Title"] = "Виды обучения";
+    ViewData["Subtitle"] = "Виды обучения, инструктажа, проверки знаний, стажировок";
+}
+
+<link rel="stylesheet" href="/css/sout-catalog.css" asp-append-version="true" />
+
+@if (!string.IsNullOrWhiteSpace(Model.Message))
+{
+    <p class="text-success">@Model.Message</p>
+}
+
+<div class="panel ppe-panel sout-catalog-panel">
+  <div class="sout-catalog-stub ppe-no-print">
+    <p class="hint sout-catalog-stub-text">Справочник видов обучения. У каждого вида и группы можно указать <b>раздел</b> (колонка в таблице или в карточке). Редактирование и создание — внутри выбранной папки или группы.</p>
+  </div>
+
+  <div class="ppe-toolbar sout-toolbar">
+    <button type="button" class="btn btn-outline btn-sm" id="kind-add-row-btn">Создать</button>
+    <button type="button" class="btn btn-outline btn-sm" id="kind-add-group-btn">Создать группу</button>
+    <button type="button" class="btn btn-outline btn-sm" id="kind-bulk-edit-btn">Изменить выделенные...</button>
+  </div>
+  <p class="hint ppe-no-print">Кнопка «Создать» открывает карточку, как в 1С. Выделите папку или элемент — новая запись попадёт в ту же группу. Двойной клик по строке открывает карточку. Смена <b>раздела</b> у группы после «Сохранить» применяется к вложенным видам. Список разделов в фильтре строится из фактических значений в таблице.</p>
+
+  <form method="get" class="sout-workplaces-filters" id="kind-catalog-filter-form" asp-page="/Training/Kinds">
+    <label class="ppe-field">
+      <span>Раздел</span>
+      <select name="filterSection" class="ppe-input" id="kind-filter-section" onchange="this.form.submit()">
+        <option value="">Все</option>
+        @foreach (var sectionName in Model.SectionOptions)
+        {
+          if (string.Equals(Model.FilterSection, sectionName, StringComparison.OrdinalIgnoreCase))
+          {
+            <option value="@sectionName" selected>@sectionName</option>
+          }
+          else
+          {
+            <option value="@sectionName">@sectionName</option>
+          }
+        }
+      </select>
+    </label>
+    <label class="sout-workplaces-search">
+      <span class="visually-hidden">Поиск</span>
+      <input type="search" name="q" value="@Model.Q" class="ppe-input" placeholder="Поиск (Ctrl+F)" autocomplete="off" />
+    </label>
+  </form>
+  @if (!string.IsNullOrWhiteSpace(Model.FilterSection))
+  {
+    <p class="hint">Показан раздел «@Model.FilterSection»: @Model.Nodes.Count(n => !n.IsGroup) вид(ов). <a asp-page="/Training/Kinds">Сбросить фильтр</a></p>
+  }
+
+  <datalist id="kind-sections">
+    @foreach (var sectionName in Model.SectionSuggestions)
+    {
+      <option value="@sectionName"></option>
+    }
+  </datalist>
+
+  <form method="post" asp-page-handler="Save">
+    <input type="hidden" name="FilterSection" value="@Model.FilterSection" />
+    <div class="ppe-actions ppe-actions-top">
+      <button type="submit" class="btn btn-primary">Сохранить</button>
+    </div>
+    <table class="data-grid ppe-edit-grid training-catalog-grid">
+      <thead>
+        <tr>
+          <th class="training-select-col"></th>
+          <th>Наименование</th>
+          <th>Тип</th>
+          <th>Периодичность</th>
+          <th>Раздел</th>
+          <th>Категория персонала</th>
+          <th>Действия</th>
+        </tr>
+      </thead>
+      <tbody id="kind-catalog-body">
+        @foreach (var item in Model.TreeItems)
+        {
+          var n = item.Node;
+          <tr class="training-catalog-row training-tree-row @(n.IsGroup ? "training-tree-folder training-tree-open" : "training-tree-file")"
+              data-id="@n.Id"
+              data-parent-id="@(n.ParentId ?? "")"
+              data-is-group="@n.IsGroup.ToString().ToLowerInvariant()"
+              data-depth="@item.Depth">
+            <td class="training-select-col">
+              <input type="checkbox" class="training-row-select" aria-label="Выделить" />
+            </td>
+            <td>
+              <input type="hidden" name="Id" value="@n.Id" />
+              <input type="hidden" name="ParentId" value="@n.ParentId" />
+              <input type="hidden" name="IsGroup" value="@n.IsGroup.ToString().ToLowerInvariant()" />
+              @await Html.PartialAsync("_TrainingTreeName", new TrainingTreeNameModel
+              {
+                Depth = item.Depth,
+                IsGroup = n.IsGroup,
+                Name = n.Name,
+                InputClass = n.IsGroup ? "ppe-input training-group-name" : "ppe-input training-item-name"
+              })
+            </td>
+            <td><input name="Type" value="@n.Type" class="ppe-input" /></td>
+            <td><input name="Periodicity" value="@n.Periodicity" class="ppe-input" /></td>
+            <td><input name="Section" value="@n.Section" class="ppe-input" list="kind-sections" /></td>
+            <td>
+              <select name="PersonnelCategory" class="ppe-input">
+                <option value="">Все</option>
+                @foreach (var category in Model.PersonnelCategoryOptions)
+                {
+                  if (string.Equals(n.PersonnelCategory, category, StringComparison.OrdinalIgnoreCase))
+                  {
+                    <option value="@category" selected>@category</option>
+                  }
+                  else
+                  {
+                    <option value="@category">@category</option>
+                  }
+                }
+              </select>
+            </td>
+            <td>
+              <div class="sout-catalog-row-actions">
+                <a class="suot-action" asp-page="/Training/Kinds/Edit" asp-route-id="@n.Id" title="Открыть">✎</a>
+                <button type="button" class="suot-action suot-action-danger" data-action="delete" title="Удалить">🗑</button>
+              </div>
+              <input type="hidden" name="Delete" value="false" class="training-delete-flag" />
+            </td>
+          </tr>
+        }
+        <tr id="kind-add-row-template" class="training-tree-row training-tree-file kind-row-template" hidden data-id="" data-parent-id="" data-is-group="false" data-depth="0">
+          <td class="training-select-col"><input type="checkbox" class="training-row-select" aria-label="Выделить" disabled /></td>
+          <td>
+            <input type="hidden" name="Id" value="" disabled />
+            <input type="hidden" name="ParentId" value="" disabled />
+            <input type="hidden" name="IsGroup" value="false" disabled />
+            @await Html.PartialAsync("_TrainingTreeName", new TrainingTreeNameModel { Depth = 0, IsGroup = false, InputClass = "ppe-input training-item-name", Disabled = true })
+          </td>
+          <td><input name="Type" value="Обучение" class="ppe-input" disabled /></td>
+          <td><input name="Periodicity" value="1 раз в год" class="ppe-input" disabled /></td>
+          <td><input name="Section" value="@(Model.FilterSection ?? "Охрана труда")" class="ppe-input" list="kind-sections" disabled /></td>
+          <td>
+            <select name="PersonnelCategory" class="ppe-input" disabled>
+              <option value="">Все</option>
+              @foreach (var category in Model.PersonnelCategoryOptions)
+              {
+                <option value="@category">@category</option>
+              }
+            </select>
+          </td>
+          <td>
+            <button type="button" class="suot-action suot-action-danger" data-action="delete" title="Удалить" disabled>🗑</button>
+            <input type="hidden" name="Delete" value="false" class="training-delete-flag" disabled />
+          </td>
+        </tr>
+        <tr id="kind-add-group-template" class="training-tree-row training-tree-folder kind-row-template" hidden data-id="" data-parent-id="" data-is-group="true" data-depth="0">
+          <td class="training-select-col"><input type="checkbox" class="training-row-select" aria-label="Выделить" disabled /></td>
+          <td>
+            <input type="hidden" name="Id" value="" disabled />
+            <input type="hidden" name="ParentId" value="" disabled />
+            <input type="hidden" name="IsGroup" value="true" disabled />
+            @await Html.PartialAsync("_TrainingTreeName", new TrainingTreeNameModel { Depth = 0, IsGroup = true, InputClass = "ppe-input training-group-name", Disabled = true })
+          </td>
+          <td><input name="Type" value="Обучение" class="ppe-input" disabled /></td>
+          <td><input name="Periodicity" value="" class="ppe-input" disabled /></td>
+          <td><input name="Section" value="@(Model.FilterSection ?? "Охрана труда")" class="ppe-input" list="kind-sections" disabled /></td>
+          <td>
+            <select name="PersonnelCategory" class="ppe-input" disabled>
+              <option value="">Все</option>
+            </select>
+          </td>
+          <td>
+            <button type="button" class="suot-action suot-action-danger" data-action="delete" title="Удалить" disabled>🗑</button>
+            <input type="hidden" name="Delete" value="false" class="training-delete-flag" disabled />
+          </td>
+        </tr>
+      </tbody>
+    </table>
+    
+  </form>
+</div>
+
+@section Scripts {
+  <script src="~/js/training-catalog.js" asp-append-version="true"></script>
+  <script src="~/js/sout-catalog.js" asp-append-version="true"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', function () {
+      initSoutCatalog({
+        filterFormId: 'kind-catalog-filter-form',
+        addRowBtnId: 'kind-add-row-btn',
+        addGroupBtnId: 'kind-add-group-btn',
+        bulkEditBtnId: 'kind-bulk-edit-btn',
+        rowTemplateId: 'kind-add-row-template',
+        groupTemplateId: 'kind-add-group-template',
+        treeBodyId: 'kind-catalog-body',
+        editBase: '/Training/Kinds/Edit'
+      });
+    });
+  </script>
+}

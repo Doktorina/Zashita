@@ -1,0 +1,15 @@
+@page "/Training/Report"
+@model Zashita.Web.Pages.Training.ReportModel
+@{
+    ViewData["Title"] = Model.Title ?? "Отчёт";
+    ViewData["Subtitle"] = "Обучение";
+}
+
+<div class="panel ppe-panel">
+  <p>Отчёт: <strong>@Model.Title</strong></p>
+  <p class="hint">Данные формируются по шаблонам обучения и загруженным таблицам Excel. Журналы доступны в <a asp-page="/Training/Reports">каталоге журналов</a>.</p>
+  <div class="ppe-actions">
+    <a class="btn btn-primary" asp-page="/Training/Status">Состояние по обучению</a>
+    <a class="btn btn-outline" asp-page="/Training/Standards">Стандарт обучения</a>
+  </div>
+</div>

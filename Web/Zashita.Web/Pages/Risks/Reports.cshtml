@@ -1,0 +1,35 @@
+@page "/Risks/Reports"
+@model Zashita.Web.Pages.Risks.ReportsModel
+@{
+    ViewData["Title"] = "Отчеты по рискам";
+    ViewData["Subtitle"] = "Оценка и управление рисками";
+}
+
+<link rel="stylesheet" href="/css/risks-report.css" asp-append-version="true" />
+
+<div class="panel ppe-panel">
+  <form method="get" class="ppe-filter-bar">
+    <label>
+      Поиск
+      <input name="q" value="@Model.Q" class="ppe-input" placeholder="название отчёта" />
+    </label>
+    <button type="submit" class="btn btn-outline">Найти</button>
+  </form>
+
+  <div class="risks-report-links">
+    @foreach (var entry in Model.Entries)
+    {
+      <div class="risks-report-link">
+        @if (!string.IsNullOrWhiteSpace(entry.Href))
+        {
+          <a href="@entry.Href">@entry.Title</a>
+        }
+        else
+        {
+          <span class="risks-report-link-disabled">@entry.Title</span>
+        }
+        <div class="ppe-muted">@entry.Description</div>
+      </div>
+    }
+  </div>
+</div>

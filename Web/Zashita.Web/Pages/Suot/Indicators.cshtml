@@ -1,0 +1,440 @@
+@page "/Suot/Indicators"
+@using Zashita.Core.Suot
+@model Zashita.Web.Pages.Suot.IndicatorsModel
+@{
+    ViewData["Title"] = "Показатели";
+    ViewData["Subtitle"] = "Справочник показателей системы управления охраной труда.";
+}
+
+@if (!string.IsNullOrWhiteSpace(Model.Message))
+{
+    <p class="@(Model.IsError ? "form-error" : "text-success")">@Model.Message</p>
+}
+
+<div class="suot-page">
+    <div class="suot-page-head panel ppe-panel">
+        <div class="ppe-toolbar suot-page-toolbar">
+            <a class="btn btn-primary btn-sm" asp-page="/Suot/Indicators"
+               asp-route-filterDirection="@Model.FilterDirection" asp-route-filterType="@Model.FilterType" asp-route-search="@Model.Search">Создать</a>
+            <a class="btn btn-outline btn-sm" asp-page="/Suot/Indicators" asp-route-newGroup="true"
+               asp-route-filterDirection="@Model.FilterDirection" asp-route-filterType="@Model.FilterType" asp-route-search="@Model.Search">
+                Создать группу
+            </a>
+            <a class="btn btn-outline btn-sm" asp-page="/Suot/Indicators" asp-route-bulk="true"
+               asp-route-filterDirection="@Model.FilterDirection" asp-route-filterType="@Model.FilterType" asp-route-search="@Model.Search">
+                Изменить выделенные
+            </a>
+            <button type="button" class="btn btn-outline btn-sm" id="suot-expand-all">Развернуть все</button>
+            <button type="button" class="btn btn-outline btn-sm" id="suot-collapse-all">Свернуть все</button>
+        </div>
+
+        <form method="get" class="suot-page-filters">
+            <label class="ppe-field">
+                <span>Направление деятельности</span>
+                <select name="filterDirection" class="ppe-input" onchange="this.form.submit()">
+                    <option value="">Все</option>
+                    @foreach (var direction in SuotIndicatorDefaults.ActivityDirections)
+                    {
+                        <option value="@direction" selected="@(direction == Model.FilterDirection)">@direction</option>
+                    }
+                </select>
+            </label>
+            <label class="ppe-field">
+                <span>Вид показателя</span>
+                <select name="filterType" class="ppe-input" onchange="this.form.submit()">
+                    <option value="">Все</option>
+                    @foreach (var type in SuotIndicatorDefaults.IndicatorTypes)
+                    {
+                        <option value="@type" selected="@(type == Model.FilterType)">@type</option>
+                    }
+                </select>
+            </label>
+            <label class="ppe-field">
+                <span>Поиск</span>
+                <input type="search" name="search" value="@Model.Search" class="ppe-input" placeholder="Наименование или код" />
+            </label>
+            <button type="submit" class="btn btn-outline btn-sm">Найти</button>
+        </form>
+    </div>
+
+    <div class="suot-layout">
+        <div class="panel ppe-panel suot-list-panel">
+            @if (Model.ShowBulkPanel)
+            {
+                <form method="post" asp-page-handler="Bulk">
+                    <input type="hidden" name="filterDirection" value="@Model.FilterDirection" />
+                    <input type="hidden" name="filterType" value="@Model.FilterType" />
+                    <input type="hidden" name="search" value="@Model.Search" />
+                    <div class="suot-bulk-panel">
+                        <h3 class="ppe-subtitle">Изменение выделенных показателей</h3>
+                        <table class="data-grid ppe-edit-grid">
+                            <thead>
+                                <tr>
+                                    <th></th>
+                                    <th>Реквизит</th>
+                                    <th>Новое значение</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td><input type="checkbox" name="bulkApplyType" value="true" /></td>
+                                    <td>Вид показателя</td>
+                                    <td>
+                                        <select name="bulkIndicatorType" class="ppe-input">
+                                            @foreach (var type in SuotIndicatorDefaults.IndicatorTypes)
+                                            {
+                                                <option value="@type">@type</option>
+                                            }
+                                        </select>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td><input type="checkbox" name="bulkApplyDirection" value="true" /></td>
+                                    <td>Направление деятельности</td>
+                                    <td>
+                                        <select name="bulkActivityDirection" class="ppe-input">
+                                            @foreach (var direction in SuotIndicatorDefaults.ActivityDirections)
+                                            {
+                                                <option value="@direction">@direction</option>
+                                            }
+                                        </select>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td><input type="checkbox" name="bulkApplyUnit" value="true" /></td>
+                                    <td>Единица измерения</td>
+                                    <td>
+                                        <select name="bulkUnit" class="ppe-input">
+                                            @foreach (var unit in SuotIndicatorDefaults.Units)
+                                            {
+                                                <option value="@unit">@unit</option>
+                                            }
+                                        </select>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td><input type="checkbox" name="bulkApplyGroup" value="true" /></td>
+                                    <td>Входит в группу</td>
+                                    <td>
+                                        <select name="bulkParentId" class="ppe-input">
+                                            <option value="">Без группы</option>
+                                            @foreach (var group in Model.Groups)
+                                            {
+                                                <option value="@group.Id">@group.Name</option>
+                                            }
+                                        </select>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                        <div class="ppe-actions">
+                            <button type="submit" class="btn btn-primary btn-sm">Изменить реквизиты</button>
+                            <a class="btn btn-outline btn-sm" asp-page="/Suot/Indicators"
+                               asp-route-filterDirection="@Model.FilterDirection" asp-route-filterType="@Model.FilterType" asp-route-search="@Model.Search">Отмена</a>
+                        </div>
+                    </div>
+
+                    <table class="data-grid suot-table">
+                        <thead>
+                            <tr>
+                                <th class="suot-check-col"></th>
+                                <th>Наименование</th>
+                                <th>Вид</th>
+                                <th>Ед. изм.</th>
+                                <th>Направление</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var row in Model.TreeRows)
+                            {
+                                <tr>
+                                    <td class="suot-check-col">
+                                        <input type="checkbox" name="selectedIds" value="@row.Indicator.Id" />
+                                    </td>
+                                    <td>@row.Indicator.Name</td>
+                                    <td>@row.Indicator.IndicatorType</td>
+                                    <td>@row.Indicator.Unit</td>
+                                    <td>@row.Indicator.ActivityDirection</td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </form>
+            }
+            else
+            {
+                <table class="data-grid suot-table" id="suot-indicators-table">
+                    <thead>
+                        <tr>
+                            <th class="suot-tree-col"></th>
+                            <th>Наименование</th>
+                            <th>Вид</th>
+                            <th>Ед. изм.</th>
+                            <th>Направление</th>
+                            <th class="suot-actions-col">Действия</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var row in Model.TreeRows)
+                        {
+                            var item = row.Indicator;
+                            var active = item.Id == Model.ActiveId;
+                            <tr class="suot-tree-row @(active ? "row-active" : "") @(row.HasChildren ? "suot-group-row" : "")"
+                                data-id="@item.Id"
+                                data-parent-id="@(row.ParentId ?? "")"
+                                data-depth="@row.Depth">
+                                <td class="suot-tree-col">
+                                    @if (row.HasChildren)
+                                    {
+                                        <button type="button"
+                                                class="suot-tree-toggle"
+                                                data-group-id="@item.Id"
+                                                aria-expanded="true"
+                                                title="Свернуть / развернуть">▼</button>
+                                    }
+                                </td>
+                                <td>
+                                    <a class="suot-name-link @(item.IsGroup ? "suot-name-group" : "")"
+                                       style="padding-left:@(row.Depth * 18)px"
+                                       asp-page="/Suot/Indicators"
+                                       asp-route-viewId="@item.Id"
+                                       asp-route-filterDirection="@Model.FilterDirection"
+                                       asp-route-filterType="@Model.FilterType"
+                                       asp-route-search="@Model.Search">
+                                        @item.Name
+                                    </a>
+                                </td>
+                                <td>@item.IndicatorType</td>
+                                <td>@item.Unit</td>
+                                <td>@item.ActivityDirection</td>
+                                <td class="suot-actions-col">
+                                    <partial name="_TableActions" model='new SuotTableActionsModel {
+                                        ViewHref = Url.Page("/Suot/Indicators", new { viewId = item.Id, filterDirection = Model.FilterDirection, filterType = Model.FilterType, search = Model.Search }),
+                                        EditHref = Url.Page("/Suot/Indicators", new { editId = item.Id, filterDirection = Model.FilterDirection, filterType = Model.FilterType, search = Model.Search }),
+                                        DeleteId = item.Id,
+                                        DeleteConfirm = "Удалить показатель?",
+                                        HiddenFields = new Dictionary<string, string?> {
+                                            ["filterDirection"] = Model.FilterDirection,
+                                            ["filterType"] = Model.FilterType,
+                                            ["search"] = Model.Search
+                                        }
+                                    }' />
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            }
+        </div>
+
+        <div class="panel ppe-panel suot-form-panel">
+            @if (Model.IsViewMode && Model.Selected is not null)
+            {
+                <h2 class="ppe-step-title">Просмотр показателя</h2>
+                <dl class="suot-view-list">
+                    <dt>Наименование</dt><dd>@Model.Selected.Name</dd>
+                    <dt>Код</dt><dd>@Model.Selected.Code</dd>
+                    <dt>Сокращённое наименование</dt><dd>@(string.IsNullOrWhiteSpace(Model.Selected.ShortName) ? "—" : Model.Selected.ShortName)</dd>
+                    <dt>Группа</dt><dd>@(Model.ResolveGroupName(Model.Selected.ParentId) ?? "—")</dd>
+                    <dt>Направление деятельности</dt><dd>@(string.IsNullOrWhiteSpace(Model.Selected.ActivityDirection) ? "—" : Model.Selected.ActivityDirection)</dd>
+                    <dt>Вид показателя</dt><dd>@Model.Selected.IndicatorType</dd>
+                    <dt>Ед. изм.</dt><dd>@Model.Selected.Unit</dd>
+                    <dt>Описание</dt><dd>@(string.IsNullOrWhiteSpace(Model.Selected.Description) ? "—" : Model.Selected.Description)</dd>
+                    <dt>Описание формулы</dt><dd>@(string.IsNullOrWhiteSpace(Model.Selected.FormulaDescription) ? "—" : Model.Selected.FormulaDescription)</dd>
+                    <dt>Формула</dt><dd><pre class="suot-formula-view">@(string.IsNullOrWhiteSpace(Model.Selected.Formula) ? "—" : Model.Selected.Formula)</pre></dd>
+                    <dt>Тип записи</dt><dd>@(Model.Selected.IsGroup ? "Группа" : "Показатель")</dd>
+                </dl>
+                <partial name="_PanelActions" model='new SuotPanelActionsModel {
+                    EditHref = Url.Page("/Suot/Indicators", new { editId = Model.Selected.Id, filterDirection = Model.FilterDirection, filterType = Model.FilterType, search = Model.Search }),
+                    DeleteId = Model.Selected.Id,
+                    DeleteConfirm = "Удалить показатель?",
+                    SecondaryHref = Url.Page("/Suot/Facts"),
+                    SecondaryLabel = "Отражение факта",
+                    HiddenFields = new Dictionary<string, string?> {
+                        ["filterDirection"] = Model.FilterDirection,
+                        ["filterType"] = Model.FilterType,
+                        ["search"] = Model.Search
+                    }
+                }' />
+            }
+            else
+            {
+                <h2 class="ppe-step-title">@(Model.IsEditMode ? "Редактирование" : "Новый показатель")</h2>
+                <form method="post" asp-page-handler="Save">
+                    <input type="hidden" asp-for="EditId" />
+                    <input type="hidden" name="filterDirection" value="@Model.FilterDirection" />
+                    <input type="hidden" name="filterType" value="@Model.FilterType" />
+                    <input type="hidden" name="search" value="@Model.Search" />
+
+                    <label class="ppe-field">
+                        <span>Наименование</span>
+                        <input asp-for="Name" class="ppe-input" required />
+                    </label>
+                    <label class="ppe-field">
+                        <span>Код</span>
+                        <input asp-for="Code" class="ppe-input" placeholder="Авто" />
+                    </label>
+                    <label class="ppe-field">
+                        <span>Сокращённое наименование</span>
+                        <input asp-for="ShortName" class="ppe-input" />
+                    </label>
+                    <label class="ppe-field">
+                        <span>Входит в группу</span>
+                        <select asp-for="ParentId" class="ppe-input">
+                            <option value="">Без группы</option>
+                            @foreach (var group in Model.Groups)
+                            {
+                                <option value="@group.Id">@group.Name</option>
+                            }
+                        </select>
+                    </label>
+                    <label class="ppe-field">
+                        <span>Направление деятельности</span>
+                        <select asp-for="ActivityDirection" class="ppe-input">
+                            <option value="">—</option>
+                            @foreach (var direction in SuotIndicatorDefaults.ActivityDirections)
+                            {
+                                <option value="@direction">@direction</option>
+                            }
+                        </select>
+                    </label>
+                    <label class="ppe-field">
+                        <span>Вид показателя</span>
+                        <select asp-for="IndicatorType" class="ppe-input">
+                            @foreach (var type in SuotIndicatorDefaults.IndicatorTypes)
+                            {
+                                <option value="@type">@type</option>
+                            }
+                        </select>
+                    </label>
+                    <label class="ppe-field">
+                        <span>Ед. изм.</span>
+                        <select asp-for="Unit" class="ppe-input">
+                            @foreach (var unit in SuotIndicatorDefaults.Units)
+                            {
+                                <option value="@unit">@unit</option>
+                            }
+                        </select>
+                    </label>
+                    <label class="ppe-field">
+                        <span>Описание</span>
+                        <textarea asp-for="Description" class="ppe-input" rows="2"></textarea>
+                    </label>
+
+                    <h3 class="ppe-subtitle">Расчёт</h3>
+                    <label class="ppe-field">
+                        <span>Описание формулы</span>
+                        <input asp-for="FormulaDescription" class="ppe-input" />
+                    </label>
+                    <label class="ppe-field">
+                        <span>Формула</span>
+                        <textarea asp-for="Formula" class="ppe-input suot-formula" rows="6" placeholder="Результат = ..."></textarea>
+                    </label>
+                    <div class="suot-vars-panel">
+                        <h4 class="suot-vars-title">Доступные переменные</h4>
+                        <ul class="suot-vars-list">
+                            <li>Период</li>
+                            <li>НачалоПериода</li>
+                            <li>КонецПериода</li>
+                            <li>Организация</li>
+                            <li>ПодразделениеОрганизации</li>
+                        </ul>
+                    </div>
+
+                    <div class="ppe-field">
+                        <label class="ppe-check">
+                            <input asp-for="IsGroup" type="checkbox" />
+                            <span>Это группа показателей</span>
+                        </label>
+                    </div>
+
+                    <div class="ppe-actions">
+                        <button type="submit" class="btn btn-primary">Сохранить</button>
+                        @if (Model.IsEditMode && !string.IsNullOrWhiteSpace(Model.EditId))
+                        {
+                            <a class="btn btn-outline"
+                               asp-page="/Suot/Indicators"
+                               asp-route-viewId="@Model.EditId"
+                               asp-route-filterDirection="@Model.FilterDirection"
+                               asp-route-filterType="@Model.FilterType"
+                               asp-route-search="@Model.Search">Просмотр</a>
+                            <button type="submit" class="btn btn-outline suot-del-btn" formaction="?handler=Delete" name="deleteId" value="@Model.EditId"
+                                    onclick="return confirm('Удалить показатель?');">Удалить</button>
+                        }
+                        <a class="btn btn-outline" asp-page="/Suot/Facts">Отражение факта</a>
+                    </div>
+                </form>
+            }
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        (function () {
+            var table = document.getElementById('suot-indicators-table');
+            if (!table) return;
+
+            function descendants(groupId) {
+                var all = Array.from(table.querySelectorAll('tr.suot-tree-row'));
+                var result = [];
+                var queue = [groupId];
+                while (queue.length) {
+                    var current = queue.shift();
+                    all.forEach(function (row) {
+                        if (row.getAttribute('data-parent-id') === current) {
+                            result.push(row);
+                            queue.push(row.getAttribute('data-id'));
+                        }
+                    });
+                }
+                return result;
+            }
+
+            function setCollapsed(groupId, collapsed) {
+                descendants(groupId).forEach(function (row) {
+                    row.hidden = collapsed;
+                    if (collapsed) {
+                        var nested = row.querySelector('.suot-tree-toggle');
+                        if (nested) {
+                            nested.setAttribute('aria-expanded', 'false');
+                            nested.textContent = '▶';
+                        }
+                    }
+                });
+                var btn = table.querySelector('.suot-tree-toggle[data-group-id="' + groupId + '"]');
+                if (btn) {
+                    btn.setAttribute('aria-expanded', collapsed ? 'false' : 'true');
+                    btn.textContent = collapsed ? '▶' : '▼';
+                }
+            }
+
+            table.addEventListener('click', function (e) {
+                var btn = e.target.closest('.suot-tree-toggle');
+                if (!btn) return;
+                var groupId = btn.getAttribute('data-group-id');
+                var expanded = btn.getAttribute('aria-expanded') !== 'false';
+                setCollapsed(groupId, expanded);
+            });
+
+            var expandAll = document.getElementById('suot-expand-all');
+            var collapseAll = document.getElementById('suot-collapse-all');
+            if (expandAll) {
+                expandAll.addEventListener('click', function () {
+                    table.querySelectorAll('tr.suot-tree-row').forEach(function (row) { row.hidden = false; });
+                    table.querySelectorAll('.suot-tree-toggle').forEach(function (btn) {
+                        btn.setAttribute('aria-expanded', 'true');
+                        btn.textContent = '▼';
+                    });
+                });
+            }
+            if (collapseAll) {
+                collapseAll.addEventListener('click', function () {
+                    table.querySelectorAll('.suot-tree-toggle').forEach(function (btn) {
+                        setCollapsed(btn.getAttribute('data-group-id'), true);
+                    });
+                });
+            }
+        })();
+    </script>
+}

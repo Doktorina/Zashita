@@ -1,0 +1,321 @@
+@page
+@model Zashita.Web.Pages.Data.UploadModel
+@{
+    ViewData["Title"] = "Данные 1С";
+    ViewData["Subtitle"] = "Штат из двух CSV 1С (Employees_zup + Employees_zup_anzhela).";
+    ViewData["SectionTitle"] = "Данные 1С";
+    ViewData["ShowToolbar"] = false;
+}
+
+<div class="panel">
+  <p class="hint">
+    Штат берётся <b>только с сервера</b> из <code>@Model.SharePath</code>
+    (<code>Employees_zup.csv</code>, <code>Employees_zup_anzhela.csv</code>).
+    Локальный inbox и сетевые шары не используются.
+  </p>
+
+  <p class="hint">
+    Серверная папка: <code>@Model.SharePath</code>
+    @if (Model.SharePathMissing)
+    {
+      <text>· <span class="form-error">папка недоступна</span> (проверьте mount и права пользователя службы)</text>
+    }
+    else if (!string.IsNullOrWhiteSpace(Model.NewestFileName))
+    {
+      <text>· файл: <b>@Model.NewestFileName</b></text>
+    }
+    else
+    {
+      <text>· пусто (нет .csv/.xlsx)</text>
+    }
+  </p>
+
+  <form method="post" asp-page-handler="SyncShared" style="margin-bottom:14px"
+        onsubmit="return confirm('Полностью перезаписать штат из CSV 1С? Старые карточки вне выгрузки будут удалены (бэкап сохранится).');">
+    <button type="submit" class="btn btn-primary">
+      Перезаписать штат из CSV 1С
+    </button>
+  </form>
+  <p class="hint" style="margin-top:-6px;margin-bottom:14px">
+    Жёсткая перезапись <code>organization-employees.json</code> только из текущих
+    <code>Employees_zup*.csv</code>. Перед записью — копия в <code>App_Data/backups</code>.
+  </p>
+
+  <details style="margin-top:8px">
+    <summary class="hint" style="cursor:pointer">Аварийная загрузка Excel (не из 1С)</summary>
+    <form method="post" enctype="multipart/form-data" class="upload-form" style="margin-top:10px">
+      <label class="file-picker">
+        <span>Файл Excel (.xlsx, .xls)</span>
+        <input type="file" name="workbook" accept=".xlsx,.xls" />
+      </label>
+      <button type="submit" class="btn btn-outline">Загрузить вручную</button>
+    </form>
+  </details>
+
+  @if (!string.IsNullOrWhiteSpace(Model.Message))
+  {
+    <p class="@(Model.IsError ? "form-error" : "text-success")" style="margin-top:12px">@Model.Message</p>
+  }
+
+  @if (Model.HasWorkbook)
+  {
+    <h2 class="panel-title">Листы (@Model.SheetNames.Count)</h2>
+    <ul class="sheet-list">
+      @foreach (var sheet in Model.SheetNames)
+      {
+        <li>
+          <span>@sheet</span>
+          <a class="btn btn-outline btn-sm" href="/print/preview?title=@Uri.EscapeDataString(sheet)&sheet=@Uri.EscapeDataString(sheet)">Печать</a>
+        </li>
+      }
+    </ul>
+  }
+</div>
+
+<div class="panel" style="margin-top:16px">
+  <h2 class="panel-title">Последняя выгрузка на сервер</h2>
+  @if (Model.LastManualPush is null || string.IsNullOrWhiteSpace(Model.LastManualPush.SyncedAtDisplay))
+  {
+    <p class="hint">Ещё не было ручной выгрузки App_Data. Запустите <code>sync-appdata-to-server.bat</code>. Актуальность CSV 1С: <code>check-1c-srv-share.bat</code>.</p>
+  }
+  else
+  {
+    <p class="hint" style="margin-bottom:8px">
+      <b>@Model.LastManualPush.SyncedAtDisplay</b>
+      @if (!string.IsNullOrWhiteSpace(Model.LastManualPush.Machine))
+      {
+        <text>· с ПК «@Model.LastManualPush.Machine»</text>
+      }
+      · файлов изменено: @Model.LastManualPush.FilesChanged
+    </p>
+    @if (!string.IsNullOrWhiteSpace(Model.LastManualPush.Summary))
+    {
+      <p class="hint">@Model.LastManualPush.Summary</p>
+    }
+    @if (Model.LastManualPush.Changes.Count > 0)
+    {
+      <details style="margin-top:8px">
+        <summary class="hint" style="cursor:pointer">Список изменений (@Model.LastManualPush.Changes.Count)</summary>
+        <ul class="hint" style="margin:8px 0 0 1.2rem; line-height:1.45">
+          @foreach (var change in Model.LastManualPush.Changes)
+          {
+            var mark = change.Kind switch
+            {
+              "added" => "+",
+              "removed" => "−",
+              _ => "~"
+            };
+            <li><code>@mark @change.Path</code> — @change.Note</li>
+          }
+        </ul>
+      </details>
+    }
+  }
+</div>
+
+<div class="panel" style="margin-top:16px">
+  <h2 class="panel-title">Журнал синхронизации</h2>
+  <p class="hint">Нажмите на строку — кто принят / уволен / переведён. Если никого не нанимали и не увольняли, будет «кадровых изменений не было». Можно скачать файлы 1С или расшифровку.</p>
+  @if (Model.SyncRuns.Count == 0)
+  {
+    <p class="hint">Пока нет прогонов. Загрузите файл выше.</p>
+  }
+  else
+  {
+    <table class="data-grid" id="one-c-sync-log">
+      <thead>
+        <tr>
+          <th>Время (UTC)</th>
+          <th>Источник</th>
+          <th>Файл</th>
+          <th>Орг.</th>
+          <th title="Строк/карточек, записанных как активный штат">+</th>
+          <th title="Активных карточек штата после синка (человек×организация). Оба файла Employees_zup + anzhela.">↑</th>
+          <th title="Снято с штата / архив (старые и уволенные), не «второй файл»">∅</th>
+          <th>Статус</th>
+          <th>Сообщение</th>
+        </tr>
+      </thead>
+      <tbody>
+        @foreach (var run in Model.SyncRuns)
+        {
+          var detailCount = run.StaffChanges?.Count ?? 0;
+          <tr class="one-c-sync-row" tabindex="0" role="button"
+              data-run-id="@run.Id"
+              title="Открыть расшифровку приёмов и увольнений">
+            <td>@run.StartedAt.ToString("dd.MM.yyyy HH:mm")</td>
+            <td>@run.Source</td>
+            <td>@run.FileName</td>
+            <td>@run.OrganizationsTouched</td>
+            <td>@run.Added</td>
+            <td>@run.Updated</td>
+            <td>@run.MarkedInactive</td>
+            <td>@(run.Success ? "OK" : "ошибка")</td>
+            <td>
+              @run.Message
+              @if (detailCount > 0)
+              {
+                <span class="hint"> · деталей: @detailCount</span>
+              }
+            </td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  }
+</div>
+
+<dialog id="one-c-sync-dialog" class="one-c-sync-dialog">
+  <form method="dialog" class="one-c-sync-dialog-head">
+    <h3 id="one-c-sync-dialog-title">Расшифровка синхронизации</h3>
+    <button type="submit" class="btn btn-outline btn-sm" value="cancel">Закрыть</button>
+  </form>
+  <p id="one-c-sync-dialog-meta" class="hint"></p>
+  <p id="one-c-sync-dialog-summary" class="hint" style="margin-bottom:10px"></p>
+  <div class="ppe-toolbar" style="margin-bottom:10px;gap:8px;flex-wrap:wrap">
+    <a id="one-c-sync-download-source" class="btn btn-primary btn-sm" href="#" download title="Employees_zup.csv и Employees_zup_anzhela.csv из папки 1С">Скачать файлы 1С</a>
+    <a id="one-c-sync-download" class="btn btn-outline btn-sm" href="#" download title="Список приёмов / увольнений / переводов">Скачать расшифровку</a>
+  </div>
+  <div id="one-c-sync-dialog-body" class="one-c-sync-dialog-body"></div>
+</dialog>
+
+@section Scripts {
+  <style>
+    .one-c-sync-row { cursor: pointer; }
+    .one-c-sync-row:hover { background: rgba(74, 123, 183, 0.08); }
+    .one-c-sync-dialog {
+      border: 1px solid rgba(15, 26, 21, 0.2);
+      border-radius: 10px;
+      padding: 16px 18px;
+      max-width: min(960px, 96vw);
+      width: 96vw;
+      max-height: 88vh;
+    }
+    .one-c-sync-dialog::backdrop { background: rgba(15, 26, 21, 0.45); }
+    .one-c-sync-dialog-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin: 0 0 8px;
+    }
+    .one-c-sync-dialog-head h3 { margin: 0; font-size: 1.1rem; }
+    .one-c-sync-dialog-body {
+      overflow: auto;
+      max-height: 58vh;
+      border: 1px solid rgba(15, 26, 21, 0.12);
+      border-radius: 6px;
+    }
+    .one-c-sync-dialog-body table { width: 100%; border-collapse: collapse; font-size: 13px; }
+    .one-c-sync-dialog-body th,
+    .one-c-sync-dialog-body td {
+      border-bottom: 1px solid rgba(15, 26, 21, 0.08);
+      padding: 6px 8px;
+      text-align: left;
+      vertical-align: top;
+    }
+    .one-c-sync-dialog-body th { background: #f3f5f4; position: sticky; top: 0; }
+    .one-c-sync-kind-hired { color: #15803d; font-weight: 600; }
+    .one-c-sync-kind-fired { color: #b91c1c; font-weight: 600; }
+    .one-c-sync-kind-transferred { color: #1d4ed8; font-weight: 600; }
+  </style>
+  <script>
+    (function () {
+      var dialog = document.getElementById('one-c-sync-dialog');
+      var body = document.getElementById('one-c-sync-dialog-body');
+      var meta = document.getElementById('one-c-sync-dialog-meta');
+      var summary = document.getElementById('one-c-sync-dialog-summary');
+      var download = document.getElementById('one-c-sync-download');
+      var downloadSource = document.getElementById('one-c-sync-download-source');
+      if (!dialog || !body) return;
+
+      function kindClass(kind) {
+        var k = String(kind || '').toLowerCase();
+        if (k === 'hired') return 'one-c-sync-kind-hired';
+        if (k === 'fired') return 'one-c-sync-kind-fired';
+        if (k === 'transferred') return 'one-c-sync-kind-transferred';
+        return '';
+      }
+
+      function esc(s) {
+        return String(s == null ? '' : s)
+          .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+      }
+
+      function openRun(id) {
+        body.innerHTML = '<p class="hint" style="padding:12px">Загрузка…</p>';
+        meta.textContent = '';
+        summary.textContent = '';
+        if (download) {
+          download.href = '/Data/Upload?handler=SyncRunExport&id=' + encodeURIComponent(id);
+        }
+        if (downloadSource) {
+          downloadSource.href = '/Data/Upload?handler=SyncRunSourceFiles&id=' + encodeURIComponent(id);
+        }
+        dialog.showModal();
+        fetch('/Data/Upload?handler=SyncRun&id=' + encodeURIComponent(id), { credentials: 'same-origin' })
+          .then(function (r) { return r.json(); })
+          .then(function (data) {
+            if (!data || !data.ok) {
+              body.innerHTML = '<p class="form-error" style="padding:12px">' + esc((data && data.error) || 'Не удалось загрузить') + '</p>';
+              return;
+            }
+            meta.textContent = (data.startedAt || '') + ' · ' + (data.source || '') + ' · ' + (data.fileName || '');
+            var hired = Number(data.hired) || 0;
+            var fired = Number(data.fired) || 0;
+            var transferred = Number(data.transferred) || 0;
+            var filteredInactive = Number(data.filteredInactive) || 0;
+            var filteredValidation = Number(data.filteredValidation) || 0;
+            var deduplicated = Number(data.deduplicated) || 0;
+            var etlLine =
+              'Отсеяно неактивных: ' + filteredInactive +
+              ' · ошибок валидации: ' + filteredValidation +
+              ' · дублей схлопнуто: ' + deduplicated;
+            if (!data.hasDetails || (hired === 0 && fired === 0 && transferred === 0)) {
+              summary.textContent = 'Кадровых изменений не было. ' + etlLine;
+              body.innerHTML = '<p class="hint" style="padding:12px;margin:0">Список кадровых событий пуст — штат перечитали из CSV по правилам ETL.</p>';
+              return;
+            }
+            summary.textContent =
+              'Приём: ' + hired +
+              ' · Увольнение: ' + fired +
+              ' · Перевод: ' + transferred +
+              ' · ' + etlLine +
+              (data.fromFallback ? ' · из журнала кадровых изменений' : '') +
+              (data.truncated ? ' (список обрезан)' : '');
+            var rows = (data.changes || []).map(function (c) {
+              var org = esc(c.organization || '');
+              if (c.fromOrganization) org = esc(c.fromOrganization) + ' → ' + org;
+              return '<tr>' +
+                '<td class="' + kindClass(c.kind) + '">' + esc(c.kindLabel) + '</td>' +
+                '<td>' + esc(c.date) + '</td>' +
+                '<td>' + esc(c.person) + '</td>' +
+                '<td>' + org + '</td>' +
+                '<td>' + esc(c.profession) + '</td>' +
+                '</tr>';
+            }).join('');
+            body.innerHTML =
+              '<table><thead><tr>' +
+              '<th>Вид</th><th>Дата</th><th>ФИО</th><th>Компания</th><th>Должность</th>' +
+              '</tr></thead><tbody>' + rows + '</tbody></table>';
+          })
+          .catch(function () {
+            body.innerHTML = '<p class="form-error" style="padding:12px">Ошибка запроса.</p>';
+          });
+      }
+
+      document.querySelectorAll('.one-c-sync-row').forEach(function (tr) {
+        tr.addEventListener('click', function () {
+          var id = tr.getAttribute('data-run-id');
+          if (id) openRun(id);
+        });
+        tr.addEventListener('keydown', function (e) {
+          if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault();
+            tr.click();
+          }
+        });
+      });
+    })();
+  </script>
+}

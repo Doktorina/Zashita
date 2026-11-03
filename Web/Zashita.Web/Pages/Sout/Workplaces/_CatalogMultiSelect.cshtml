@@ -1,0 +1,42 @@
+@model Zashita.Web.Pages.Sout.Workplaces.CatalogMultiSelectModel
+@{
+    var selected = Model.Items
+        .Where(item => Model.SelectedIds.Contains(item.Id))
+        .Select(item => string.IsNullOrWhiteSpace(item.FullName) ? item.Name : item.FullName)
+        .Where(name => !string.IsNullOrWhiteSpace(name))
+        .ToList();
+    var summary = selected.Count == 0
+        ? Model.Placeholder
+        : string.Join(",\n", selected);
+}
+
+<details class="catalog-multiselect catalog-multiselect-wide">
+  <summary class="catalog-multiselect-trigger ppe-input">
+    <span class="catalog-multiselect-value" data-placeholder="@Model.Placeholder">@summary</span>
+    <span class="catalog-multiselect-chevron" aria-hidden="true">▾</span>
+  </summary>
+  <div class="catalog-multiselect-menu">
+    <input type="search" class="ppe-input catalog-multiselect-search" placeholder="Поиск..." autocomplete="off" />
+    <div class="catalog-multiselect-toolbar">
+      <button type="button" class="btn btn-secondary catalog-multiselect-clear">Снять выделения</button>
+    </div>
+    <div class="catalog-multiselect-list">
+      @if (Model.Items.Count == 0)
+      {
+        <span class="hint">Справочник пуст</span>
+      }
+      @foreach (var item in Model.Items)
+      {
+        var label = string.IsNullOrWhiteSpace(item.FullName) ? item.Name : item.FullName;
+        var isSelected = Model.SelectedIds.Contains(item.Id);
+        <label class="catalog-multiselect-option" data-label="@label.ToLowerInvariant()">
+          <input type="checkbox"
+                 name="@Model.FieldName"
+                 value="@item.Id"
+                 @(isSelected ? "checked" : null) />
+          <span>@label</span>
+        </label>
+      }
+    </div>
+  </div>
+</details>

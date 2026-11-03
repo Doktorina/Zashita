@@ -1,0 +1,175 @@
+@page "/Ppe/Status"
+@model Zashita.Web.Pages.Ppe.StatusModel
+@using Zashita.Core.Ppe
+@{
+    ViewData["Title"] = PpeCardTypes.ProvisionMenuTitle;
+    ViewData["Subtitle"] = string.IsNullOrWhiteSpace(Model.SelectedOrganization) ? Model.Organization : Model.SelectedOrganization;
+}
+
+@if (!string.IsNullOrWhiteSpace(Model.Message))
+{
+  <p class="text-success">@Model.Message</p>
+}
+
+<div class="panel training-report-panel">
+  <div class="training-report-toolbar" style="margin-bottom:8px">
+    <a class="btn btn-outline" href="/module/спецодежда-и-сиз">Все разделы модуля</a>
+    <a class="btn btn-outline" asp-page="/Ppe/CardSelect">Выдача спецодежды, СИЗ</a>
+  </div>
+  <p class="hint"><b>Отчёт:</b> @ViewData["Title"]</p>
+  <p class="hint">Большая таблица обеспечения СИЗ: нормы берутся из стандартов выдачи, даты выдачи вводятся и сохраняются прямо в таблице.</p>
+
+  <form method="get" class="training-report-filters" id="ppe-status-filters">
+    <div class="training-filter-grid">
+      <label class="ppe-field">
+        <span>Подразделение</span>
+        <select asp-for="Department" class="ppe-input js-auto-filter">
+          <option value="">все</option>
+          @foreach (var item in Model.DepartmentOptions)
+          {
+            <option value="@item">@item</option>
+          }
+        </select>
+      </label>
+      <label class="ppe-field">
+        <span>Профессия</span>
+        <select asp-for="Profession" class="ppe-input js-auto-filter">
+          <option value="">все</option>
+          @foreach (var item in Model.ProfessionOptions)
+          {
+            <option value="@item">@item</option>
+          }
+        </select>
+      </label>
+      <label class="ppe-field">
+        <span>Наименование СИЗ</span>
+        <select asp-for="PpeName" class="ppe-input js-auto-filter">
+          <option value="">все</option>
+          @foreach (var item in Model.PpeNameOptions)
+          {
+            <option value="@item">@item</option>
+          }
+        </select>
+      </label>
+      <label class="ppe-field">
+        <span>Статус</span>
+        <select asp-for="StatusFilter" class="ppe-input js-auto-filter">
+          <option value="">все</option>
+          @foreach (var item in Model.StatusOptions)
+          {
+            <option value="@item">@item</option>
+          }
+        </select>
+      </label>
+    </div>
+
+    <div class="training-report-toolbar">
+      <button type="submit" class="btn btn-primary">Сформировать</button>
+      <button type="button" class="btn btn-outline" onclick="window.print()">Печать</button>
+      <a class="btn btn-outline" asp-page="/Ppe/Status">Сбросить</a>
+    </div>
+  </form>
+
+  <div class="training-status-wrap">
+    <div class="training-report-toolbar training-status-save-bar report-save-bar" style="margin-bottom:8px">
+      <button type="submit" form="ppe-status-save" class="btn btn-primary">Сохранить даты выдачи</button>
+      <span class="hint">Найдено строк: @Model.Rows.Count</span>
+    </div>
+
+    <form method="post" asp-page-handler="Save" id="ppe-status-save">
+      <input type="hidden" asp-for="ReportDate" />
+      <input type="hidden" asp-for="SelectedOrganization" />
+      <input type="hidden" asp-for="Department" />
+      <input type="hidden" asp-for="Profession" />
+      <input type="hidden" asp-for="PpeName" />
+      <input type="hidden" asp-for="StatusFilter" />
+    </form>
+
+    <table class="data-grid training-status-grid training-catalog-grid training-sticky-head-grid report-sticky-head-grid" id="ppe-status-grid">
+      <thead>
+        <tr>
+          <th class="col-tree">Структура / Наименование СИЗ</th>
+          <th>Норма выдачи на год</th>
+          <th>Фактически выдано</th>
+          <th>Дата выдачи</th>
+          <th>Дата очередной замены</th>
+          <th>Основание выдачи</th>
+          <th>Статус</th>
+        </tr>
+      </thead>
+      <tbody>
+        @if (Model.TreeLines.Count == 0)
+        {
+          <tr>
+            <td colspan="7" class="hint">Нет данных. Создайте стандарты выдачи и выберите организацию.</td>
+          </tr>
+        }
+        @foreach (var line in Model.TreeLines)
+        {
+          if (line.IsGroup)
+          {
+            var cls = line.Level switch
+            {
+              0 => "training-tree-folder",
+              1 => "training-tree-group",
+              2 => "training-tree-group",
+              _ => "training-tree-group"
+            };
+            <tr class="training-tree-row @cls level-@line.Level">
+              <td colspan="7">
+                <div class="training-tree-name" style="--tree-depth:@line.Level">
+                  <span class="training-tree-toggle-spacer"></span>
+                  <strong>@line.Label</strong>
+                </div>
+              </td>
+            </tr>
+          }
+          else if (line.Row is { } row)
+          {
+            var dateIso = "";
+            if (!string.IsNullOrWhiteSpace(row.IssueDate) &&
+                DateTime.TryParseExact(row.IssueDate, "dd.MM.yyyy", System.Globalization.CultureInfo.GetCultureInfo("ru-RU"), System.Globalization.DateTimeStyles.None, out var parsed))
+            {
+              dateIso = parsed.ToString("yyyy-MM-dd");
+            }
+            var statusClass = string.Equals(row.Status, "Выдано", StringComparison.OrdinalIgnoreCase)
+              ? "traffic-green"
+              : "traffic-red";
+            <tr class="@statusClass training-tree-row training-tree-file level-@line.Level">
+              <td class="col-tree">
+                <div class="training-tree-name" style="--tree-depth:@line.Level">
+                  <span class="training-tree-toggle-spacer"></span>
+                  @row.PpeName
+                </div>
+                <input form="ppe-status-save" type="hidden" name="organization" value="@row.Organization" />
+                <input form="ppe-status-save" type="hidden" name="employee" value="@row.Employee" />
+                <input form="ppe-status-save" type="hidden" name="profession" value="@row.Profession" />
+                <input form="ppe-status-save" type="hidden" name="ppeName" value="@row.PpeName" />
+              </td>
+              <td>@row.NormText</td>
+              <td>
+                <input form="ppe-status-save" type="text" name="issuedQty" value="@row.IssuedQty" class="ppe-input" style="min-width:8rem" />
+              </td>
+              <td>
+                <input form="ppe-status-save" type="date" name="issueDate" value="@dateIso" class="ppe-input" style="min-width:9rem" />
+              </td>
+              <td>@(row.NextReplacementDate ?? "—")</td>
+              <td>@row.LegalBasis</td>
+              <td>@row.Status</td>
+            </tr>
+          }
+        }
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<script>
+  (function () {
+    var form = document.getElementById('ppe-status-filters');
+    if (!form) return;
+    form.querySelectorAll('.js-auto-filter').forEach(function (el) {
+      el.addEventListener('change', function () { form.submit(); });
+    });
+  })();
+</script>

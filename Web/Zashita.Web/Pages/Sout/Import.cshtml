@@ -1,0 +1,99 @@
+@page "/Sout/Import"
+@model Zashita.Web.Pages.Sout.ImportModel
+@{
+    ViewData["Title"] = "Загрузка результатов";
+    ViewData["Subtitle"] = Model.Organization;
+}
+
+<link rel="stylesheet" href="/css/sout-import.css" asp-append-version="true" />
+
+<div class="panel ppe-panel sout-import-panel" id="sout-import-panel">
+  @if (!string.IsNullOrWhiteSpace(Model.Message))
+  {
+    <p class="@(Model.IsError ? "form-error" : "text-success")">@Model.Message</p>
+  }
+
+  <p class="hint" style="margin-top:0">
+    Чтобы <b>вставить данные карт СОУТ</b> (профессия, ОК, численность, класс) из файла Word —
+    используйте <a asp-page="/Sout/ImportCards">Импорт карт СОУТ из Word</a>.
+  </p>
+
+  <form method="post" asp-page="/Sout/Import" asp-page-handler="Upload" enctype="multipart/form-data" class="sout-import-simple-form">
+    <p class="hint">
+      Архив результатов: <strong>XTM</strong>, <strong>XML</strong>,
+      <strong>Word</strong> (.doc/.docx), <strong>PDF</strong>, <strong>Excel</strong> (.xls/.xlsx).
+      XTM/XML разбираются; остальные типы сохраняются в архив организации.
+    </p>
+
+    <label class="ppe-field sout-import-file-field">
+      <span>Файл результатов</span>
+      <input type="file" name="uploadFile" accept=".xtm,.xml,.doc,.docx,.pdf,.xls,.xlsx,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" class="ppe-input" id="sout-import-file" />
+    </label>
+
+    <div class="ppe-actions">
+      <button type="submit" class="btn btn-primary">Загрузить</button>
+    </div>
+  </form>
+
+  <h3 class="ppe-step-title" style="margin-top:24px">Загруженные файлы</h3>
+  <p class="hint">Архив результатов по организации «@Model.Organization».</p>
+
+  <div class="sout-import-files">
+    <table class="data-grid">
+      <thead>
+        <tr>
+          <th>Дата</th>
+          <th>Имя файла</th>
+          <th>Тип</th>
+          <th>Размер</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        @if (Model.UploadedFiles.Count == 0)
+        {
+          <tr>
+            <td colspan="5" class="hint">Пока ничего не загружено.</td>
+          </tr>
+        }
+        @foreach (var file in Model.UploadedFiles)
+        {
+          var canPreview = file.Kind is "PDF" or "Word" or "Excel" or "XML" or "XTM"
+            || file.FileName.EndsWith(".pdf", StringComparison.OrdinalIgnoreCase)
+            || file.FileName.EndsWith(".png", StringComparison.OrdinalIgnoreCase)
+            || file.FileName.EndsWith(".jpg", StringComparison.OrdinalIgnoreCase)
+            || file.FileName.EndsWith(".jpeg", StringComparison.OrdinalIgnoreCase)
+            || file.FileName.EndsWith(".webp", StringComparison.OrdinalIgnoreCase)
+            || file.FileName.EndsWith(".txt", StringComparison.OrdinalIgnoreCase)
+            || file.FileName.EndsWith(".xml", StringComparison.OrdinalIgnoreCase)
+            || file.FileName.EndsWith(".xtm", StringComparison.OrdinalIgnoreCase);
+          <tr>
+            <td>@file.UploadedAt.ToString("dd.MM.yyyy HH:mm")</td>
+            <td>@file.FileName</td>
+            <td>@file.Kind</td>
+            <td>@file.SizeDisplay</td>
+            <td style="white-space:nowrap">
+              @if (canPreview)
+              {
+                <a class="btn btn-outline btn-sm"
+                   asp-page="/Sout/Import"
+                   asp-page-handler="Preview"
+                   asp-route-fileName="@file.FileName"
+                   target="_blank">Предпросмотр</a>
+              }
+              <a class="btn btn-outline btn-sm"
+                 asp-page="/Sout/Import"
+                 asp-page-handler="Download"
+                 asp-route-fileName="@file.FileName">Скачать</a>
+              <form method="post" asp-page-handler="Delete" style="display:inline"
+                    onsubmit="return confirm('Удалить файл «@file.FileName»?');">
+                <input type="hidden" name="fileName" value="@file.FileName" />
+                <button type="submit" class="btn btn-outline btn-sm btn-danger">Удалить</button>
+              </form>
+            </td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  </div>
+</div>

@@ -1,0 +1,93 @@
+@page "/Sout/Preparation/Edit"
+@model Zashita.Web.Pages.Sout.Preparation.EditModel
+@{
+    ViewData["Title"] = Model.IsNew ? "Подготовка проведения СОУТ. Новый" : "Подготовка проведения СОУТ";
+    ViewData["Subtitle"] = Model.Organization;
+    var doc = Model.Document;
+}
+
+@if (!string.IsNullOrWhiteSpace(Model.Message))
+{
+  <p class="@(Model.IsError ? "form-error" : "text-success")">@Model.Message</p>
+}
+
+<div class="panel ppe-panel sout-assignment-doc">
+  <form method="post" asp-page="/Sout/Preparation/Edit">
+    <input type="hidden" asp-for="Id" />
+
+    <div class="sout-assignment-toolbar">
+      <div class="sout-assignment-toolbar-left">
+        <a class="btn btn-outline btn-sm" asp-page="/Sout/Preparation" asp-route-list="1">←</a>
+        <button type="submit" formaction="?handler=PostAndClose" class="btn btn-primary btn-sm">Провести и закрыть</button>
+        <button type="submit" formaction="?handler=Save" class="btn btn-outline btn-sm">Записать</button>
+        <button type="submit" formaction="?handler=Post" class="btn btn-outline btn-sm">Провести</button>
+      </div>
+      <div class="sout-assignment-toolbar-right">
+        <span class="hint sout-assignment-status">@(doc.IsPosted ? "Проведён" : "Новый *")</span>
+      </div>
+    </div>
+
+    <div class="sout-assignment-header">
+      <div class="sout-assignment-header-col">
+        <label class="ppe-field">
+          <span>Номер</span>
+          <input name="number" value="@(string.IsNullOrWhiteSpace(doc.Number) ? "<Авто>" : doc.Number)" class="ppe-input" />
+        </label>
+        <label class="ppe-field">
+          <span>от</span>
+          <input type="datetime-local" name="date" value="@doc.Date.ToString("yyyy-MM-ddTHH:mm:ss")" class="ppe-input" step="1" />
+        </label>
+        <label class="ppe-field">
+          <span>Подразделение</span>
+          <input name="department" value="@doc.Department" class="ppe-input" placeholder="Производство" />
+        </label>
+      </div>
+      <div class="sout-assignment-header-col">
+        <label class="ppe-field">
+          <span>Дата начала</span>
+          <input type="date" name="startDate" value="@doc.StartDate?.ToString("yyyy-MM-dd")" class="ppe-input" />
+        </label>
+        <label class="ppe-field">
+          <span>Дата окончания</span>
+          <input type="date" name="endDate" value="@doc.EndDate?.ToString("yyyy-MM-dd")" class="ppe-input" />
+        </label>
+        <label class="ppe-field">
+          <span>Организация</span>
+          <input name="organization" value="@Model.Organization" class="ppe-input" readonly />
+        </label>
+        <label class="ppe-field">
+          <span>Организация, проводящая специальную оценку</span>
+          <input name="contractorOrganization" value="@doc.ContractorOrganization" class="ppe-input" />
+        </label>
+      </div>
+    </div>
+
+  @if (!Model.IsNew)
+  {
+    <div class="sout-preparation-print-links ppe-no-print-block">
+      <h3 class="ppe-subtitle">Печать</h3>
+      <div class="ppe-toolbar sout-toolbar">
+        <a class="btn btn-primary btn-sm" asp-page="/Sout/Preparation/Preview" asp-route-id="@doc.Id" asp-route-mode="workplaces-list">
+          Предпечать: перечень рабочих мест
+        </a>
+        <a class="btn btn-outline btn-sm" asp-page="/Sout/Preparation/Preview" asp-route-id="@doc.Id" asp-route-mode="equipment">
+          Предпечать: перечень оборудования
+        </a>
+        <a class="btn btn-outline btn-sm" asp-page="/Sout/Preparation/Preview" asp-route-id="@doc.Id" asp-route-mode="info-needed">
+          Предпечать: информация для СОУТ
+        </a>
+        <a class="btn btn-outline btn-sm" asp-page="/Sout/Preparation/Templates">Все шаблоны</a>
+      </div>
+      <p class="hint">В предпросмотре можно править ячейки и подписи, затем «Записать».</p>
+    </div>
+  }
+
+    <div class="ppe-actions">
+      @if (!Model.IsNew)
+      {
+        <button type="submit" formaction="?handler=Delete" class="btn btn-outline" onclick="return confirm('Удалить документ?');">Удалить</button>
+      }
+      <a class="btn btn-outline" asp-page="/Sout/Preparation" asp-route-list="1">К списку</a>
+    </div>
+  </form>
+</div>

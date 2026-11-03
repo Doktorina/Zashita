@@ -1,0 +1,245 @@
+﻿@page "/Med/Directions/Preview"
+@model Zashita.Web.Pages.Med.Directions.PreviewModel
+@{
+    Layout = null;
+}
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>@Model.Title</title>
+    <partial name="_SiteIconLinks" />
+<link rel="stylesheet" href="/css/zashita.css" asp-append-version="true" />
+  <link rel="stylesheet" href="/css/sout-preparation.css" asp-append-version="true" />
+  <link rel="stylesheet" href="/css/med-person-list.css" asp-append-version="true" />
+  <link rel="stylesheet" href="/css/med-direction-print.css" asp-append-version="true" />
+</head>
+<body class="sout-preview-page">
+@if (Model.NotFound)
+{
+  <div class="sout-preview-missing"><p>Документ не найден.</p><a class="btn btn-outline" href="/Med/Directions">К списку</a></div>
+}
+else
+{
+  <div class="sout-preview-shell">
+    <div class="sout-preview-toolbar ppe-no-print">
+      <div class="sout-preview-toolbar-left">
+        <button type="button" class="btn btn-primary btn-sm" onclick="zashitaRecordPrint({ category: 'med', title: document.title, summary: 'Печать направления на медосмотр' })">Печать</button>
+        <button type="button" class="btn btn-outline btn-sm" id="med-direction-word-btn">Word</button>
+        <button type="button" class="btn btn-outline btn-sm" id="med-direction-pdf-btn">PDF</button>
+        <button type="button" class="btn btn-outline btn-sm" id="med-direction-preview-save-btn">Записать</button>
+      </div>
+      <div class="sout-preview-toolbar-right">
+        <a class="btn btn-outline btn-sm" href="/Med/Directions?editId=@Model.Id">К документу</a>
+        <a class="btn btn-outline btn-sm" href="/Med/Directions">К списку</a>
+      </div>
+    </div>
+    @if (!string.IsNullOrWhiteSpace(Model.Message))
+    {
+      <p class="sout-preview-message ppe-no-print">@Model.Message</p>
+    }
+    <form method="post" asp-page-handler="Save" id="med-direction-preview-save-form" class="ppe-no-print">
+      <input type="hidden" name="id" value="@Model.Id" />
+      <div id="med-direction-preview-overrides"></div>
+    </form>
+    <div class="sout-preview-doc-wrap" id="med-direction-preview-print-area">
+      <div class="sout-eq-doc med-print-sheet med-dir-preview-doc">
+        @Html.Raw(Model.PreviewHtml)
+      </div>
+    </div>
+  </div>
+  <script src="~/js/med-doc-list.js" asp-append-version="true"></script>
+  <script src="~/js/vendor/html2pdf.bundle.min.js" asp-append-version="true"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', function () {
+      initMedPreparationPreview({
+        saveBtnId: 'med-direction-preview-save-btn',
+        saveFormId: 'med-direction-preview-save-form',
+        overridesContainerId: 'med-direction-preview-overrides',
+        printAreaId: 'med-direction-preview-print-area'
+      });
+
+      var pdfName = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.PdfFileName));
+      var wordUrl = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(
+          Url.Page("/Med/Directions/Preview", new { handler = "Download", id = Model.Id }) ?? ""));
+
+      function getDirectionPrintSource() {
+        return document.querySelector('#med-direction-preview-print-area .med-dir-preview-doc')
+          || document.querySelector('#med-direction-preview-print-area .sout-eq-doc')
+          || document.getElementById('med-direction-preview-print-area');
+      }
+
+      function toDataUrl(url) {
+        return fetch(url, { credentials: 'same-origin' })
+          .then(function (r) { return r.ok ? r.blob() : null; })
+          .then(function (blob) {
+            if (!blob) return null;
+            return new Promise(function (resolve) {
+              var reader = new FileReader();
+              reader.onload = function () { resolve(reader.result); };
+              reader.onerror = function () { resolve(null); };
+              reader.readAsDataURL(blob);
+            });
+          })
+          .catch(function () { return null; });
+      }
+
+      function embedImagesAsDataUrls(root) {
+        var imgs = Array.prototype.slice.call(root.querySelectorAll('img'));
+        return Promise.all(imgs.map(function (img) {
+          var src = img.getAttribute('src') || '';
+          if (!src || src.indexOf('data:') === 0) return Promise.resolve();
+          return toDataUrl(src).then(function (dataUrl) {
+            if (dataUrl) {
+              img.setAttribute('src', dataUrl);
+            }
+          });
+        }));
+      }
+
+      function downloadDirectionWord() {
+        if (wordUrl) window.location.href = wordUrl;
+      }
+
+      function downloadDirectionPdf() {
+        var src = getDirectionPrintSource();
+        if (!src || typeof html2pdf !== 'function') {
+          window.print();
+          return;
+        }
+
+        try {
+          window.scrollTo(0, 0);
+          src.scrollIntoView({ block: 'start', behavior: 'instant' });
+        } catch (_) {
+          try { window.scrollTo(0, 0); src.scrollIntoView(true); } catch (__) { /* ignore */ }
+        }
+
+        var prev = {
+          boxShadow: src.style.boxShadow,
+          overflow: src.style.overflow,
+          width: src.style.width,
+          maxWidth: src.style.maxWidth,
+          height: src.style.height,
+          maxHeight: src.style.maxHeight,
+          minHeight: src.style.minHeight,
+          padding: src.style.padding,
+          margin: src.style.margin,
+          boxSizing: src.style.boxSizing
+        };
+
+        // Ровно один лист A4: поля уже в бланке (12mm). Доп. margin у html2pdf
+        // сжимает/обрезает бока — поэтому margin:0 и фиксируем 210×297.
+        src.style.boxShadow = 'none';
+        src.style.overflow = 'hidden';
+        src.style.width = '210mm';
+        src.style.maxWidth = '210mm';
+        src.style.height = '297mm';
+        src.style.maxHeight = '297mm';
+        src.style.minHeight = '297mm';
+        src.style.padding = '12mm';
+        src.style.margin = '0';
+        src.style.boxSizing = 'border-box';
+
+        var restore = function () {
+          src.style.boxShadow = prev.boxShadow;
+          src.style.overflow = prev.overflow;
+          src.style.width = prev.width;
+          src.style.maxWidth = prev.maxWidth;
+          src.style.height = prev.height;
+          src.style.maxHeight = prev.maxHeight;
+          src.style.minHeight = prev.minHeight;
+          src.style.padding = prev.padding;
+          src.style.margin = prev.margin;
+          src.style.boxSizing = prev.boxSizing;
+        };
+
+        function waitImages() {
+          var imgs = Array.prototype.slice.call(src.querySelectorAll('img'));
+          return Promise.all(imgs.map(function (img) {
+            if (img.complete && img.naturalWidth > 0) return Promise.resolve();
+            return new Promise(function (resolve) {
+              var done = function () { resolve(); };
+              img.addEventListener('load', done, { once: true });
+              img.addEventListener('error', done, { once: true });
+              setTimeout(done, 1200);
+            });
+          }));
+        }
+
+        embedImagesAsDataUrls(src)
+          .then(waitImages)
+          .then(function () {
+            return new Promise(function (resolve) { setTimeout(resolve, 50); });
+          })
+          .then(function () {
+            var w = Math.ceil(src.offsetWidth);
+            var h = Math.ceil(src.offsetHeight);
+            return html2pdf().set({
+              margin: 0,
+              filename: pdfName || 'направление.pdf',
+              image: { type: 'jpeg', quality: 0.98 },
+              html2canvas: {
+                scale: 2,
+                useCORS: true,
+                allowTaint: true,
+                logging: false,
+                backgroundColor: '#ffffff',
+                scrollX: 0,
+                scrollY: 0,
+                x: 0,
+                y: 0,
+                width: w,
+                height: h,
+                windowWidth: w,
+                windowHeight: h,
+                onclone: function (clonedDoc) {
+                  var el = clonedDoc.querySelector('.med-dir-preview-doc')
+                    || clonedDoc.querySelector('.sout-eq-doc')
+                    || clonedDoc.getElementById('med-direction-preview-print-area');
+                  if (!el) return;
+                  el.style.boxShadow = 'none';
+                  el.style.overflow = 'hidden';
+                  el.style.width = '210mm';
+                  el.style.maxWidth = '210mm';
+                  el.style.height = '297mm';
+                  el.style.maxHeight = '297mm';
+                  el.style.minHeight = '297mm';
+                  el.style.padding = '12mm';
+                  el.style.margin = '0';
+                  el.style.boxSizing = 'border-box';
+                }
+              },
+              jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
+              pagebreak: { mode: ['avoid-all', 'css', 'legacy'] }
+            }).from(src).toPdf().get('pdf').then(function (pdf) {
+              // Один лист A4: если html2pdf разбил снимок — оставляем первую.
+              var pages = pdf.internal.getNumberOfPages();
+              for (var i = pages; i > 1; i--) {
+                pdf.deletePage(i);
+              }
+              pdf.save(pdfName || 'направление.pdf');
+            });
+          })
+          .then(restore, function (err) {
+            console.error(err);
+            restore();
+            window.print();
+          });
+      }
+
+      var wordBtn = document.getElementById('med-direction-word-btn');
+      if (wordBtn) wordBtn.addEventListener('click', downloadDirectionWord);
+      var pdfBtn = document.getElementById('med-direction-pdf-btn');
+      if (pdfBtn) pdfBtn.addEventListener('click', downloadDirectionPdf);
+      @if (Model.AutoDownloadPdf)
+      {
+        <text>setTimeout(downloadDirectionPdf, 500);</text>
+      }
+    });
+  </script>
+}
+<script src="/js/print-history.js"></script>
+</body>
+</html>

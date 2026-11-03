@@ -1,0 +1,211 @@
+[
+  {
+    "Id": "grp-ot",
+    "ParentId": null,
+    "IsGroup": true,
+    "MarkedForDeletion": false,
+    "Name": "\u041E\u0445\u0440\u0430\u043D\u0430 \u0442\u0440\u0443\u0434\u0430",
+    "Code": "grp-ot",
+    "Section": "\u041E\u0445\u0440\u0430\u043D\u0430 \u0442\u0440\u0443\u0434\u0430",
+    "ApprovalDate": null,
+    "TotalHours": 0
+  },
+  {
+    "Id": "item-p1",
+    "ParentId": "grp-ot",
+    "IsGroup": false,
+    "MarkedForDeletion": false,
+    "Name": "\u0412\u043E\u0434\u0438\u0442\u0435\u043B\u044C \u0430\u0432\u0442\u043E\u043C\u043E\u0431\u0438\u043B\u044F",
+    "Code": "p1",
+    "Section": "\u041E\u0445\u0440\u0430\u043D\u0430 \u0442\u0440\u0443\u0434\u0430",
+    "ApprovalDate": "2024-01-01T00:00:00",
+    "TotalHours": 15
+  },
+  {
+    "Id": "item-p2",
+    "ParentId": "grp-ot",
+    "IsGroup": false,
+    "MarkedForDeletion": false,
+    "Name": "\u041E\u0431\u0443\u0447\u0435\u043D\u0438\u0435 \u043F\u043E \u043E\u0445\u0440\u0430\u043D\u0435 \u0442\u0440\u0443\u0434\u0430",
+    "Code": "p2",
+    "Section": "\u041E\u0445\u0440\u0430\u043D\u0430 \u0442\u0440\u0443\u0434\u0430",
+    "ApprovalDate": "2024-01-01T00:00:00",
+    "TotalHours": 42
+  },
+  {
+    "Id": "item-p3",
+    "ParentId": "grp-ot",
+    "IsGroup": false,
+    "MarkedForDeletion": false,
+    "Name": "\u0418\u043D\u0441\u0442\u0440\u0443\u043A\u0442\u0430\u0436 \u043D\u0430 \u0440\u0430\u0431\u043E\u0447\u0435\u043C \u043C\u0435\u0441\u0442\u0435",
+    "Code": "p3",
+    "Section": "\u041E\u0445\u0440\u0430\u043D\u0430 \u0442\u0440\u0443\u0434\u0430",
+    "ApprovalDate": "2024-06-01T00:00:00",
+    "TotalHours": 2.5
+  },
+  {
+    "Id": "grp-fire",
+    "ParentId": null,
+    "IsGroup": true,
+    "MarkedForDeletion": false,
+    "Name": "\u041F\u043E\u0436\u0430\u0440\u043D\u0430\u044F \u0431\u0435\u0437\u043E\u043F\u0430\u0441\u043D\u043E\u0441\u0442\u044C",
+    "Code": "grp-fire",
+    "Section": "\u041F\u043E\u0436\u0430\u0440\u043D\u0430\u044F \u0431\u0435\u0437\u043E\u043F\u0430\u0441\u043D\u043E\u0441\u0442\u044C",
+    "ApprovalDate": null,
+    "TotalHours": 0
+  },
+  {
+    "Id": "item-p4",
+    "ParentId": "grp-fire",
+    "IsGroup": false,
+    "MarkedForDeletion": false,
+    "Name": "\u041F\u0440\u043E\u0442\u0438\u0432\u043E\u043F\u043E\u0436\u0430\u0440\u043D\u044B\u0439 \u0438\u043D\u0441\u0442\u0440\u0443\u043A\u0442\u0430\u0436",
+    "Code": "p4",
+    "Section": "\u041F\u043E\u0436\u0430\u0440\u043D\u0430\u044F \u0431\u0435\u0437\u043E\u043F\u0430\u0441\u043D\u043E\u0441\u0442\u044C",
+    "ApprovalDate": "2024-01-01T00:00:00",
+    "TotalHours": 4
+  },
+  {
+    "Id": "item-p5",
+    "ParentId": "grp-fire",
+    "IsGroup": false,
+    "MarkedForDeletion": false,
+    "Name": "\u041E\u0431\u0443\u0447\u0435\u043D\u0438\u0435 \u043C\u0435\u0440\u0430\u043C \u043F\u043E\u0436\u0430\u0440\u043D\u043E\u0439 \u0431\u0435\u0437\u043E\u043F\u0430\u0441\u043D\u043E\u0441\u0442\u0438",
+    "Code": "p5",
+    "Section": "\u041F\u043E\u0436\u0430\u0440\u043D\u0430\u044F \u0431\u0435\u0437\u043E\u043F\u0430\u0441\u043D\u043E\u0441\u0442\u044C",
+    "ApprovalDate": "2023-12-15T00:00:00",
+    "TotalHours": 8
+  },
+  {
+    "Id": "item-p7",
+    "ParentId": "grp-fire",
+    "IsGroup": false,
+    "MarkedForDeletion": false,
+    "Name": "\u041F\u0440\u043E\u0433\u0440\u0430\u043C\u043C\u0430 \u0432\u0432\u043E\u0434\u043D\u043E\u0433\u043E \u043F\u0440\u043E\u0442\u0438\u0432\u043E\u043F\u043E\u0436\u0430\u0440\u043D\u043E\u0433\u043E \u0438\u043D\u0441\u0442\u0440\u0443\u043A\u0442\u0430\u0436\u0430",
+    "Code": "p7",
+    "Section": "\u041F\u043E\u0436\u0430\u0440\u043D\u0430\u044F \u0431\u0435\u0437\u043E\u043F\u0430\u0441\u043D\u043E\u0441\u0442\u044C",
+    "ApprovalDate": "2024-01-01T00:00:00",
+    "TotalHours": 2
+  },
+  {
+    "Id": "item-p8",
+    "ParentId": "grp-fire",
+    "IsGroup": false,
+    "MarkedForDeletion": false,
+    "Name": "\u041F\u0440\u043E\u0433\u0440\u0430\u043C\u043C\u0430 \u043F\u0435\u0440\u0432\u0438\u0447\u043D\u043E\u0433\u043E \u043F\u0440\u043E\u0442\u0438\u0432\u043E\u043F\u043E\u0436\u0430\u0440\u043D\u043E\u0433\u043E \u0438\u043D\u0441\u0442\u0440\u0443\u043A\u0442\u0430\u0436\u0430 \u043D\u0430 \u0440\u0430\u0431\u043E\u0447\u0435\u043C \u043C\u0435\u0441\u0442\u0435",
+    "Code": "p8",
+    "Section": "\u041F\u043E\u0436\u0430\u0440\u043D\u0430\u044F \u0431\u0435\u0437\u043E\u043F\u0430\u0441\u043D\u043E\u0441\u0442\u044C",
+    "ApprovalDate": "2024-01-01T00:00:00",
+    "TotalHours": 2
+  },
+  {
+    "Id": "item-p9",
+    "ParentId": "grp-fire",
+    "IsGroup": false,
+    "MarkedForDeletion": false,
+    "Name": "\u041F\u0440\u043E\u0433\u0440\u0430\u043C\u043C\u0430 \u043F\u043E\u0432\u0442\u043E\u0440\u043D\u043E\u0433\u043E \u043F\u0440\u043E\u0442\u0438\u0432\u043E\u043F\u043E\u0436\u0430\u0440\u043D\u043E\u0433\u043E \u0438\u043D\u0441\u0442\u0440\u0443\u043A\u0442\u0430\u0436\u0430",
+    "Code": "p9",
+    "Section": "\u041F\u043E\u0436\u0430\u0440\u043D\u0430\u044F \u0431\u0435\u0437\u043E\u043F\u0430\u0441\u043D\u043E\u0441\u0442\u044C",
+    "ApprovalDate": "2024-01-01T00:00:00",
+    "TotalHours": 1.5
+  },
+  {
+    "Id": "item-p11",
+    "ParentId": "grp-fire",
+    "IsGroup": false,
+    "MarkedForDeletion": false,
+    "Name": "\u041F\u0440\u043E\u0433\u0440\u0430\u043C\u043C\u0430 \u0432\u043D\u0435\u043F\u043B\u0430\u043D\u043E\u0432\u043E\u0433\u043E \u043F\u0440\u043E\u0442\u0438\u0432\u043E\u043F\u043E\u0436\u0430\u0440\u043D\u043E\u0433\u043E \u0438\u043D\u0441\u0442\u0440\u0443\u043A\u0442\u0430\u0436\u0430",
+    "Code": "p11",
+    "Section": "\u041F\u043E\u0436\u0430\u0440\u043D\u0430\u044F \u0431\u0435\u0437\u043E\u043F\u0430\u0441\u043D\u043E\u0441\u0442\u044C",
+    "ApprovalDate": "2024-01-01T00:00:00",
+    "TotalHours": 1
+  },
+  {
+    "Id": "item-p12",
+    "ParentId": "grp-fire",
+    "IsGroup": false,
+    "MarkedForDeletion": false,
+    "Name": "\u041F\u0440\u043E\u0433\u0440\u0430\u043C\u043C\u0430 \u0446\u0435\u043B\u0435\u0432\u043E\u0433\u043E \u043F\u0440\u043E\u0442\u0438\u0432\u043E\u043F\u043E\u0436\u0430\u0440\u043D\u043E\u0433\u043E \u0438\u043D\u0441\u0442\u0440\u0443\u043A\u0442\u0430\u0436\u0430",
+    "Code": "p12",
+    "Section": "\u041F\u043E\u0436\u0430\u0440\u043D\u0430\u044F \u0431\u0435\u0437\u043E\u043F\u0430\u0441\u043D\u043E\u0441\u0442\u044C",
+    "ApprovalDate": "2024-01-01T00:00:00",
+    "TotalHours": 1
+  },
+  {
+    "Id": "item-p13",
+    "ParentId": "grp-fire",
+    "IsGroup": false,
+    "MarkedForDeletion": false,
+    "Name": "\u041F\u043E\u0436\u0430\u0440\u043D\u0430\u044F \u0431\u0435\u0437\u043E\u043F\u0430\u0441\u043D\u043E\u0441\u0442\u044C",
+    "Code": "p13",
+    "Section": "\u041F\u043E\u0436\u0430\u0440\u043D\u0430\u044F \u0431\u0435\u0437\u043E\u043F\u0430\u0441\u043D\u043E\u0441\u0442\u044C",
+    "ApprovalDate": "2024-01-01T00:00:00",
+    "TotalHours": 8
+  },
+  {
+    "Id": "item-p14",
+    "ParentId": "grp-fire",
+    "IsGroup": false,
+    "MarkedForDeletion": false,
+    "Name": "\u041F\u0440\u043E\u0442\u0438\u0432\u043E\u043F\u043E\u0436\u0430\u0440\u043D\u0430\u044F \u0431\u0435\u0437\u043E\u043F\u0430\u0441\u043D\u043E\u0441\u0442\u044C",
+    "Code": "p14",
+    "Section": "\u041F\u043E\u0436\u0430\u0440\u043D\u0430\u044F \u0431\u0435\u0437\u043E\u043F\u0430\u0441\u043D\u043E\u0441\u0442\u044C",
+    "ApprovalDate": "2024-01-01T00:00:00",
+    "TotalHours": 8
+  },
+  {
+    "Id": "item-p10",
+    "ParentId": "grp-fire",
+    "IsGroup": false,
+    "MarkedForDeletion": false,
+    "Name": "\u0421\u043F\u0435\u0446\u0438\u0430\u043B\u0438\u0441\u0442 \u043F\u043E \u043F\u043E\u0436\u0430\u0440\u043D\u043E\u0439 \u043F\u0440\u043E\u0444\u0438\u043B\u0430\u043A\u0442\u0438\u043A\u0435",
+    "Code": "p10",
+    "Section": "\u041F\u043E\u0436\u0430\u0440\u043D\u0430\u044F \u0431\u0435\u0437\u043E\u043F\u0430\u0441\u043D\u043E\u0441\u0442\u044C",
+    "ApprovalDate": "2023-06-01T00:00:00",
+    "TotalHours": 72
+  },
+  {
+    "Id": "grp-intern",
+    "ParentId": null,
+    "IsGroup": true,
+    "MarkedForDeletion": false,
+    "Name": "\u0421\u0442\u0430\u0436\u0438\u0440\u043E\u0432\u043A\u0438",
+    "Code": "grp-intern",
+    "Section": "\u0421\u0442\u0430\u0436\u0438\u0440\u043E\u0432\u043A\u0438",
+    "ApprovalDate": null,
+    "TotalHours": 0
+  },
+  {
+    "Id": "item-p6",
+    "ParentId": "grp-intern",
+    "IsGroup": false,
+    "MarkedForDeletion": false,
+    "Name": "\u0421\u0442\u0430\u0436\u0438\u0440\u043E\u0432\u043A\u0430 \u043D\u0430 \u0440\u0430\u0431\u043E\u0447\u0435\u043C \u043C\u0435\u0441\u0442\u0435",
+    "Code": "p6",
+    "Section": "\u0421\u0442\u0430\u0436\u0438\u0440\u043E\u0432\u043A\u0438",
+    "ApprovalDate": null,
+    "TotalHours": 0.25
+  },
+  {
+    "Id": "34f4626ac09945b6a8482380ddbcaa07",
+    "ParentId": null,
+    "IsGroup": false,
+    "MarkedForDeletion": false,
+    "Name": "\u0410\u0442\u0442\u0435\u0441\u0442\u0430\u0446\u0438\u044F \u043F\u043E \u043E\u0445\u0440\u0430\u043D\u0435 \u0442\u0440\u0443\u0434\u0430",
+    "Code": "std-0018",
+    "Section": "\u041E\u0445\u0440\u0430\u043D\u0430 \u0442\u0440\u0443\u0434\u0430",
+    "ApprovalDate": null,
+    "TotalHours": 0
+  },
+  {
+    "Id": "a4333e92a66d420f8324237ca0801801",
+    "ParentId": null,
+    "IsGroup": false,
+    "MarkedForDeletion": false,
+    "Name": "\u0410\u0442\u0442\u0435\u0441\u0442\u0430\u0446\u0438\u044F \u043F\u043E \u043F\u043E\u0436\u0430\u0440\u043D\u043E\u0439 \u0431\u0435\u0437\u043E\u043F\u0430\u0441\u043D\u043E\u0441\u0442\u0438",
+    "Code": "std-0019",
+    "Section": "\u041E\u0445\u0440\u0430\u043D\u0430 \u0442\u0440\u0443\u0434\u0430",
+    "ApprovalDate": null,
+    "TotalHours": 0
+  }
+]

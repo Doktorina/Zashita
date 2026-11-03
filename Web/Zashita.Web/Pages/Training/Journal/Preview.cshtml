@@ -1,0 +1,93 @@
+﻿@page "/Training/Journal/Preview"
+@model Zashita.Web.Pages.Training.Journal.PreviewModel
+@{
+    Layout = null;
+    ViewData["Title"] = Model.JournalTitle;
+}
+
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>@ViewData["Title"]</title>
+    <partial name="_SiteIconLinks" />
+<link rel="stylesheet" href="/css/zashita.css" asp-append-version="true" />
+  <link rel="stylesheet" href="/css/sout-preparation.css" asp-append-version="true" />
+  <link rel="stylesheet" href="/css/training-journal-print.css" asp-append-version="true" />
+</head>
+<body class="sout-preview-page">
+  <div class="sout-preview-shell">
+    <div class="sout-preview-toolbar ppe-no-print">
+      <div class="sout-preview-toolbar-left">
+        <button type="button" class="btn btn-primary btn-sm" id="journal-preview-print-btn">Печать</button>
+        <span class="hint">Можно менять текст в ячейках и шапке перед печатью.</span>
+      </div>
+      <div class="sout-preview-toolbar-right">
+        <a class="btn btn-outline btn-sm" href="@Model.BackUrl">К журналу</a>
+      </div>
+    </div>
+
+    @if (!string.IsNullOrWhiteSpace(Model.Message))
+    {
+      <p class="sout-preview-message ppe-no-print">@Model.Message</p>
+    }
+
+    <form method="post" asp-page="/Training/Journal/Preview" asp-page-handler="Save" id="journal-preview-save-form" class="ppe-no-print" hidden>
+      <input type="hidden" name="Kind" value="@Model.Kind" />
+      <input type="hidden" name="ShowTitlePage" value="@(Model.ShowTitlePage ?? true)" />
+      <div id="journal-preview-overrides"></div>
+    </form>
+
+    <div class="sout-preview-doc-wrap" id="journal-preview-print-area">
+      <div class="journal-preview-doc">
+        @if (string.IsNullOrWhiteSpace(Model.PreviewHtml))
+        {
+          <p class="hint">Нет данных для печати. Вернитесь к журналу, нажмите «Сформировать записи» и снова «Предпросмотр».</p>
+        }
+        else
+        {
+          @Html.Raw(Model.PreviewHtml)
+        }
+      </div>
+    </div>
+  </div>
+
+  <script src="~/js/print-history.js" asp-append-version="true"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', function () {
+      var printBtn = document.getElementById('journal-preview-print-btn');
+      if (printBtn) {
+        printBtn.addEventListener('click', function () {
+          if (typeof window.zashitaRecordPrint === 'function') {
+            window.zashitaRecordPrint({
+              category: 'journal',
+              title: @Json.Serialize(Model.JournalTitle),
+              summary: 'Печать журнала'
+            });
+          } else {
+            window.print();
+          }
+        });
+      }
+
+      @if (Model.AutoPrint)
+      {
+        <text>
+        setTimeout(function () {
+          if (typeof window.zashitaRecordPrint === 'function') {
+            window.zashitaRecordPrint({
+              category: 'journal',
+              title: @Json.Serialize(Model.JournalTitle),
+              summary: 'Печать журнала'
+            });
+          } else {
+            window.print();
+          }
+        }, 400);
+        </text>
+      }
+    });
+  </script>
+</body>
+</html>

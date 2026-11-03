@@ -1,0 +1,29 @@
+.sout-import-panel {
+  max-width: none;
+  width: 100%;
+}
+
+.sout-import-simple-form {
+  max-width: 48rem;
+}
+
+.sout-import-simple-form .ppe-field {
+  margin: 12px 0 16px;
+}
+
+.sout-import-file-field .ppe-input {
+  width: 100%;
+}
+
+.sout-import-files {
+  width: 100%;
+  overflow-x: auto;
+}
+
+.sout-import-preview-frame {
+  width: 100%;
+  min-height: 70vh;
+  border: 1px solid #d0d7de;
+  border-radius: 6px;
+  background: #fff;
+}

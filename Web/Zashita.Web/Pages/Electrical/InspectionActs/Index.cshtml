@@ -1,0 +1,89 @@
+@page "/Electrical/InspectionActs"
+@model Zashita.Web.Pages.Electrical.InspectionActs.IndexModel
+@{
+    ViewData["Title"] = "Акт проверки";
+    ViewData["Subtitle"] = Model.Organization;
+}
+
+<div class="panel ppe-panel">
+  <div class="ppe-toolbar" style="flex-wrap:wrap; gap:8px; align-items:center">
+    <a class="btn btn-primary btn-sm" asp-page="/Electrical/InspectionActs/Edit">Создать</a>
+    @if (!string.IsNullOrWhiteSpace(Model.PrintId))
+    {
+      <a class="btn btn-outline btn-sm"
+         href="/Electrical/InspectionActs/Preview?id=@Uri.EscapeDataString(Model.PrintId!)">Печать</a>
+      @if (Model.SelectedPrintRecord is not null)
+      {
+        <span class="hint ppe-print-selected">Документ: № @Model.SelectedPrintRecord.Number — @Model.SelectedPrintRecord.ConstructionObject</span>
+      }
+    }
+    else
+    {
+      <span class="hint">Для печати выберите документ: кликните по номеру в таблице.</span>
+    }
+  </div>
+
+  <form method="get" class="ppe-filter-bar">
+    @if (!string.IsNullOrWhiteSpace(Model.PrintId))
+    {
+      <input type="hidden" name="printId" value="@Model.PrintId" />
+    }
+    <label>
+      Поиск
+      <input type="search" name="q" value="@Model.Q" class="ppe-input" placeholder="№, объект, подрядчик, ФИО..." />
+    </label>
+    <button type="submit" class="btn btn-outline">Найти</button>
+  </form>
+
+  <table class="data-grid">
+    <thead>
+      <tr>
+        <th>Дата</th>
+        <th>Номер</th>
+        <th>Объект строительства</th>
+        <th>Подрядчик</th>
+        <th>Составитель</th>
+        <th>Статус</th>
+        <th>Действия</th>
+      </tr>
+    </thead>
+    <tbody>
+      @if (Model.Rows.Count == 0)
+      {
+        <tr><td colspan="7" class="hint">Документов пока нет. Нажмите «Создать».</td></tr>
+      }
+      else
+      {
+        foreach (var row in Model.Rows)
+        {
+          <tr class="@(row.Id == Model.PrintId ? "row-active grid-row-selected" : "")">
+            <td>@row.Date.ToString("dd.MM.yyyy")</td>
+            <td>
+              <a asp-page="/Electrical/InspectionActs"
+                 asp-route-printId="@row.Id"
+                 title="Выбрать для печати">@row.Number</a>
+            </td>
+            <td>@row.ConstructionObject</td>
+            <td>@row.Contractor</td>
+            <td>@row.InspectorName</td>
+            <td>@(row.IsPosted ? "Проведён" : "Черновик")</td>
+            <td>
+              <div class="suot-action-bar">
+                <a class="suot-action" title="Редактировать"
+                   asp-page="/Electrical/InspectionActs/Edit"
+                   asp-route-id="@row.Id">✏️</a>
+                <a class="suot-action" title="Печать"
+                   href="/Electrical/InspectionActs/Preview?id=@Uri.EscapeDataString(row.Id)">🖨</a>
+                <form method="post" asp-page-handler="Delete" class="suot-inline-form"
+                      onsubmit="return confirm('Удалить документ?');">
+                  <button type="submit" class="suot-action suot-action-danger"
+                          name="deleteId" value="@row.Id" title="Удалить">🗑</button>
+                </form>
+              </div>
+            </td>
+          </tr>
+        }
+      }
+    </tbody>
+  </table>
+</div>

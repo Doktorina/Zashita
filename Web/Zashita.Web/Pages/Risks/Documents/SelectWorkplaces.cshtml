@@ -1,0 +1,125 @@
+@page "/Risks/Documents/SelectWorkplaces"
+@model Zashita.Web.Pages.Risks.Documents.SelectWorkplacesModel
+@using Zashita.Core.Risks
+@{
+    ViewData["Title"] = Model.IsCardsPurpose
+        ? "Карты идентификации — выбор РМ"
+        : "Перечень РМ для ОПР — выбор";
+}
+
+<link rel="stylesheet" href="~/css/risks-preparation.css" asp-append-version="true" />
+
+<div class="panel ppe-panel">
+  <div class="risks-docs-back-row">
+    <a class="btn btn-outline btn-sm" asp-page="/Risks/Documents">← К документам</a>
+  </div>
+  @if (Model.IsCardsPurpose)
+  {
+    <p class="hint">Отметьте рабочие места, карты которых нужно напечатать (альбомная ориентация). Можно выбрать все или часть.</p>
+  }
+  else
+  {
+    <p class="hint">
+      Отметьте профессии / рабочие места для печати перечня ОПР (как в бланке: № п/п и профессия).
+      По умолчанию отмечены профессии с заполненной оценкой на выбранном объекте.
+    </p>
+  }
+  @if (!string.IsNullOrWhiteSpace(Model.Message))
+  {
+    <p class="form-error">@Model.Message</p>
+  }
+
+  <p class="hint" style="margin:0 0 14px">
+    Объект: <b>@Model.SelectedObjectDisplayName</b>. Переключение — в панели сверху.
+    @(Model.IsCardsPurpose
+        ? "Печатаются карты с данными оценки для выбранного объекта."
+        : "В списке — профессии объекта; отмечены те, по которым есть оценка на этом объекте.")
+  </p>
+
+  <form method="post" asp-page-handler="Print">
+    <input type="hidden" asp-for="PrepId" />
+    <input type="hidden" asp-for="Purpose" />
+    <input type="hidden" name="ObjectId" value="@Model.SelectedObjectId" />
+    <div class="ppe-toolbar" style="flex-wrap:wrap;gap:8px">
+      <button type="submit" class="btn btn-primary btn-sm">@(Model.IsCardsPurpose ? "Печать выбранных карт" : "Печать выбранных")</button>
+      <button type="button" class="btn btn-outline btn-sm" id="risks-wp-export-word">Word</button>
+      <button type="button" class="btn btn-outline btn-sm" id="risks-wp-select-all">Выбрать все</button>
+      <button type="button" class="btn btn-outline btn-sm" id="risks-wp-select-none">Снять все</button>
+    </div>
+
+    <table class="data-grid">
+      <thead>
+        <tr>
+          <th style="width:2.5rem"></th>
+          <th>№</th>
+          <th>Профессия, должность</th>
+          <th>Подразделение</th>
+          <th>Номер РМ</th>
+        </tr>
+      </thead>
+      <tbody>
+        @if (Model.Rows.Count == 0)
+        {
+          <tr><td colspan="5" class="hint">Нет рабочих мест. Загрузите штат / справочник РМ.</td></tr>
+        }
+        @for (var i = 0; i < Model.Rows.Count; i++)
+        {
+          var row = Model.Rows[i];
+          var title = string.IsNullOrWhiteSpace(row.Profession) ? row.Name : row.Profession;
+          var isChecked = Model.PrecheckedIds.Contains(row.Id);
+          <tr>
+            <td><input type="checkbox" name="SelectedIds" value="@row.Id" class="js-wp-check" @(isChecked ? "checked" : null) /></td>
+            <td>@(i + 1)</td>
+            <td>@title</td>
+            <td>@(string.IsNullOrWhiteSpace(row.Department) ? "—" : row.Department)</td>
+            <td>@(string.IsNullOrWhiteSpace(row.WorkplaceNumber) ? "—" : row.WorkplaceNumber)</td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  </form>
+</div>
+
+@section Scripts {
+  <script src="~/js/risks-doc-export.js" asp-append-version="true"></script>
+  <script>
+    (function () {
+      var isCards = @(Model.IsCardsPurpose ? "true" : "false");
+      var prepId = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.PrepId ?? ""));
+      var objectId = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.SelectedObjectId ?? ""));
+      document.getElementById('risks-wp-select-all')?.addEventListener('click', function () {
+        document.querySelectorAll('.js-wp-check').forEach(function (c) { c.checked = true; });
+      });
+      document.getElementById('risks-wp-select-none')?.addEventListener('click', function () {
+        document.querySelectorAll('.js-wp-check').forEach(function (c) { c.checked = false; });
+      });
+      function selectedIds() {
+        return Array.prototype.map.call(
+          document.querySelectorAll('.js-wp-check:checked'),
+          function (c) { return c.value; }
+        ).filter(Boolean);
+      }
+      function exportSelected(format) {
+        var ids = selectedIds();
+        if (!ids.length) {
+          window.alert('Отметьте хотя бы одну профессию / рабочее место.');
+          return;
+        }
+        var url = isCards
+          ? '/Risks/Documents/OrgDocPreview?kind=identification-cards&ids=' + encodeURIComponent(ids.join(','))
+            + (objectId ? '&objectId=' + encodeURIComponent(objectId) : '')
+          : '/Risks/Documents/PrintSelection?kind=workplaces&ids=' + encodeURIComponent(ids.join(','))
+            + (prepId ? '&prepId=' + encodeURIComponent(prepId) : '')
+            + (objectId ? '&objectId=' + encodeURIComponent(objectId) : '');
+        if (window.zashitaRisksDocExport) {
+          window.zashitaRisksDocExport.exportFromUrl(url, format);
+        } else {
+          window.open(url + '&export=' + encodeURIComponent(format), '_blank');
+        }
+      }
+      document.getElementById('risks-wp-export-word')?.addEventListener('click', function () {
+        exportSelected('word');
+      });
+    })();
+  </script>
+}

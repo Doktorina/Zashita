@@ -1,0 +1,163 @@
+@page "/Suot/Facts"
+@model Zashita.Web.Pages.Suot.FactsModel
+@{
+    ViewData["Title"] = "Отражение факта по показателям";
+    ViewData["Subtitle"] = Model.Organization;
+    var dateFrom = Model.DateFrom?.ToString("yyyy-MM-dd");
+    var dateTo = Model.DateTo?.ToString("yyyy-MM-dd");
+}
+
+@if (!string.IsNullOrWhiteSpace(Model.Message))
+{
+    <p class="@(Model.IsError ? "form-error" : "text-success")">@Model.Message</p>
+}
+
+<div class="suot-page">
+    <div class="suot-page-head panel ppe-panel">
+        <div class="ppe-toolbar suot-page-toolbar">
+            <a class="btn btn-primary btn-sm" asp-page="/Suot/Facts" asp-route-dateFrom="@dateFrom" asp-route-dateTo="@dateTo">Новая запись</a>
+            <a class="btn btn-outline btn-sm" asp-page="/Suot/Indicators">Показатели</a>
+        </div>
+        <form method="get" class="suot-page-filters">
+            <label class="ppe-field">
+                <span>Период с</span>
+                <input type="date" name="dateFrom" value="@dateFrom" class="ppe-input" />
+            </label>
+            <label class="ppe-field">
+                <span>по</span>
+                <input type="date" name="dateTo" value="@dateTo" class="ppe-input" />
+            </label>
+            <button type="submit" class="btn btn-outline btn-sm">Применить</button>
+        </form>
+    </div>
+
+    <div class="suot-layout">
+        <div class="panel ppe-panel suot-list-panel">
+            <table class="data-grid suot-table">
+                <thead>
+                    <tr>
+                        <th>Период</th>
+                        <th>Показатель</th>
+                        <th>Значение</th>
+                        <th class="suot-actions-col">Действия</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var row in Model.Rows)
+                    {
+                        var active = row.Id == Model.ActiveId;
+                        <tr class="@(active ? "row-active" : "")">
+                            <td>
+                                <a asp-page="/Suot/Facts"
+                                   asp-route-viewId="@row.Id"
+                                   asp-route-dateFrom="@dateFrom"
+                                   asp-route-dateTo="@dateTo">
+                                    @row.PeriodStart.ToString("dd.MM.yyyy") – @row.PeriodEnd.ToString("dd.MM.yyyy")
+                                </a>
+                            </td>
+                            <td>@Model.ResolveIndicatorName(row.IndicatorId)</td>
+                            <td>@row.Value</td>
+                            <td class="suot-actions-col">
+                                <partial name="_TableActions" model='new SuotTableActionsModel {
+                                    ViewHref = Url.Page("/Suot/Facts", new { viewId = row.Id, dateFrom, dateTo }),
+                                    EditHref = Url.Page("/Suot/Facts", new { editId = row.Id, dateFrom, dateTo }),
+                                    DeleteId = row.Id,
+                                    DeleteConfirm = "Удалить запись?",
+                                    HiddenFields = new Dictionary<string, string?> {
+                                        ["dateFrom"] = dateFrom,
+                                        ["dateTo"] = dateTo
+                                    }
+                                }' />
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+
+        <div class="panel ppe-panel suot-form-panel">
+            @if (Model.IsViewMode && Model.Selected is not null)
+            {
+                <h2 class="ppe-step-title">Просмотр факта</h2>
+                <dl class="suot-view-list">
+                    <dt>Организация</dt><dd>@Model.Selected.Organization</dd>
+                    <dt>Показатель</dt><dd>@Model.ResolveIndicatorName(Model.Selected.IndicatorId)</dd>
+                    <dt>Подразделение</dt><dd>@(string.IsNullOrWhiteSpace(Model.Selected.Department) ? "—" : Model.Selected.Department)</dd>
+                    <dt>Период</dt><dd>@Model.Selected.PeriodStart.ToString("dd.MM.yyyy") – @Model.Selected.PeriodEnd.ToString("dd.MM.yyyy")</dd>
+                    <dt>Значение</dt><dd>@Model.Selected.Value</dd>
+                    <dt>Комментарий</dt><dd>@(string.IsNullOrWhiteSpace(Model.Selected.Comment) ? "—" : Model.Selected.Comment)</dd>
+                </dl>
+                <partial name="_PanelActions" model='new SuotPanelActionsModel {
+                    EditHref = Url.Page("/Suot/Facts", new { editId = Model.Selected.Id, dateFrom, dateTo }),
+                    DeleteId = Model.Selected.Id,
+                    DeleteConfirm = "Удалить запись?",
+                    HiddenFields = new Dictionary<string, string?> {
+                        ["dateFrom"] = dateFrom,
+                        ["dateTo"] = dateTo
+                    }
+                }' />
+            }
+            else
+            {
+                <h2 class="ppe-step-title">@(Model.IsEditMode ? "Редактирование" : "Новый факт")</h2>
+                <form method="post" asp-page-handler="Save">
+                    <input type="hidden" asp-for="EditId" />
+                    <input type="hidden" name="dateFrom" value="@dateFrom" />
+                    <input type="hidden" name="dateTo" value="@dateTo" />
+
+                    <label class="ppe-field">
+                        <span>Организация</span>
+                        <input class="ppe-input" value="@Model.Organization" readonly />
+                    </label>
+                    <label class="ppe-field">
+                        <span>Показатель</span>
+                        <select asp-for="IndicatorId" class="ppe-input" required>
+                            <option value="">— выберите —</option>
+                            @foreach (var indicator in Model.IndicatorOptions)
+                            {
+                                <option value="@indicator.Id">@indicator.Name (@indicator.Unit)</option>
+                            }
+                        </select>
+                    </label>
+                    @await Html.PartialAsync("~/Pages/Shared/_DepartmentSelect.cshtml", new Zashita.Web.Pages.Shared.DepartmentSelectModel
+                    {
+                        Name = "Department",
+                        Value = Model.Department,
+                        Options = Model.Departments,
+                        Optional = true
+                    })
+                    <label class="ppe-field">
+                        <span>Начало периода</span>
+                        <input asp-for="PeriodStart" type="date" class="ppe-input" />
+                    </label>
+                    <label class="ppe-field">
+                        <span>Конец периода</span>
+                        <input asp-for="PeriodEnd" type="date" class="ppe-input" />
+                    </label>
+                    <label class="ppe-field">
+                        <span>Значение</span>
+                        <input asp-for="Value" type="number" step="0.01" class="ppe-input" required />
+                    </label>
+                    <label class="ppe-field">
+                        <span>Комментарий</span>
+                        <input asp-for="Comment" class="ppe-input" />
+                    </label>
+
+                    <div class="ppe-actions">
+                        <button type="submit" class="btn btn-primary">Сохранить</button>
+                        @if (Model.IsEditMode && !string.IsNullOrWhiteSpace(Model.EditId))
+                        {
+                            <a class="btn btn-outline"
+                               asp-page="/Suot/Facts"
+                               asp-route-viewId="@Model.EditId"
+                               asp-route-dateFrom="@dateFrom"
+                               asp-route-dateTo="@dateTo">Просмотр</a>
+                            <button type="submit" class="btn btn-outline suot-del-btn" formaction="?handler=Delete" name="deleteId" value="@Model.EditId"
+                                    onclick="return confirm('Удалить запись?');">Удалить</button>
+                        }
+                    </div>
+                </form>
+            }
+        </div>
+    </div>
+</div>

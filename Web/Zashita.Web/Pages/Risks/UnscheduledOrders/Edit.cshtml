@@ -1,0 +1,90 @@
+@page "/Risks/UnscheduledOrders/Edit"
+@model Zashita.Web.Pages.Risks.UnscheduledOrders.EditModel
+@{
+    ViewData["Title"] = Model.IsNew ? "Приказ на оценку рисков. Новый" : "Приказ на оценку рисков";
+    ViewData["Subtitle"] = Model.Organization;
+    var doc = Model.Document;
+}
+
+@section Styles {
+  <link rel="stylesheet" href="~/css/risks-preparation.css" asp-append-version="true" />
+}
+
+<div class="panel ppe-panel sout-assignment-doc">
+  <div class="risks-docs-back-row">
+    <a class="btn btn-outline btn-sm" asp-page="/Risks/Documents" asp-route-tab="order">← К документам</a>
+  </div>
+  <form method="post" asp-page="/Risks/UnscheduledOrders/Edit">
+    <input type="hidden" asp-for="Id" />
+
+    <div class="sout-assignment-toolbar">
+      <div class="sout-assignment-toolbar-left">
+        <button type="submit" formaction="?handler=PostAndClose" class="btn btn-primary btn-sm">Провести и закрыть</button>
+        <button type="submit" formaction="?handler=Save" class="btn btn-outline btn-sm">Записать</button>
+        <button type="submit" formaction="?handler=Post" class="btn btn-outline btn-sm">Провести</button>
+      </div>
+      <div class="sout-assignment-toolbar-right">
+        <span class="hint sout-assignment-status">@(doc.IsPosted ? "Проведён" : "Новый *")</span>
+      </div>
+    </div>
+
+    <div class="sout-assignment-header">
+      <div class="sout-assignment-header-col">
+        <label class="ppe-field">
+          <span>Номер</span>
+          <input name="number" value="@(string.IsNullOrWhiteSpace(doc.Number) ? "<Авто>" : doc.Number)" class="ppe-input" />
+        </label>
+        <label class="ppe-field">
+          <span>от</span>
+          <input type="datetime-local" name="date" value="@doc.Date.ToString("yyyy-MM-ddTHH:mm:ss")" class="ppe-input" step="1" />
+        </label>
+        <label class="ppe-field">
+          <span>Подразделение</span>
+          <input name="department" value="@doc.Department" class="ppe-input" placeholder="Цех сборки-сварки" />
+        </label>
+      </div>
+      <div class="sout-assignment-header-col">
+        <label class="ppe-field">
+          <span>Организация</span>
+          <input name="organization" value="@Model.Organization" class="ppe-input" readonly />
+        </label>
+        @if (!string.IsNullOrWhiteSpace(Model.CommissionName))
+        {
+          <label class="ppe-field">
+            <span>Комиссия</span>
+            <input value="@Model.CommissionName" class="ppe-input" readonly />
+          </label>
+        }
+        <a class="btn btn-outline btn-sm" asp-page="/Risks/UnscheduledOrders/SelectCommission" asp-route-orderId="@doc.Id">Изменить комиссию</a>
+      </div>
+    </div>
+
+    @if (!Model.IsNew)
+    {
+      <div class="sout-preparation-print-links ppe-no-print-block">
+        <h3 class="ppe-subtitle">Форма на печать</h3>
+        <div class="ppe-toolbar sout-toolbar">
+          <a class="btn btn-outline btn-sm"
+             asp-page="/Risks/UnscheduledOrders/Preview"
+             asp-route-id="@doc.Id"
+             asp-route-mode="order"
+             target="_blank">Печать приказа</a>
+          <button type="button" class="btn btn-outline btn-sm"
+                  data-risks-export="word"
+                  data-risks-export-url="/Risks/UnscheduledOrders/Preview?id=@Uri.EscapeDataString(doc.Id)&amp;mode=order">Word</button>
+        </div>
+      </div>
+    }
+
+    <div class="ppe-actions">
+      @if (!Model.IsNew)
+      {
+        <button type="submit" formaction="?handler=Delete" class="btn btn-outline" onclick="return confirm('Удалить документ?');">Удалить</button>
+      }
+    </div>
+  </form>
+</div>
+
+@section Scripts {
+  <script src="~/js/risks-doc-export.js" asp-append-version="true"></script>
+}

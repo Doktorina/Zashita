@@ -1,0 +1,366 @@
+body.journal-print-body {
+  font-family: "Times New Roman", Times, serif;
+  font-size: 10pt;
+  color: #000;
+  margin: 0;
+  background: #fff;
+}
+
+/* ——— Титул вводного журнала (как в DOCX) ——— */
+.journal-intro-title {
+  min-height: 190mm;
+  height: 190mm;
+  padding: 18mm 20mm 16mm;
+  box-sizing: border-box;
+  position: relative;
+  page-break-after: always;
+  break-after: page;
+}
+
+.journal-intro-title-spacer {
+  height: 18mm;
+}
+
+.journal-intro-org {
+  text-align: center;
+  font-size: 12pt;
+  min-height: 1.4em;
+  line-height: 1.4;
+}
+
+
+.journal-intro-title-mid {
+  margin-top: 48mm;
+  text-align: center;
+}
+
+.journal-intro-h1 {
+  font-size: 18pt;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  margin: 0 0 8px;
+}
+
+.journal-intro-h2 {
+  font-size: 14pt;
+  font-weight: 700;
+  margin: 0;
+  line-height: 1.35;
+}
+
+.journal-intro-h3 {
+  font-size: 12pt;
+  font-weight: 700;
+  margin: 6px 0 0;
+  line-height: 1.35;
+}
+
+/* Титул подрядных: блок по центру, объект сразу под подзаголовком */
+.journal-contractor-title .journal-contractor-mid {
+  margin-top: 42mm;
+}
+
+.journal-contractor-object {
+  margin-top: 14mm;
+  text-align: center;
+  font-size: 12pt;
+  font-weight: 400;
+  min-height: 1.4em;
+  line-height: 1.4;
+}
+
+.journal-contractor-object [contenteditable="true"] {
+  outline: none;
+  display: inline;
+  min-width: 4em;
+}
+
+.journal-contractor-object [contenteditable="true"]:focus {
+  background: #fff8d6;
+}
+
+.journal-intro-object {
+  margin-top: 28mm;
+  text-align: center;
+  font-size: 12pt;
+  min-height: 1.4em;
+  line-height: 1.4;
+}
+
+.journal-intro-object-caption {
+  text-align: center;
+  font-size: 9pt;
+  margin-top: 2px;
+}
+
+.journal-intro-period {
+  position: absolute;
+  right: 20mm;
+  bottom: 22mm;
+  text-align: left;
+  font-size: 10pt;
+  line-height: 1.85;
+}
+
+.journal-workplace-table thead th {
+  font-size: 6.8pt;
+}
+
+.journal-fire-contractor-table thead th {
+  font-size: 6.5pt;
+  line-height: 1.1;
+}
+
+.journal-page-break {
+  display: none;
+}
+
+@media screen {
+  .journal-preview-sheet .journal-intro-title,
+  .journal-preview-sheet .journal-intro-page-2 {
+    background: #fff;
+    box-shadow: 0 1px 10px rgba(0, 0, 0, 0.12);
+    margin: 0 auto 20px;
+    width: 297mm;
+    max-width: 100%;
+  }
+
+  .journal-preview-sheet .journal-intro-page-2 {
+    min-height: 190mm;
+  }
+}
+
+/* Вторая страница — таблица */
+.journal-intro-page-2 {
+  page-break-before: always;
+  break-before: page;
+}
+
+.journal-intro-table-wrap {
+  padding: 4mm 5mm 8mm;
+  box-sizing: border-box;
+}
+
+.journal-intro-table {
+  width: 100%;
+  border-collapse: collapse;
+  table-layout: fixed;
+  font-size: 8pt;
+  display: table;
+}
+
+.journal-intro-table thead {
+  display: table-row-group; /* шапка один раз, без повтора на каждой странице */
+}
+
+.journal-intro-table tbody {
+  display: table-row-group;
+}
+
+.journal-intro-table tr {
+  display: table-row;
+}
+
+.journal-intro-table th,
+.journal-intro-table td {
+  display: table-cell;
+  border: 1px solid #000;
+  padding: 3px 3px;
+  vertical-align: top;
+  overflow-wrap: break-word;
+  word-wrap: break-word;
+  word-break: normal;
+}
+
+.journal-intro-table thead th {
+  font-weight: 700;
+  text-align: center;
+  vertical-align: middle;
+  line-height: 1.15;
+  font-size: 7.5pt;
+  background: #fff;
+}
+
+.journal-intro-nums th {
+  font-size: 8pt;
+  font-weight: 700;
+  padding: 2px;
+  height: auto;
+}
+
+.journal-intro-table tbody td {
+  height: 22px;
+  font-size: 8.5pt;
+}
+
+.journal-intro-table td[contenteditable="true"] {
+  outline: none;
+  /* НЕ ставить display:block — ломает таблицу */
+}
+
+.journal-intro-org [contenteditable="true"],
+.journal-intro-object [contenteditable="true"],
+.journal-intro-period [contenteditable="true"] {
+  outline: none;
+  display: inline;
+  min-width: 4em;
+}
+
+.journal-intro-table td[contenteditable="true"]:focus,
+.journal-intro-org [contenteditable="true"]:focus,
+.journal-intro-object [contenteditable="true"]:focus,
+.journal-intro-period [contenteditable="true"]:focus {
+  background: #fff8d6;
+}
+
+/* ——— Общие журналы ——— */
+.journal-title-page {
+  min-height: 100vh;
+  padding: 48px 56px 40px;
+  box-sizing: border-box;
+  position: relative;
+  page-break-after: always;
+}
+
+.journal-appendix {
+  position: absolute;
+  top: 24px;
+  right: 56px;
+  width: 42%;
+  text-align: right;
+  font-size: 9pt;
+  line-height: 1.35;
+}
+
+.journal-title-org,
+.journal-title-dept {
+  text-align: center;
+  font-weight: bold;
+  margin: 8px 0;
+}
+
+.journal-title-line {
+  border-bottom: 1px solid #000;
+  margin: 8px auto 16px;
+  width: 70%;
+}
+
+.journal-title-caption {
+  text-align: center;
+  font-size: 9pt;
+  margin-bottom: 36px;
+}
+
+.journal-title-heading {
+  text-align: center;
+  font-weight: bold;
+  font-size: 13pt;
+  line-height: 1.35;
+  margin: 6px 0;
+}
+
+.journal-period {
+  position: absolute;
+  right: 56px;
+  bottom: 56px;
+  text-align: right;
+  line-height: 1.6;
+}
+
+.journal-table-section {
+  padding: 12px 16px 24px;
+}
+
+.journal-table {
+  width: 100%;
+  border-collapse: collapse;
+  table-layout: fixed;
+  font-size: 8.5pt;
+}
+
+.journal-table th,
+.journal-table td {
+  border: 1px solid #000;
+  padding: 4px 5px;
+  vertical-align: top;
+  word-wrap: break-word;
+}
+
+.journal-table th {
+  font-weight: bold;
+  text-align: center;
+  vertical-align: middle;
+  line-height: 1.2;
+}
+
+.journal-responsible {
+  margin: 24px 16px 32px;
+  font-size: 9pt;
+}
+
+.journal-responsible-line {
+  margin: 8px 0 4px 120px;
+}
+
+.journal-responsible-hint {
+  margin-left: 120px;
+  font-size: 8pt;
+}
+
+.journal-page-break {
+  page-break-after: always;
+}
+
+.journal-preview-sheet {
+  margin: 0;
+}
+
+.journal-preview-doc {
+  width: 297mm;
+  max-width: 100%;
+  padding: 0;
+  box-sizing: border-box;
+  background: #fff;
+  box-shadow: 0 1px 8px rgba(0, 0, 0, 0.12);
+}
+
+@media print {
+  .sout-preview-toolbar,
+  .ppe-no-print,
+  .sout-preview-message {
+    display: none !important;
+  }
+
+  @page {
+    size: A4 landscape;
+    margin: 8mm;
+  }
+
+  body.journal-print-body,
+  .journal-preview-sheet {
+    margin: 0;
+  }
+
+  .journal-preview-doc {
+    width: auto;
+    box-shadow: none !important;
+  }
+
+  .journal-intro-title {
+    height: 100vh;
+    min-height: 100vh;
+    page-break-after: always;
+    break-after: page;
+  }
+
+  .journal-intro-page-2 {
+    page-break-before: always;
+    break-before: page;
+  }
+
+  .journal-intro-table td[contenteditable="true"]:focus,
+  .journal-intro-org [contenteditable="true"]:focus,
+  .journal-intro-period [contenteditable="true"]:focus {
+    background: transparent;
+  }
+}

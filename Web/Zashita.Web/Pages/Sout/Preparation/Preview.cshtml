@@ -1,0 +1,409 @@
+﻿@page "/Sout/Preparation/Preview"
+@using Zashita.Core.Risks
+@model Zashita.Web.Pages.Sout.Preparation.PreviewModel
+@{
+    ViewData["Title"] = Model.NotFound ? "Не найдено" : " ";
+    var historyTitle = Model.NotFound ? "Не найдено" : $"{Model.FormTitle} {Model.Title}";
+    Layout = null;
+    var isLandscape = SoutPreparationPrintModes.IsLandscape(Model.Mode);
+    // Информация для СОУТ: оба листа альбом A3 (таблица + примечания).
+    var paperClass = isLandscape ? "sout-a4-landscape" : "sout-a4-portrait";
+    var isInfoNeeded = Model.Mode == SoutPreparationPrintModes.InfoNeeded;
+    if (isInfoNeeded)
+    {
+        paperClass += " sout-a4-info sout-a3-info";
+    }
+}
+
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>@ViewData["Title"]</title>
+    <partial name="_SiteIconLinks" />
+<link rel="stylesheet" href="/css/sout-preparation.css" asp-append-version="true" />
+  <style>
+    * { box-sizing: border-box; }
+    html, body {
+      margin: 0;
+      padding: 0;
+      background: #c5c5c5;
+      font-family: "Times New Roman", Times, serif;
+      color: #000;
+    }
+    .sout-preview-toolbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 8px 12px;
+      background: #ece9d8;
+      border-bottom: 1px solid #a0a0a0;
+      font-family: "Segoe UI", Tahoma, sans-serif;
+      position: sticky;
+      top: 0;
+      z-index: 20;
+    }
+    .sout-preview-toolbar-left,
+    .sout-preview-toolbar-right {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+    .btn {
+      display: inline-block;
+      padding: 6px 12px;
+      border: 1px solid #888;
+      background: #fff;
+      cursor: pointer;
+      text-decoration: none;
+      color: #222;
+      font-size: 13px;
+      border-radius: 3px;
+    }
+    .btn-primary { background: #2f6b3a; color: #fff; border-color: #245530; }
+    .hint { font-size: 12px; color: #444; }
+    .sout-preview-stage {
+      padding: 20px;
+      display: block;
+      overflow: auto;
+    }
+    .sout-a4-page {
+      background: #fff;
+      margin: 0 auto 24px;
+      box-shadow: 0 2px 14px rgba(0,0,0,.25);
+      color: #000;
+    }
+    .sout-a4-portrait {
+      width: 210mm;
+      min-height: 297mm;
+      padding: 12mm 14mm;
+    }
+    .sout-a4-landscape {
+      width: 297mm;
+      min-height: 210mm;
+      padding: 8mm 10mm;
+    }
+    /* Таблица СОУТ-инфо: на экране — на всю ширину области; лист A3 landscape */
+    .sout-a4-info.sout-a3-info {
+      width: 100%;
+      min-width: 420mm;
+      min-height: 297mm;
+      padding: 5mm;
+      box-sizing: border-box;
+      overflow: visible;
+    }
+    .sout-a4-info:not(.sout-a3-info) {
+      width: 100%;
+      min-width: 297mm;
+      min-height: 210mm;
+      padding: 5mm;
+      box-sizing: border-box;
+      overflow: visible;
+    }
+    /* Хвост: тоже альбом A3 */
+    .sout-info-tail-sheet.sout-a3-info {
+      width: 100%;
+      min-width: 420mm;
+      min-height: 297mm;
+      padding: 5mm;
+      box-sizing: border-box;
+    }
+    .sout-info-tail-sheet:not(.sout-a3-info) {
+      width: 100%;
+      min-width: 297mm;
+      min-height: 210mm;
+      padding: 5mm;
+      box-sizing: border-box;
+    }
+    .sout-info-tail-sheet .sout-info-tail {
+      page-break-before: auto;
+      break-before: auto;
+      margin: 0;
+      padding: 0;
+    }
+    .sout-a4-page .sout-eq-doc,
+    .sout-a4-page .sout-wp-doc,
+    .sout-a4-page .sout-info-doc {
+      width: 100% !important;
+      max-width: none !important;
+      margin: 0 !important;
+      padding: 0 !important;
+      box-shadow: none !important;
+      min-height: 0 !important;
+    }
+    @@page sout-info-land {
+      size: A3 landscape;
+      margin: 5mm;
+    }
+    @@page sout-info-port {
+      size: A3 landscape;
+      margin: 5mm;
+    }
+    @@media print {
+      @@page {
+        size: @(isLandscape || Model.Mode == SoutPreparationPrintModes.InfoNeeded ? "A4 landscape" : "A4 portrait");
+        margin: @(Model.Mode == SoutPreparationPrintModes.InfoNeeded ? "5mm" : (isLandscape ? "8mm" : "12mm"));
+      }
+      html, body {
+        background: #fff !important;
+        margin: 0 !important;
+        padding: 0 !important;
+      }
+      .ppe-no-print,
+      .sout-preview-toolbar,
+      .sout-preview-message,
+      #sout-preview-save-form,
+      .sout-wp-edit-hint,
+      datalist,
+      script {
+        display: none !important;
+      }
+      .sout-preview-stage {
+        padding: 0 !important;
+        overflow: visible !important;
+      }
+      .sout-preview-doc-wrap {
+        display: block !important;
+        padding: 0 !important;
+        gap: 0 !important;
+      }
+      .sout-a4-page {
+        width: 100% !important;
+        max-width: 100% !important;
+        min-height: auto !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        box-shadow: none !important;
+        page-break-inside: auto !important;
+        break-inside: auto !important;
+      }
+      .sout-a4-info {
+        page: sout-info-land;
+      }
+      .sout-info-tail-sheet {
+        page: sout-info-land;
+        page-break-before: always !important;
+        break-before: page !important;
+        width: 100% !important;
+      }
+      .sout-info-ok,
+      .sout-info-table td.sout-info-ok,
+      .sout-info-table--form thead th.sout-info-ok {
+        background: #fff !important;
+      }
+      .sout-info-hl {
+        background: transparent !important;
+        font-weight: inherit !important;
+      }
+      /* Шапка один раз; строки целиком — не резать ячейку пополам */
+      .sout-info-table thead {
+        display: table-row-group !important;
+        page-break-inside: avoid !important;
+        break-inside: avoid !important;
+      }
+      .sout-info-table {
+        width: 100% !important;
+        max-width: 100% !important;
+        table-layout: fixed !important;
+        page-break-inside: auto !important;
+        break-inside: auto !important;
+      }
+      .sout-info-table--form thead tr:first-child th[rowspan] {
+        height: 155px !important;
+        max-height: 155px !important;
+        overflow: hidden !important;
+        vertical-align: bottom !important;
+      }
+      .sout-info-v {
+        overflow: hidden !important;
+        background: #f0f0f0 !important;
+        color: #000 !important;
+      }
+      .sout-info-v span,
+      .sout-info-v .sout-info-vert {
+        display: inline-block !important;
+        writing-mode: vertical-rl !important;
+        transform: rotate(180deg) !important;
+        white-space: nowrap !important;
+        max-height: 195px !important;
+        overflow: hidden !important;
+        font-size: 5.5pt !important;
+        line-height: 1.05 !important;
+        color: #000 !important;
+        background: transparent !important;
+      }
+      .sout-info-table--form thead tr:nth-child(2) th {
+        height: 155px !important;
+        max-height: 155px !important;
+        background: #f0f0f0 !important;
+        color: #000 !important;
+      }
+      .sout-info-table--form thead tr:nth-child(2) .sout-info-v span {
+        max-height: 150px !important;
+        font-size: 5pt !important;
+      }
+      .sout-info-equip,
+      .sout-info-table--21 td:nth-child(12) {
+        width: 16% !important;
+      }
+      .sout-info-ok,
+      .sout-info-hl,
+      mark {
+        background: transparent !important;
+      }
+      .sout-info-table thead th {
+        background: #f0f0f0 !important;
+        color: #000 !important;
+      }
+      .sout-info-col-numbers th {
+        background: #fff !important;
+        color: #000 !important;
+      }
+      .sout-info-table tbody tr {
+        page-break-inside: avoid !important;
+        break-inside: avoid !important;
+      }
+      .sout-info-table tbody td {
+        page-break-inside: avoid !important;
+        break-inside: avoid !important;
+      }
+      .sout-info-tail {
+        page-break-before: auto !important;
+        break-before: auto !important;
+        page-break-inside: auto !important;
+        break-inside: auto !important;
+      }
+      .sout-info-summary,
+      .sout-info-commission,
+      .sout-info-signs {
+        page-break-inside: avoid !important;
+        break-inside: avoid !important;
+      }
+      .sout-info-summary thead th,
+      .sout-info-commission thead th {
+        background: #e8e8e8 !important;
+        color: #000 !important;
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+      }
+      .sout-info-hl {
+        background: transparent !important;
+        font-weight: inherit !important;
+      }
+    }
+  </style>
+</head>
+<body class="sout-preview-mode-@Model.Mode">
+@if (Model.NotFound)
+{
+  <div style="padding:2rem;font-family:Segoe UI,sans-serif">
+    <p>Документ не найден. Сохраните документ в списке и повторите печать.</p>
+    <a class="btn" href="/Sout/Preparation">К списку</a>
+    <a class="btn" href="/Sout/Preparation/Templates">К шаблонам</a>
+  </div>
+}
+else
+{
+  <div class="sout-preview-toolbar ppe-no-print">
+    <div class="sout-preview-toolbar-left">
+      @if (!isInfoNeeded)
+      {
+        <button type="button" class="btn btn-primary" id="sout-preview-print-btn">Печать</button>
+      }
+      <button type="button" class="btn @(isInfoNeeded ? "btn-primary" : "")" id="risks-doc-word-btn">Word</button>
+      <button type="button" class="btn" id="sout-preview-save-btn">Записать</button>
+      <span class="hint">Правьте ячейки, затем «Записать». @(isInfoNeeded ? "Альбом A3 (таблица + примечания)" : (isLandscape ? "Альбомная ориентация" : "A4"))</span>
+    </div>
+    <div class="sout-preview-toolbar-right">
+      <a class="btn" href="/Sout/Preparation/Templates?tab=@Model.Mode">К шаблонам</a>
+      <a class="btn" href="/Sout/Preparation/Edit?id=@Model.Id">К документу</a>
+      <a class="btn" href="/Sout/Preparation">К списку</a>
+    </div>
+  </div>
+
+  @if (!string.IsNullOrWhiteSpace(Model.Message))
+  {
+    <p class="sout-preview-message ppe-no-print">@Model.Message</p>
+  }
+
+  <form method="post" asp-page="/Sout/Preparation/Preview" asp-page-handler="Save" id="sout-preview-save-form" class="ppe-no-print">
+    <input type="hidden" name="id" value="@Model.Id" />
+    <input type="hidden" name="mode" value="@Model.Mode" />
+    <div id="sout-preview-overrides"></div>
+  </form>
+
+  @if (Model.Mode == SoutPreparationPrintModes.InfoNeeded)
+  {
+    <datalist id="sout-info-employees-dl" class="ppe-no-print">
+      @foreach (var name in Model.EmployeeNames)
+      {
+        <option value="@name"></option>
+      }
+    </datalist>
+    <script type="application/json" id="sout-info-employee-lookup">@Html.Raw(Model.EmployeeLookupJson)</script>
+  }
+
+  <div class="sout-preview-stage">
+    <div id="sout-preview-print-area" class="sout-preview-doc-wrap">
+      <div class="sout-a4-page @paperClass">
+        @Html.Raw(Model.PreviewHtml)
+      </div>
+    </div>
+  </div>
+
+  <script src="~/js/sout-preparation.js" asp-append-version="true"></script>
+  <script src="/js/print-history.js" asp-append-version="true"></script>
+  <script src="~/js/vendor/html2pdf.bundle.min.js" asp-append-version="true"></script>
+  <script src="~/js/risks-doc-export.js" asp-append-version="true"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', function () {
+      initSoutPreparationPreview({
+        saveBtnId: 'sout-preview-save-btn',
+        saveFormId: 'sout-preview-save-form',
+        overridesContainerId: 'sout-preview-overrides',
+        printAreaId: 'sout-preview-print-area'
+      });
+      if (typeof initSoutInfoEmployeeAutofill === 'function') {
+        initSoutInfoEmployeeAutofill();
+      }
+      if (window.zashitaRisksDocExport) {
+        window.zashitaRisksDocExport.bind({
+          sourceSelector: '#sout-preview-print-area',
+          fileName: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(historyTitle)),
+          landscape: @((isLandscape || isInfoNeeded) ? "true" : "false")
+        });
+      }
+      @if (!isInfoNeeded)
+      {
+        <text>
+      var printBtn = document.getElementById('sout-preview-print-btn');
+      function doPrint() {
+        if (typeof zashitaRecordPrint === 'function') {
+          zashitaRecordPrint({
+            category: 'sout',
+            title: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(historyTitle)),
+            summary: 'Печать'
+          });
+        } else {
+          window.print();
+        }
+      }
+      if (printBtn) {
+        printBtn.addEventListener('click', doPrint);
+      }
+        </text>
+        @if (Model.AutoPrint)
+        {
+          <text>
+      doPrint();
+          </text>
+        }
+      }
+    });
+  </script>
+}
+</body>
+</html>

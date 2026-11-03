@@ -1,0 +1,382 @@
+@page "/Med/Standards"
+@using System.Text.Json
+@using Zashita.Core.Med
+@model Zashita.Web.Pages.Med.StandardsModel
+@{
+    var catalogJson = JsonSerializer.Serialize(
+        Model.FactorCatalog.Select(f => new
+        {
+            id = f.Id,
+            item = f.ItemNumber,
+            name = f.Name,
+            period = f.Periodicity,
+            group = f.GroupName
+        }));
+    var availableProfessions = Model.ProfessionOptions
+        .Where(p => !Model.SelectedProfessions.Contains(p, StringComparer.OrdinalIgnoreCase))
+        .ToList();
+    var professionDepartmentsJson = JsonSerializer.Serialize(Model.ProfessionDepartments);
+    var professionOptionsJson = JsonSerializer.Serialize(Model.ProfessionOptions);
+}
+
+@section Styles {
+  <link rel="stylesheet" href="~/css/med-standards.css" asp-append-version="true" />
+}
+
+<div class="ppe-split">
+  <div class="panel ppe-panel ppe-split-side">
+    <div class="ppe-toolbar">
+      <a class="btn btn-outline" asp-page="/Med/Standards">Новый стандарт</a>
+    </div>
+    <form method="get" class="ppe-field" style="margin-bottom:10px">
+      <input type="hidden" asp-for="EditId" />
+      <span>Поиск</span>
+      <div style="display:flex; gap:8px; align-items:center">
+        <input asp-for="Q" class="ppe-input" placeholder="название, профессия, пункт, фактор" autocomplete="off" />
+        <button type="submit" class="btn btn-outline btn-sm">Найти</button>
+      </div>
+    </form>
+    <ul class="ppe-standards-list qual-standards-list" id="med-standards-list">
+      @foreach (var row in Model.Rows)
+      {
+        var professionList = MedStandardAssignmentBuilder.SplitProfessionAliases(row.Profession);
+        var professionPreview = 2;
+        <li class="@(row.Id == Model.EditId ? "active" : "")" id="med-std-@row.Id" data-std-id="@row.Id">
+          <a asp-page="/Med/Standards" asp-route-editId="@row.Id" asp-route-q="@Model.Q" class="js-med-std-select">@row.Name</a>
+          @if (professionList.Count == 0)
+          {
+            <span class="ppe-muted">—</span>
+          }
+          else if (professionList.Count <= professionPreview)
+          {
+            <span class="ppe-muted">@string.Join("; ", professionList)</span>
+          }
+          else
+          {
+            <span class="ppe-muted med-std-prof-collapse" data-expanded="0">
+              <span class="med-std-prof-short">@string.Join("; ", professionList.Take(professionPreview))</span>
+              <span class="med-std-prof-full" hidden>@string.Join("; ", professionList)</span>
+              <button type="button"
+                      class="med-std-prof-toggle"
+                      data-more="ещё @(professionList.Count - professionPreview)"
+                      data-less="свернуть">ещё @(professionList.Count - professionPreview)</button>
+            </span>
+          }
+          <div class="qual-list-actions">
+            <form method="post" asp-page-handler="Copy" class="qual-list-copy">
+              <input type="hidden" name="id" value="@row.Id" />
+              <input type="hidden" name="Q" value="@Model.Q" />
+              <button type="submit" class="btn btn-outline btn-sm" title="Создать копию стандарта">Дублировать</button>
+            </form>
+            <form method="post" asp-page-handler="Delete" class="qual-list-delete"
+                  onsubmit="return confirm(@Html.Raw(System.Text.Json.JsonSerializer.Serialize($"Удалить стандарт «{row.Name}»?")));">
+              <input type="hidden" name="deleteId" value="@row.Id" />
+              <input type="hidden" name="Q" value="@Model.Q" />
+              <button type="submit" class="btn btn-outline btn-sm btn-danger" title="Удалить стандарт">Удалить</button>
+            </form>
+          </div>
+        </li>
+      }
+    </ul>
+  </div>
+
+  <div class="panel ppe-panel ppe-split-main">
+    <h2 class="ppe-step-title">Стандарт медосмотра</h2>
+    @if (!string.IsNullOrWhiteSpace(Model.Message))
+    {
+      <p class="hint">@Model.Message</p>
+    }
+    @if (Model.Rows.Count == 0 && string.IsNullOrWhiteSpace(Model.Q) && string.IsNullOrWhiteSpace(Model.EditId))
+    {
+      <p class="hint" style="color:#b45309">Список стандартов пуст. Создайте стандарт заново: профессия → факторы → при необходимости «Психиатрическое освидетельствование» → Сохранить. Без сохранённого стандарта отчёт МО не подтягивает пункты и психиатрию.</p>
+    }
+    <p class="hint">
+      1) Выберите профессии (можно несколько) и отметьте факторы.
+      2) В стандарт попадут только выбранные профессии. Варианты с разрядом из штата
+      (например «… 6 разряда») подхватятся в отчёте автоматически — добавлять их вручную не нужно.
+      3) Разные должности («Машинист» и «Машинист автомобильного крана») — отдельные строки в стандарте.
+    </p>
+    <form method="post" asp-page-handler="Save" id="med-standard-form">
+      <input type="hidden" asp-for="EditId" />
+      <div class="training-filter-grid">
+        <label class="ppe-field"><span>Название</span><input asp-for="Name" class="ppe-input" placeholder="Если пусто — подставится из профессии" /></label>
+        <label class="ppe-field"><span>Подразделение</span><input asp-for="Department" id="med-std-department" class="ppe-input" /></label>
+      </div>
+
+      <div class="ppe-field qual-field">
+        <span>Профессии (можно выбрать несколько)</span>
+        <div class="qual-prof-box" id="med-std-prof-box">
+          <div class="qual-chips" id="med-std-prof-chips">
+            @foreach (var profession in Model.SelectedProfessions)
+            {
+              <span class="qual-chip" data-value="@profession">
+                <span>@profession</span>
+                <button type="button" class="qual-chip-remove" aria-label="Удалить">×</button>
+                <input type="hidden" name="SelectedProfessionsForm" value="@profession" />
+              </span>
+            }
+          </div>
+          <button type="button" class="med-std-chips-toggle" id="med-std-chips-toggle" hidden>ещё</button>
+          @if (Model.ProfessionOptions.Count > 0)
+          {
+            <button type="button" class="qual-add-prof-link" id="med-std-add-prof">+ Добавить профессию</button>
+            <div class="qual-prof-picker-wrap" id="med-std-prof-picker-wrap" hidden>
+              <select id="med-std-prof-picker" class="ppe-input qual-prof-picker">
+                <option value="">— выберите профессию —</option>
+                @foreach (var profession in availableProfessions)
+                {
+                  <option value="@profession">@profession</option>
+                }
+              </select>
+              <p class="hint" style="margin:6px 0 0">Нет в списке — введите вручную и нажмите Enter или «Сохранить» (не уходите из поля кликом — иначе добавится незаконченный текст):</p>
+              <input type="text" id="med-std-prof-manual" class="ppe-input" placeholder="Профессия / должность" autocomplete="off" />
+            </div>
+          }
+          else
+          {
+            <p class="hint qual-prof-empty">Нет профессий в справочнике сотрудников — укажите вручную.</p>
+            <input asp-for="Profession" class="ppe-input" placeholder="Профессия / должность" />
+          }
+        </div>
+      </div>
+
+      <div class="training-filter-grid">
+        <label class="ppe-field"><input asp-for="IsPeriodic" type="checkbox" /> Периодический</label>
+        <label class="ppe-field">
+          <input asp-for="IsPreShift" type="checkbox" /> Предсменный / Предрейсовый
+          <span class="hint" style="display:block;font-weight:400;margin-top:4px">Те же пункты, что в периодическом, появятся в отчёте как предсменный осмотр.</span>
+        </label>
+        <label class="ppe-field"><input asp-for="IsExtraordinary" type="checkbox" /> Внеочередной</label>
+        <label class="ppe-field">
+          <input asp-for="HasPsychiatric" type="checkbox" /> Психиатрическое освидетельствование
+          <span class="hint" style="display:block;font-weight:400;margin-top:4px">Один раз при приёме на работу по профессии (не из факторов).</span>
+        </label>
+      </div>
+
+      <label class="ppe-field">
+        <span>Медорганизация по умолчанию</span>
+        <select asp-for="DefaultMedicalOrganizationId" class="ppe-input">
+          <option value="">— не выбрано —</option>
+          @foreach (var item in Model.MedicalOrganizations)
+          {
+            <option value="@item.Id">@item.Name</option>
+          }
+        </select>
+      </label>
+
+      <div class="med-std-rules">
+        <div class="med-std-rules-head">
+          <h3 class="ppe-subtitle">Правила стандарта</h3>
+          <span class="hint">Данные из <a asp-page="/Med/Factors">Перечня факторов и видов работ</a> — пункт, название и периодичность подставляются сами</span>
+        </div>
+
+        <div class="med-std-picker">
+          <label class="ppe-field med-std-picker-field">
+            <span>Добавить фактор из перечня</span>
+            <div class="med-std-combo" id="med-std-combo">
+              <input type="text"
+                     id="med-std-combo-input"
+                     class="ppe-input"
+                     placeholder="Начните вводить пункт или название…"
+                     autocomplete="off"
+                     role="combobox"
+                     aria-expanded="false"
+                     aria-controls="med-std-combo-list" />
+              <button type="button" class="btn btn-outline btn-sm med-std-combo-toggle" id="med-std-combo-toggle" aria-label="Открыть список">▾</button>
+              <ul class="med-std-combo-list" id="med-std-combo-list" role="listbox" hidden></ul>
+            </div>
+          </label>
+        </div>
+
+        <div id="med-std-selected-wrap" class="med-std-selected-wrap">
+          <table class="data-grid med-std-selected-table" id="med-std-selected-table">
+            <thead>
+              <tr>
+                <th>№ п/п</th>
+                <th>Фактор</th>
+                <th>Периодичность</th>
+                <th>Вид</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody id="med-std-selected-body">
+              @foreach (var rule in Model.SelectedRules)
+              {
+                var itemDisplay = string.IsNullOrWhiteSpace(rule.ItemNumber)
+                    ? "—"
+                    : MedItemNumber.Display(rule.ItemNumber);
+                var itemValue = MedItemNumber.Normalize(rule.ItemNumber);
+                <tr data-item="@(string.IsNullOrWhiteSpace(itemValue) ? "—" : itemValue)" data-name="@rule.FactorName">
+                  <td>
+                    <input type="hidden" name="RuleItemNumber" value="@itemValue" />
+                    <input type="hidden" name="RuleFactorName" value="@rule.FactorName" />
+                    @itemDisplay
+                  </td>
+                  <td>@rule.FactorName</td>
+                  <td>
+                    <select name="RulePeriodicity" class="ppe-input">
+                      @foreach (var opt in Model.PeriodicityOptions)
+                      {
+                        if (string.Equals(opt, rule.Periodicity, StringComparison.OrdinalIgnoreCase))
+                        {
+                          <option value="@opt" selected>@opt</option>
+                        }
+                        else
+                        {
+                          <option value="@opt">@opt</option>
+                        }
+                      }
+                    </select>
+                  </td>
+                  <td>
+                    <select name="RuleExamKind" class="ppe-input">
+                      @foreach (var opt in Model.ExamKindOptions)
+                      {
+                        if (string.Equals(opt, rule.ExamKind, StringComparison.OrdinalIgnoreCase))
+                        {
+                          <option value="@opt" selected>@opt</option>
+                        }
+                        else
+                        {
+                          <option value="@opt">@opt</option>
+                        }
+                      }
+                    </select>
+                  </td>
+                  <td><button type="button" class="btn btn-outline btn-sm med-std-remove">Убрать</button></td>
+                </tr>
+              }
+            </tbody>
+          </table>
+          <p class="hint" id="med-std-empty" style="@(Model.SelectedRules.Count == 0 ? null : "display:none")">Пока ничего не выбрано — выберите фактор в списке выше.</p>
+        </div>
+      </div>
+
+      <label class="ppe-field"><span>Комментарий</span><input asp-for="Comment" class="ppe-input" /></label>
+      <div class="ppe-actions">
+        <button type="submit" class="btn btn-primary">Сохранить</button>
+        @if (!string.IsNullOrWhiteSpace(Model.EditId))
+        {
+          <button type="submit"
+                  formaction="?handler=Copy"
+                  formmethod="post"
+                  name="id"
+                  value="@Model.EditId"
+                  class="btn btn-outline"
+                  title="Создать копию сохранённого стандарта">
+            Дублировать
+          </button>
+          <button type="submit" class="btn btn-outline" formaction="?handler=Delete" name="deleteId" value="@Model.EditId">Удалить</button>
+        }
+      </div>
+    </form>
+  </div>
+</div>
+
+<template id="med-std-row-template">
+  <tr>
+    <td>
+      <input type="hidden" name="RuleItemNumber" value="" />
+      <input type="hidden" name="RuleFactorName" value="" />
+      <span class="med-std-item-label"></span>
+    </td>
+    <td class="med-std-name-label"></td>
+    <td>
+      <select name="RulePeriodicity" class="ppe-input">
+        @foreach (var opt in Model.PeriodicityOptions)
+        {
+          <option value="@opt">@opt</option>
+        }
+      </select>
+    </td>
+    <td>
+      <select name="RuleExamKind" class="ppe-input">
+        @foreach (var opt in Model.ExamKindOptions)
+        {
+          <option value="@opt">@opt</option>
+        }
+      </select>
+    </td>
+    <td><button type="button" class="btn btn-outline btn-sm med-std-remove">Убрать</button></td>
+  </tr>
+</template>
+
+<script>
+  window.medStandardCatalog = @Html.Raw(catalogJson);
+  window.medStandardProfessionDepartments = @Html.Raw(professionDepartmentsJson);
+  window.medStandardProfessionOptions = @Html.Raw(professionOptionsJson);
+</script>
+<script src="~/js/med-standards.js" asp-append-version="true"></script>
+<script>
+  (function () {
+    var KEY = 'medStandardsListScroll';
+    var side = document.querySelector('.ppe-split-side');
+    var focusId = @Html.Raw(JsonSerializer.Serialize(Model.EditId ?? ""));
+
+    function saveScroll(idHint) {
+      try {
+        if (!side) return;
+        sessionStorage.setItem(KEY, JSON.stringify({
+          top: side.scrollTop,
+          id: idHint || focusId || '',
+          at: Date.now()
+        }));
+      } catch (e) { /* ignore */ }
+    }
+
+    function restoreScroll() {
+      if (!side) return;
+      var saved = null;
+      try {
+        var raw = sessionStorage.getItem(KEY);
+        if (raw) saved = JSON.parse(raw);
+      } catch (e) { saved = null; }
+
+      if (saved && typeof saved.top === 'number') {
+        side.scrollTop = saved.top;
+      }
+
+      var id = focusId || (saved && saved.id) || '';
+      var active = id
+        ? document.getElementById('med-std-' + id)
+        : side.querySelector('li.active');
+      if (!active) return;
+
+      var sideRect = side.getBoundingClientRect();
+      var aRect = active.getBoundingClientRect();
+      if (aRect.top < sideRect.top + 8 || aRect.bottom > sideRect.bottom - 8) {
+        var y = aRect.top - sideRect.top + side.scrollTop
+          - Math.max(24, (sideRect.height - aRect.height) / 3);
+        side.scrollTop = Math.max(0, y);
+      }
+    }
+
+    if (side) {
+      side.addEventListener('click', function (e) {
+        var link = e.target.closest('a.js-med-std-select');
+        var action = e.target.closest('.qual-list-actions button, .ppe-toolbar a');
+        if (!link && !action) return;
+        var li = e.target.closest('li[data-std-id]');
+        saveScroll(li ? li.getAttribute('data-std-id') : '');
+      });
+    }
+
+    document.querySelectorAll('#med-standards-list form, #med-standard-form').forEach(function (form) {
+      form.addEventListener('submit', function () {
+        var idInput = form.querySelector('input[name="EditId"], input[name="deleteId"], input[name="id"]');
+        saveScroll(idInput ? idInput.value : focusId);
+      });
+    });
+
+    function apply() { restoreScroll(); }
+
+    apply();
+    requestAnimationFrame(function () {
+      apply();
+      setTimeout(function () {
+        apply();
+        try { sessionStorage.removeItem(KEY); } catch (e) { /* ignore */ }
+      }, 80);
+    });
+  })();
+</script>

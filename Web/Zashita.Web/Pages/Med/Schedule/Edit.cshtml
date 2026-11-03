@@ -1,0 +1,195 @@
+@page "/Med/Schedule/Edit"
+@using Zashita.Core.Med
+@model Zashita.Web.Pages.Med.Schedule.EditModel
+@{
+    ViewData["Title"] = Model.IsNew ? "Планирование медосмотров. Новый" : "Планирование медосмотров";
+    var doc = Model.Document;
+}
+
+@if (!string.IsNullOrWhiteSpace(Model.Message))
+{
+  <p class="hint">@Model.Message</p>
+}
+
+<div class="panel ppe-panel sout-assignment-doc">
+  <form method="post">
+    <input type="hidden" asp-for="Id" />
+    <div class="sout-assignment-toolbar">
+      <div class="sout-assignment-toolbar-left">
+        <a class="btn btn-outline btn-sm" asp-page="/Med/Schedule">←</a>
+        <button type="submit" formaction="?handler=PostAndClose" class="btn btn-primary btn-sm">Провести и закрыть</button>
+        <button type="submit" formaction="?handler=Save" class="btn btn-outline btn-sm">Записать</button>
+        <button type="submit" formaction="?handler=Post" class="btn btn-outline btn-sm">Провести</button>
+        <button type="submit" formaction="?handler=FillFromDates" class="btn btn-outline btn-sm">Заполнить по срокам</button>
+        @if (!Model.IsNew)
+        {
+          <a class="btn btn-outline btn-sm" href="/Med/Schedule/Preview?id=@Model.Id&amp;mode=@MedSchedulePrintModes.NamedByDepartment">Предпечать</a>
+        }
+      </div>
+    </div>
+    <div class="sout-assignment-header">
+      <label class="ppe-field"><span>Номер</span><input name="number" value="@doc.Number" class="ppe-input" /></label>
+      <label class="ppe-field"><span>от</span><input type="datetime-local" name="date" value="@doc.Date.ToString("yyyy-MM-ddTHH:mm:ss")" class="ppe-input" step="1" /></label>
+      <label class="ppe-field"><span>Вид медосмотра</span><input name="examType" value="@doc.ExamType" class="ppe-input" /></label>
+      @await Html.PartialAsync("~/Pages/Shared/_DepartmentSelect.cshtml", new Zashita.Web.Pages.Shared.DepartmentSelectModel
+      {
+          Name = "department",
+          Value = doc.Department,
+          Options = Model.Departments,
+          Optional = true
+      })
+      <label class="ppe-field"><span>Организация</span><input value="@Model.Organization" class="ppe-input" readonly /></label>
+      <label class="ppe-field"><span>Мед. учреждение</span><input name="medicalInstitution" value="@doc.MedicalInstitution" class="ppe-input" /></label>
+      <label class="ppe-field"><span>Собственность</span><input name="employerOwnership" value="@(string.IsNullOrWhiteSpace(doc.EmployerOwnership) ? "РОССИЙСКАЯ СОБСТВЕННОСТЬ" : doc.EmployerOwnership)" class="ppe-input" /></label>
+      <label class="ppe-field"><span>Адрес организации</span><input name="employerAddress" value="@doc.EmployerAddress" class="ppe-input" /></label>
+      <label class="ppe-field"><span>ИНН</span><input name="employerInn" value="@doc.EmployerInn" class="ppe-input" /></label>
+      <label class="ppe-field"><span>ОКВЭД</span><input name="employerOkved" value="@doc.EmployerOkved" class="ppe-input" /></label>
+      <label class="ppe-field"><span>Комментарий</span><input name="comment" value="@doc.Comment" class="ppe-input" /></label>
+    </div>
+
+    <h3 class="ppe-subtitle">Список по срокам</h3>
+    <p class="hint">Выберите ФИО — подразделение, должность, пункт и периодичность подставятся из штата / отчёта / стандарта. Можно править вручную.</p>
+    <div class="ppe-actions ppe-actions-top">
+      <button type="button" class="btn btn-outline btn-sm" id="med-add-line-btn">Добавить строку</button>
+    </div>
+    <table class="data-grid ppe-edit-grid">
+      <thead>
+        <tr>
+          <th>Подразделение</th>
+          <th>ФИО</th>
+          <th>Дата рождения</th>
+          <th>Пол</th>
+          <th>Должность</th>
+          <th>Вид деятельности (псих.)</th>
+          <th>Пункт</th>
+          <th>Периодичность</th>
+          <th>Дата медосмотра</th>
+          <th>Примечание</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody id="med-schedule-lines-body">
+        @for (var i = 0; i < Math.Max(doc.Lines.Count, 1); i++)
+        {
+          var line = i < doc.Lines.Count ? doc.Lines[i] : new MedScheduleLine();
+          <tr class="med-person-line-row">
+            <td>
+              <input type="hidden" name="lineId" value="@line.Id" />
+              <input name="lineDepartment" value="@line.Department" class="ppe-input" list="med-schedule-departments" autocomplete="off" />
+            </td>
+            <td>
+              <input name="employeeName" value="@line.EmployeeName" class="ppe-input" list="med-schedule-employees" autocomplete="off" />
+            </td>
+            <td>
+              <input type="date" name="birthDate" value="@(line.BirthDate is { Year: > 1900 } b ? b.ToString("yyyy-MM-dd") : "")" class="ppe-input" />
+            </td>
+            <td>
+              <select name="gender" class="ppe-input">
+                <option value="">—</option>
+                @if (line.Gender == "Мужской")
+                {
+                  <option value="Мужской" selected>Мужской</option>
+                }
+                else
+                {
+                  <option value="Мужской">Мужской</option>
+                }
+                @if (line.Gender == "Женский")
+                {
+                  <option value="Женский" selected>Женский</option>
+                }
+                else
+                {
+                  <option value="Женский">Женский</option>
+                }
+              </select>
+            </td>
+            <td><input name="profession" value="@line.Profession" class="ppe-input" autocomplete="off" /></td>
+            <td><input name="activityKinds" value="@line.ActivityKinds" class="ppe-input" placeholder="для псих. направления" /></td>
+            <td><input name="itemNumber" value="@MedItemNumber.Normalize(line.ItemNumber)" class="ppe-input" placeholder="п.4.2.5" /></td>
+            <td>
+              <select name="periodicity" class="ppe-input">
+                @foreach (var option in Model.PeriodicityOptions)
+                {
+                  if (string.Equals(MedPeriodicity.Normalize(line.Periodicity), option, StringComparison.OrdinalIgnoreCase))
+                  {
+                    <option value="@option" selected>@option</option>
+                  }
+                  else
+                  {
+                    <option value="@option">@option</option>
+                  }
+                }
+              </select>
+            </td>
+            <td><input type="date" name="examDate" value="@line.ExamDate.ToString("yyyy-MM-dd")" class="ppe-input" /></td>
+            <td><input name="lineComment" value="@line.Comment" class="ppe-input" /></td>
+            <td><button type="button" class="btn btn-outline btn-sm med-remove-line-btn">×</button></td>
+          </tr>
+        }
+      </tbody>
+    </table>
+
+    <datalist id="med-schedule-employees">
+      @foreach (var name in Model.EmployeeNames)
+      {
+        <option value="@name"></option>
+      }
+    </datalist>
+    <datalist id="med-schedule-departments">
+      @foreach (var dept in Model.Departments)
+      {
+        <option value="@dept"></option>
+      }
+    </datalist>
+
+    <div class="ppe-actions">
+      @if (!Model.IsNew)
+      {
+        <button type="submit" formaction="?handler=Delete" class="btn btn-outline" onclick="return confirm('Удалить?');">Удалить</button>
+      }
+      <a class="btn btn-outline" asp-page="/Med/Schedule">К списку</a>
+    </div>
+  </form>
+</div>
+
+<template id="med-person-line-template">
+  <tr class="med-person-line-row">
+    <td>
+      <input type="hidden" name="lineId" value="" />
+      <input name="lineDepartment" value="" class="ppe-input" list="med-schedule-departments" autocomplete="off" />
+    </td>
+    <td>
+      <input name="employeeName" value="" class="ppe-input" list="med-schedule-employees" autocomplete="off" />
+    </td>
+    <td><input type="date" name="birthDate" value="" class="ppe-input" /></td>
+    <td>
+      <select name="gender" class="ppe-input">
+        <option value="">—</option>
+        <option value="Мужской">Мужской</option>
+        <option value="Женский">Женский</option>
+      </select>
+    </td>
+    <td><input name="profession" value="" class="ppe-input" autocomplete="off" /></td>
+    <td><input name="activityKinds" value="" class="ppe-input" placeholder="для псих. направления" /></td>
+    <td><input name="itemNumber" value="" class="ppe-input" placeholder="п.4.2.5" /></td>
+    <td>
+      <select name="periodicity" class="ppe-input">
+        @foreach (var option in Model.PeriodicityOptions)
+        {
+          <option value="@option">@option</option>
+        }
+      </select>
+    </td>
+    <td><input type="date" name="examDate" value="" class="ppe-input" /></td>
+    <td><input name="lineComment" value="" class="ppe-input" /></td>
+    <td><button type="button" class="btn btn-outline btn-sm med-remove-line-btn">×</button></td>
+  </tr>
+</template>
+
+@section Scripts {
+  <script>
+    window.medScheduleEmployees = @Html.Raw(Model.EmployeeLookupJson);
+  </script>
+  <script src="~/js/med-schedule-edit.js" asp-append-version="true"></script>
+}

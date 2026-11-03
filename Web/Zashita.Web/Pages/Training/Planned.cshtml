@@ -1,0 +1,89 @@
+@page "/Training/Planned"
+@model Zashita.Web.Pages.Training.PlannedModel
+@{
+    ViewData["Title"] = "Годовой план обучения";
+    ViewData["Subtitle"] = Model.Organization;
+}
+
+<link rel="stylesheet" href="/css/training-annual-plan.css" asp-append-version="true" />
+
+<div class="panel training-report-panel">
+  @if (!string.IsNullOrWhiteSpace(Model.Message))
+  {
+    <p class="hint ppe-no-print">@Model.Message</p>
+  }
+
+  <form method="get" class="training-report-filters ppe-no-print">
+    <div class="training-filter-grid">
+      <label class="training-filter-item">
+        <span>Год плана</span>
+        <input type="number" asp-for="PlanYear" class="ppe-input" min="2000" max="2100" />
+      </label>
+      <label class="training-filter-item">
+        <span>Организация</span>
+        <input type="text" class="ppe-input" value="@Model.Organization" readonly />
+      </label>
+      <label class="training-filter-item">
+        <span>Подразделение</span>
+        <input asp-for="Department" class="ppe-input" placeholder="все" />
+      </label>
+    </div>
+    <div class="training-report-toolbar">
+      <button type="submit" class="btn btn-primary">Открыть</button>
+      <button type="button" class="btn btn-outline" onclick="window.print()">Печать</button>
+    </div>
+  </form>
+
+  <form method="post" class="ppe-no-print training-plan-edit-form">
+    <input type="hidden" asp-for="PlanYear" />
+    <input type="hidden" asp-for="Department" />
+
+    <div class="training-plan-edit-meta">
+      <label class="ppe-field"><span>Утверждающий — должность</span><input asp-for="ApproverPosition" class="ppe-input" /></label>
+      <label class="ppe-field"><span>Утверждающий — Ф.И.О.</span><input asp-for="ApproverName" class="ppe-input" /></label>
+    </div>
+
+    <h3 class="ppe-step-subtitle">Общие направления обучения</h3>
+    @await Html.PartialAsync("_AnnualPlanEditTable", new Zashita.Web.Pages.Training.AnnualPlanEditTableModel
+    {
+      Section = "general",
+      TbodyId = "general-rows-tbody",
+      AddButtonId = "general-add-row-btn",
+      Directions = Model.GeneralDirection,
+      Categories = Model.GeneralCategory,
+      Periodicities = Model.GeneralPeriodicity,
+      HeadCounts = Model.GeneralHeadCount,
+      Providers = Model.GeneralProvider,
+      Months = Model.GeneralMonths,
+      MonthLabels = Model.EditMonthLabels
+    })
+
+    <h3 class="ppe-step-subtitle">Обучение работников отдельных профессий</h3>
+    @await Html.PartialAsync("_AnnualPlanEditTable", new Zashita.Web.Pages.Training.AnnualPlanEditTableModel
+    {
+      Section = "profession",
+      TbodyId = "profession-rows-tbody",
+      AddButtonId = "profession-add-row-btn",
+      Directions = Model.ProfessionDirection,
+      Categories = Model.ProfessionCategory,
+      Periodicities = Model.ProfessionPeriodicity,
+      HeadCounts = Model.ProfessionHeadCount,
+      Providers = Model.ProfessionProvider,
+      Months = Model.ProfessionMonths,
+      MonthLabels = Model.EditMonthLabels
+    })
+
+    <div class="training-report-toolbar">
+      <button type="submit" asp-page-handler="Save" class="btn btn-primary">Сохранить</button>
+      <button type="submit" asp-page-handler="Regenerate" class="btn btn-outline" onclick="return confirm('Заменить текущий план данными из справочников?');">Сформировать заново</button>
+    </div>
+  </form>
+
+  <div class="training-annual-plan-preview-wrap training-annual-plan-body" id="training-annual-plan-print-area">
+    @Html.Raw(Model.PreviewHtml)
+  </div>
+</div>
+
+@section Scripts {
+  <script src="/js/training-annual-plan-edit.js" asp-append-version="true"></script>
+}

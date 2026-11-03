@@ -1,0 +1,142 @@
+@page "/Med/ContingentLists/Print"
+@model Zashita.Web.Pages.Med.ContingentLists.PrintModel
+@{
+    Layout = null;
+    ViewData["Title"] = Model.Title;
+}
+
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>@Model.Title</title>
+  <partial name="_SiteIconLinks" />
+  <link rel="stylesheet" href="/css/zashita.css" asp-append-version="true" />
+  <link rel="stylesheet" href="/css/sout-preparation.css" asp-append-version="true" />
+  <link rel="stylesheet" href="/css/med-person-list.css" asp-append-version="true" />
+  <style>
+    /* Альбом всегда для контингентов / поименного списка (и экран, и печать). */
+    @@page {
+      size: A4 landscape !important;
+      margin: 6mm !important;
+    }
+
+    body.med-contingent-print-page {
+      background: #5a6570;
+    }
+
+    /* Перекрываем книжный .sout-eq-doc (190×270) — лист A4 альбом. */
+    body.med-contingent-print-page .sout-eq-doc,
+    body.med-contingent-print-page .sout-eq-doc.med-contingent-print-sheet {
+      width: 297mm !important;
+      min-width: 297mm !important;
+      max-width: none !important;
+      min-height: 210mm !important;
+      height: auto !important;
+      margin: 0 auto !important;
+      padding: 8mm 6mm 10mm !important;
+      box-sizing: border-box !important;
+      box-shadow: 0 2px 14px rgba(0, 0, 0, 0.22);
+      background: #fff;
+    }
+
+    body.med-contingent-print-page .sout-preview-doc-wrap {
+      overflow-x: auto;
+      justify-content: center;
+    }
+
+    @@media print {
+      @@page {
+        size: A4 landscape !important;
+        margin: 6mm !important;
+      }
+
+      .ppe-no-print { display: none !important; }
+      .med-contingent-hint-block,
+      .med-contingent-format-toolbar,
+      .js-contingent-hint { display: none !important; }
+
+      html, body.med-contingent-print-page, body.sout-preview-page {
+        background: #fff !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        width: auto !important;
+        height: auto !important;
+      }
+
+      .sout-preview-shell,
+      .sout-preview-doc-wrap {
+        margin: 0 !important;
+        padding: 0 !important;
+        box-shadow: none !important;
+        display: block !important;
+      }
+
+      body.med-contingent-print-page .sout-eq-doc,
+      body.med-contingent-print-page .sout-eq-doc.med-contingent-print-sheet,
+      .med-contingent-print-sheet {
+        width: auto !important;
+        min-width: 0 !important;
+        min-height: 0 !important;
+        max-width: none !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        box-shadow: none !important;
+      }
+
+      .med-contingent-print [contenteditable="true"] {
+        outline: none !important;
+        background: transparent !important;
+      }
+    }
+  </style>
+</head>
+<body class="sout-preview-page med-contingent-print-page">
+  <div class="sout-preview-shell">
+    <div class="sout-preview-toolbar ppe-no-print">
+      <div class="sout-preview-toolbar-left">
+        <button type="button" class="btn btn-primary btn-sm"
+                onclick="zashitaRecordPrint({ category: 'med', title: document.title, summary: '@(Model.ActiveKind == "named" ? "Печать поименного списка (ЛПУ)" : "Печать списка контингентов")' })">Печать</button>
+        <button type="button" class="btn btn-outline btn-sm" id="med-contingent-preview-save-btn">Записать</button>
+        <a class="btn btn-outline btn-sm @(Model.ActiveKind == "contingents" ? "training-row-active" : null)"
+           href="/Med/ContingentLists/Print?kind=contingents">Список контингентов</a>
+        <a class="btn btn-outline btn-sm @(Model.ActiveKind == "named" ? "training-row-active" : null)"
+           href="/Med/ContingentLists/Print?kind=named">Поименный список (ЛПУ)</a>
+      </div>
+      <div class="sout-preview-toolbar-right">
+        <a class="btn btn-outline btn-sm"
+           href="/Med/ContingentLists?tab=@(Model.ActiveKind == "named" ? "named" : "contingents")">К спискам</a>
+      </div>
+    </div>
+
+    @if (!string.IsNullOrWhiteSpace(Model.Message))
+    {
+      <p class="sout-preview-message ppe-no-print">@Model.Message</p>
+    }
+
+    <form method="post" asp-page-handler="Save" id="med-contingent-preview-save-form" class="ppe-no-print">
+      <input type="hidden" name="kind" value="@Model.ActiveKind" />
+      <div id="med-contingent-preview-overrides"></div>
+    </form>
+
+    <div class="sout-preview-doc-wrap" id="med-contingent-preview-print-area">
+      <div class="sout-eq-doc med-contingent-print-sheet">
+        @Html.Raw(Model.PreviewHtml)
+      </div>
+    </div>
+  </div>
+  <script src="~/js/med-doc-list.js" asp-append-version="true"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', function () {
+      initMedPreparationPreview({
+        saveBtnId: 'med-contingent-preview-save-btn',
+        saveFormId: 'med-contingent-preview-save-form',
+        overridesContainerId: 'med-contingent-preview-overrides',
+        printAreaId: 'med-contingent-preview-print-area'
+      });
+    });
+  </script>
+  <script src="/js/print-history.js" asp-append-version="true"></script>
+</body>
+</html>

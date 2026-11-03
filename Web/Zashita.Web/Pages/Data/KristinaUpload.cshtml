@@ -1,0 +1,29 @@
+@page "/Data/KristinaUpload"
+@model Zashita.Web.Pages.Data.KristinaUploadModel
+@{
+    ViewData["Title"] = "Данные Кристины";
+    ViewData["Subtitle"] = "Файл профессий по юр. лицам. Всегда используется модулем СИЗ/Обучение/Медосмотры.";
+    ViewData["SectionTitle"] = "Кристина";
+    ViewData["ShowToolbar"] = false;
+}
+
+<div class="panel">
+    <form method="post" enctype="multipart/form-data" class="upload-form">
+        <label class="file-picker">
+            <span>Excel «От_Кристины_Списки_профессий_по_юр_лицам_*.xlsx»</span>
+            <input type="file" name="kristina" accept=".xlsx,.xls" required />
+        </label>
+        <button type="submit" class="btn btn-primary">Сделать активным</button>
+    </form>
+
+    @if (!string.IsNullOrWhiteSpace(Model.Message))
+    {
+        <p class="@(Model.IsError ? "form-error" : "text-success")">@Model.Message</p>
+    }
+
+    <p class="hint">
+        После загрузки файл будет сохранён как <code>App_Data/kristina-professions.xlsx</code>.
+        Модуль сразу начнёт использовать новые данные.
+    </p>
+</div>
+

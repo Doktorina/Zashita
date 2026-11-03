@@ -1,0 +1,180 @@
+@page "/Training/Applications"
+@using Zashita.Core.Training
+@model Zashita.Web.Pages.Training.ApplicationsModel
+@{
+    ViewData["Title"] = "Заявки на обучение";
+    ViewData["Subtitle"] = "Формирование и редактирование заявок на обучение";
+}
+
+@if (!string.IsNullOrWhiteSpace(Model.Message))
+{
+  <p class="@(Model.IsError ? "form-error" : "text-success")">@Model.Message</p>
+}
+
+<div class="panel ppe-panel">
+  <div class="ppe-toolbar">
+    <a class="btn btn-outline btn-sm" asp-page="/Training/Applications" asp-route-create="1">Новая заявка</a>
+    <a class="btn btn-outline btn-sm" asp-page="/Training/Planning">Планирование потребностей</a>
+    <a class="btn btn-outline btn-sm" asp-page="/Training/Calendar">Календарь</a>
+    @if (Model.SelectedPrintRecord is not null)
+    {
+      <span class="hint ppe-print-selected" id="application-selected-hint">Для печати: № @Model.SelectedPrintRecord.Number</span>
+    }
+    else
+    {
+      <span class="hint ppe-print-selected" id="application-selected-hint"></span>
+    }
+    @{
+      var topPrintId = string.IsNullOrWhiteSpace(Model.PrintId) ? null : Uri.EscapeDataString(Model.PrintId!);
+      var topDisabled = string.IsNullOrWhiteSpace(Model.PrintId);
+      var topDownloadName = Model.SelectedPrintRecord is null
+          ? null
+          : TrainingApplicationDownloadFileName.WithExtension(Model.SelectedPrintRecord);
+    }
+    <div class="training-application-print-actions" id="application-print-actions">
+      @if (topDisabled)
+      {
+        <a class="btn btn-outline btn-sm training-print-link training-print-disabled"
+           data-href-template="/Training/Applications?handler=Download&amp;id={id}&amp;mode=application-v2"
+           data-download-role="save"
+           href="#"
+           title="Сначала выберите заявку в таблице"
+           aria-disabled="true"
+           tabindex="-1">Сохранить</a>
+        <a class="btn btn-outline btn-sm training-print-link training-print-disabled"
+           data-href-template="/Training/Planning/Preview?id={id}&amp;mode=application-v2"
+           href="#"
+           target="_blank"
+           rel="noopener"
+           title="Сначала выберите заявку в таблице"
+           aria-disabled="true"
+           tabindex="-1">Печать</a>
+      }
+      else
+      {
+        <a class="btn btn-outline btn-sm training-print-link"
+           data-href-template="/Training/Applications?handler=Download&amp;id={id}&amp;mode=application-v2"
+           data-download-role="save"
+           download="@(topDownloadName ?? "Заявка.doc")"
+           href="/Training/Applications?handler=Download&amp;id=@topPrintId&amp;mode=application-v2"
+           title="Сохранить заявку как документ Word">Сохранить</a>
+        <a class="btn btn-outline btn-sm training-print-link"
+           data-href-template="/Training/Planning/Preview?id={id}&amp;mode=application-v2"
+           href="/Training/Planning/Preview?id=@topPrintId&amp;mode=application-v2"
+           target="_blank"
+           rel="noopener"
+           title="Открыть предпросмотр для печати">Печать</a>
+      }
+    </div>
+  </div>
+
+  <form method="get" id="application-filter-form" class="training-report-filters training-planning-filters">
+    <input type="hidden" name="printId" id="application-print-id" value="@Model.PrintId" />
+    <input type="hidden" name="editId" value="@Model.EditId" />
+    <label class="training-planning-filter-item training-planning-filter-search">
+      <span>Поиск</span>
+      <input type="search" name="q" value="@Model.Q" class="ppe-input js-auto-filter" placeholder="номер, программа, сотрудник…" />
+    </label>
+  </form>
+</div>
+
+<partial name="_TrainingApplicationForm" model="Model" />
+
+<div class="panel ppe-panel" style="margin-top:12px">
+  <div class="ppe-toolbar" style="justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px">
+    <h3 class="ppe-subtitle" style="margin:0">Заявки</h3>
+    @{
+      var listPrintId = string.IsNullOrWhiteSpace(Model.PrintId) ? null : Uri.EscapeDataString(Model.PrintId!);
+      var listDisabled = string.IsNullOrWhiteSpace(Model.PrintId);
+      var listDownloadName = Model.SelectedPrintRecord is null
+          ? null
+          : TrainingApplicationDownloadFileName.WithExtension(Model.SelectedPrintRecord);
+    }
+    <div class="training-application-print-actions" id="application-print-actions-inline">
+      @if (listDisabled)
+      {
+        <a class="btn btn-outline btn-sm training-print-link training-print-disabled"
+           data-href-template="/Training/Applications?handler=Download&amp;id={id}&amp;mode=application-v2"
+           data-download-role="save"
+           href="#"
+           title="Выберите заявку в таблице"
+           aria-disabled="true"
+           tabindex="-1">Сохранить</a>
+        <a class="btn btn-outline btn-sm training-print-link training-print-disabled"
+           data-href-template="/Training/Planning/Preview?id={id}&amp;mode=application-v2"
+           href="#"
+           target="_blank"
+           rel="noopener"
+           title="Выберите заявку в таблице"
+           aria-disabled="true"
+           tabindex="-1">Печать</a>
+      }
+      else
+      {
+        <a class="btn btn-outline btn-sm training-print-link"
+           data-href-template="/Training/Applications?handler=Download&amp;id={id}&amp;mode=application-v2"
+           data-download-role="save"
+           download="@(listDownloadName ?? "Заявка.doc")"
+           href="/Training/Applications?handler=Download&amp;id=@listPrintId&amp;mode=application-v2"
+           title="Сохранить заявку как документ Word">Сохранить</a>
+        <a class="btn btn-outline btn-sm training-print-link"
+           data-href-template="/Training/Planning/Preview?id={id}&amp;mode=application-v2"
+           href="/Training/Planning/Preview?id=@listPrintId&amp;mode=application-v2"
+           target="_blank"
+           rel="noopener"
+           title="Открыть предпросмотр для печати">Печать</a>
+      }
+    </div>
+  </div>
+  <table class="data-grid training-planning-grid" id="application-grid">
+    <thead>
+      <tr>
+        <th>Дата</th>
+        <th>Номер</th>
+        <th>Организация</th>
+        <th>Вид обучения</th>
+        <th></th>
+      </tr>
+    </thead>
+    <tbody>
+      @if (Model.Rows.Count == 0)
+      {
+        <tr>
+          <td colspan="5" class="hint">Заявок пока нет. Заполните форму выше и нажмите «Сохранить».</td>
+        </tr>
+      }
+      @foreach (var row in Model.Rows)
+      {
+        var isSelected = !string.IsNullOrWhiteSpace(Model.PrintId) && Model.PrintId == row.Id;
+        var isEditing = string.Equals(Model.EditId, row.Id, StringComparison.OrdinalIgnoreCase);
+        var rowDownloadName = TrainingApplicationDownloadFileName.WithExtension(row);
+        <tr class="training-planning-row @(isSelected ? "training-row-active" : "") @(isEditing ? "training-row-editing" : "")"
+            data-id="@row.Id"
+            data-number="@row.Number"
+            data-download-name="@rowDownloadName">
+          <td>@row.DocumentDate.ToString("dd.MM.yyyy")</td>
+          <td>@row.Number</td>
+          <td>@row.Organization</td>
+          <td>@row.TrainingKind</td>
+          <td class="training-planning-actions">
+            <a class="btn btn-outline btn-sm"
+               asp-page="/Training/Applications"
+               asp-route-editId="@row.Id"
+               asp-route-printId="@Model.PrintId"
+               asp-route-q="@Model.Q"
+               asp-fragment="application-form-panel">Изменить</a>
+            <form method="post" asp-page-handler="Delete" class="training-planning-delete-form">
+              <input type="hidden" name="id" value="@row.Id" />
+              <input type="hidden" name="q" value="@Model.Q" />
+              <button type="submit" class="btn btn-outline btn-sm btn-danger" onclick="return confirm('Удалить заявку № @row.Number?');">Удалить</button>
+            </form>
+          </td>
+        </tr>
+      }
+    </tbody>
+  </table>
+</div>
+
+@section Scripts {
+  <script src="~/js/training-applications.js" asp-append-version="true"></script>
+}

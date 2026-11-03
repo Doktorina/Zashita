@@ -1,0 +1,49 @@
+@model Zashita.Web.Pages.Training.AnnualPlanEditTableModel
+@{
+    var prefix = Model.Prefix;
+}
+
+<div class="training-plan-edit-wrap">
+  <div class="ppe-actions ppe-actions-top ppe-actions-inline">
+    <button type="button" class="btn btn-outline btn-sm" id="@Model.AddButtonId" data-target="@Model.TbodyId">Добавить строку</button>
+  </div>
+  <table class="data-grid training-plan-edit-table">
+    <thead>
+      <tr>
+        <th>Направление</th>
+        <th>Категория / профессия (Ф.И.О.)</th>
+        <th>Периодичность</th>
+        <th>Кол-во</th>
+        <th>Учебный центр</th>
+        @foreach (var month in Model.MonthLabels)
+        {
+          <th class="training-plan-month-head">@month</th>
+        }
+        <th></th>
+      </tr>
+    </thead>
+    <tbody id="@Model.TbodyId" data-prefix="@prefix">
+      @for (var i = 0; i < Model.RowCount; i++)
+      {
+        var months = Zashita.Core.Training.TrainingAnnualPlanBuilder.ParseMonths(i < Model.Months.Count ? Model.Months[i] : string.Empty);
+        <tr class="training-plan-edit-row">
+          <td><input name="@(prefix)Direction[@i]" value="@(i < Model.Directions.Count ? Model.Directions[i] : "")" class="ppe-input" /></td>
+          <td><input name="@(prefix)Category[@i]" value="@(i < Model.Categories.Count ? Model.Categories[i] : "")" class="ppe-input" placeholder="Профессия (Фамилия И.О.)" /></td>
+          <td><input name="@(prefix)Periodicity[@i]" value="@(i < Model.Periodicities.Count ? Model.Periodicities[i] : "")" class="ppe-input ppe-input-sm" /></td>
+          <td><input name="@(prefix)HeadCount[@i]" value="@(i < Model.HeadCounts.Count ? Model.HeadCounts[i] : "1")" class="ppe-input ppe-input-sm" /></td>
+          <td><input name="@(prefix)Provider[@i]" value="@(i < Model.Providers.Count ? Model.Providers[i] : "")" class="ppe-input" /></td>
+          @for (var m = 1; m <= 12; m++)
+          {
+            <td class="training-plan-month-cell">
+              <input type="checkbox" class="training-plan-month-cb" data-month="@m" @(months.Contains(m) ? "checked" : "") />
+            </td>
+          }
+          <td class="ppe-line-actions">
+            <button type="button" class="suot-action" data-action="remove-plan-row" title="Удалить строку">✕</button>
+            <input type="hidden" name="@(prefix)Months[@i]" value="@(i < Model.Months.Count ? Model.Months[i] : "")" class="training-plan-months-hidden" />
+          </td>
+        </tr>
+      }
+    </tbody>
+  </table>
+</div>

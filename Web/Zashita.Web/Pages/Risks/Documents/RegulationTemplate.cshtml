@@ -1,0 +1,82 @@
+@page "/Risks/Documents/RegulationTemplate"
+@model Zashita.Web.Pages.Risks.Documents.RegulationTemplateModel
+@{
+    ViewData["Title"] = "Положение (методика)";
+    ViewData["Subtitle"] = Model.Organization;
+}
+
+@section Styles {
+  <link rel="stylesheet" href="~/css/risks-preparation.css" asp-append-version="true" />
+  <style>
+    .risks-regulation-preview-wrap {
+      margin-top: 12px;
+      border: 1px solid #d0d5dd;
+      border-radius: 8px;
+      background: #fff;
+      overflow: auto;
+      max-height: 70vh;
+    }
+    .risks-regulation-preview-wrap .risks-method-sheet {
+      padding: 16px 20px;
+    }
+  </style>
+}
+
+<div class="panel ppe-panel">
+  <div class="risks-docs-back-row">
+    <a class="btn btn-outline btn-sm" asp-page="/Risks/Documents">← К документам</a>
+  </div>
+  <div class="ppe-toolbar sout-toolbar" style="margin-bottom:12px;flex-wrap:wrap;gap:8px">
+    <a class="btn btn-outline btn-sm"
+       asp-page="/Risks/Documents/OrgDocPreview"
+       asp-route-kind="regulation"
+       target="_blank">Печать / Word</a>
+    <a class="btn btn-outline btn-sm"
+       asp-page="/Risks/Documents/OrgDocPreview"
+       asp-route-kind="title-page"
+       target="_blank">Титульный лист (Word)</a>
+  </div>
+
+  @if (!string.IsNullOrWhiteSpace(Model.Message))
+  {
+    <p class="text-success">@Model.Message</p>
+  }
+  @if (!string.IsNullOrWhiteSpace(Model.Error))
+  {
+    <p class="text-danger">@Model.Error</p>
+  }
+
+  <p class="hint">
+    Шаблон положения (методики) для <b>@(string.IsNullOrWhiteSpace(Model.Organization) ? "—" : Model.Organization)</b>.
+    Текст и вёрстка — как в образце Методики; название организации подставляется в колонтитул и в заголовок на 1-й странице.
+    Можно загрузить свой .docx или сбросить к тексту по умолчанию (образец).
+    @(Model.HasCustom
+        ? $"Свой шаблон загружен{(Model.SavedAtUtc is null ? "" : $", обновлён {Model.SavedAtUtc.Value.ToLocalTime():dd.MM.yyyy HH:mm}")}."
+        : "Сейчас используется текст по умолчанию из образца.")
+  </p>
+
+  <form method="post" asp-page-handler="Upload" enctype="multipart/form-data" class="panel" style="padding:12px;margin-bottom:12px">
+    <label class="ppe-field">
+      <span>Загрузить методику / положение (.docx)</span>
+      <input type="file" name="UploadFile" accept=".docx,application/vnd.openxmlformats-officedocument.wordprocessingml.document" class="ppe-input" required />
+    </label>
+    <div style="margin-top:8px;display:flex;gap:8px;flex-wrap:wrap">
+      <button type="submit" class="btn btn-primary btn-sm">Загрузить и сохранить</button>
+      <button type="submit" formaction="?handler=Reset" formnovalidate class="btn btn-outline btn-sm"
+              onclick="return confirm('Вернуть текст положения по умолчанию?');">Сбросить к умолчанию</button>
+      <a class="btn btn-outline btn-sm"
+         asp-page="/Risks/Documents/OrgDocPreview"
+         asp-route-kind="regulation"
+         target="_blank">Предпросмотр / печать</a>
+    </div>
+  </form>
+
+  <h2 class="ppe-subtitle" style="margin:8px 0 6px">Как будет выглядеть документ</h2>
+  <div class="risks-regulation-preview-wrap">
+    <div class="risks-method-sheet risks-regulation-sheet">
+      <div class="risks-regulation-body">
+        @Html.Raw(Model.PreviewHtml)
+      </div>
+    </div>
+  </div>
+</div>

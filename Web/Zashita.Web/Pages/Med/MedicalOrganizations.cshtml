@@ -1,0 +1,79 @@
+@page "/Med/MedicalOrganizations"
+@model Zashita.Web.Pages.Med.MedicalOrganizationsModel
+
+<link rel="stylesheet" href="~/css/med-person-list.css" asp-append-version="true" />
+
+<div class="ppe-split med-medical-orgs-split">
+  <div class="panel ppe-panel ppe-split-side med-medical-orgs-side">
+    <div class="ppe-toolbar">
+      <a class="btn btn-outline" asp-page="/Med/MedicalOrganizations">Новая запись</a>
+    </div>
+    <div class="med-medical-orgs-list-wrap">
+      @if (Model.Rows.Count == 0)
+      {
+        <p class="hint med-medical-orgs-empty">Записей пока нет. Нажмите «Новая запись» и сохраните медицинскую организацию.</p>
+      }
+      else
+      {
+        <ul class="ppe-standards-list med-medical-orgs-list">
+          @foreach (var row in Model.Rows)
+          {
+            <li class="@(row.Id == Model.EditId ? "active" : "")">
+              <a asp-page="/Med/MedicalOrganizations" asp-route-editId="@row.Id">@row.Name</a>
+              @if (row.IsDefault)
+              {
+                <span class="ppe-muted">по умолчанию</span>
+              }
+            </li>
+          }
+        </ul>
+      }
+    </div>
+  </div>
+
+  <div class="panel ppe-panel ppe-split-main med-medical-orgs-main">
+    <h2 class="ppe-step-title">Медицинская организация</h2>
+    <p class="hint">Справочник общий для всех юр. лиц контура. Обязательное поле отмечено <span class="text-danger">*</span>. Остальные можно заполнить позже.</p>
+
+    @if (!string.IsNullOrWhiteSpace(Model.Message))
+    {
+      <p class="@(Model.IsError ? "form-error" : "text-success")">@Model.Message</p>
+    }
+    <div asp-validation-summary="All" class="form-error"></div>
+
+    <form method="post" asp-page-handler="Save" novalidate>
+      <input type="hidden" asp-for="EditId" />
+      <label class="ppe-field">
+        <span>Наименование <span class="text-danger">*</span></span>
+        <input asp-for="Name" class="ppe-input" autocomplete="organization" />
+        <span asp-validation-for="Name" class="form-error"></span>
+      </label>
+      <label class="ppe-field"><span>Адрес</span><input asp-for="Address" class="ppe-input" /></label>
+      <label class="ppe-field">
+        <span>Email</span>
+        <input asp-for="Email" class="ppe-input" type="text" inputmode="email" autocomplete="email" placeholder="name@example.com" />
+        <span asp-validation-for="Email" class="form-error"></span>
+      </label>
+      <label class="ppe-field"><span>Телефон</span><input asp-for="Phone" class="ppe-input" /></label>
+      <div class="training-filter-grid">
+        <label class="ppe-field"><span>ОГРН</span><input asp-for="Ogrn" class="ppe-input" /></label>
+        <label class="ppe-field"><span>ИНН</span><input asp-for="Inn" class="ppe-input" /></label>
+        <label class="ppe-field"><span>КПП</span><input asp-for="Kpp" class="ppe-input" /></label>
+      </div>
+      <label class="ppe-field"><span>Лицензия / реквизиты</span><input asp-for="LicenseInfo" class="ppe-input" /></label>
+      <div class="training-filter-grid">
+        <label class="ppe-field"><span>Должность руководителя</span><input asp-for="HeadPosition" class="ppe-input" /></label>
+        <label class="ppe-field"><span>ФИО руководителя</span><input asp-for="HeadName" class="ppe-input" /></label>
+      </div>
+      <label class="ppe-field"><input asp-for="IsDefault" type="checkbox" /> по умолчанию для организации</label>
+      <div class="ppe-actions">
+        <button type="submit" class="btn btn-primary">Сохранить</button>
+        @if (!string.IsNullOrWhiteSpace(Model.EditId))
+        {
+          <button type="submit" class="btn btn-outline" formaction="?handler=Delete" name="deleteId" value="@Model.EditId"
+                  onclick="return confirm('Удалить медицинскую организацию?');">Удалить</button>
+        }
+      </div>
+    </form>
+  </div>
+</div>

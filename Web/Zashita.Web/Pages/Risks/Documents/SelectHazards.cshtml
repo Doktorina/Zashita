@@ -1,0 +1,200 @@
+@page "/Risks/Documents/SelectHazards"
+@model Zashita.Web.Pages.Risks.Documents.SelectHazardsModel
+@using Zashita.Core.Risks
+@{
+    ViewData["Title"] = Model.PageHeading;
+    var isMeasures = Model.IsMeasuresPurpose;
+}
+
+<link rel="stylesheet" href="~/css/risks-preparation.css" asp-append-version="true" />
+
+<div class="panel ppe-panel">
+  <div class="risks-docs-back-row">
+    <a class="btn btn-outline btn-sm" asp-page="/Risks/Documents">← К документам</a>
+  </div>
+  <p class="hint">
+    Галочками отмечены опасности из <b>карт оценки рисков</b> выбранного объекта
+    @(Model.HasSavedSelection ? "(или ваш сохранённый выбор)" : "").
+    @(isMeasures
+        ? "Здесь только печать мер и сохранение мер в Word."
+        : "Здесь только печать реестра и сохранение реестра в Word.")
+  </p>
+  @if (!string.IsNullOrWhiteSpace(Model.Message))
+  {
+    <p class="@(Model.IsError ? "form-error" : "text-success")">@Model.Message</p>
+  }
+
+  <p class="hint" style="margin:0 0 14px">
+    Объект: <b>@Model.SelectedObjectDisplayName</b>. Переключение — в панели сверху.
+    Учитываются опасности из карт оценки для выбранного объекта.
+  </p>
+
+  <form method="post" asp-page="/Risks/Documents/SelectHazards" id="risks-hz-form">
+    <input type="hidden" name="ObjectId" value="@Model.SelectedObjectId" />
+    <input type="hidden" name="Purpose" value="@Model.Purpose" />
+    <div class="ppe-toolbar" style="display:flex;flex-direction:column;gap:8px;align-items:stretch">
+      <div style="display:flex;flex-wrap:wrap;gap:8px;align-items:center">
+        @if (isMeasures)
+        {
+          <button type="button" class="btn btn-primary btn-sm" id="risks-hz-print-measures"
+                  title="Печать перечня мер управления">Печать мер</button>
+          <button type="button" class="btn btn-outline btn-sm" id="risks-hz-export-word"
+                  title="Сохранить перечень мер управления в Word">Сохранить меры в Word</button>
+        }
+        else
+        {
+          <button type="button" class="btn btn-primary btn-sm" id="risks-hz-print-registry"
+                  title="Печать реестра опасностей">Печать реестра</button>
+          <button type="button" class="btn btn-outline btn-sm" id="risks-hz-export-registry-word"
+                  title="Сохранить реестр опасностей в Word">Сохранить реестр в Word</button>
+        }
+      </div>
+
+      <div style="display:flex;flex-wrap:wrap;gap:8px;align-items:center">
+        <button type="submit" class="btn btn-outline btn-sm" asp-page-handler="Save"
+                title="Запомнить отмеченные галочки для следующего открытия">Сохранить выбор</button>
+        <button type="submit" class="btn btn-outline btn-sm" asp-page-handler="ResetToCards"
+                title="Снова отметить только опасности из заполненных карт оценки рисков">
+          Сбросить к картам
+        </button>
+        <button type="button" class="btn btn-outline btn-sm" id="risks-hz-select-all">Выбрать все</button>
+        <button type="button" class="btn btn-outline btn-sm" id="risks-hz-select-none">Снять все</button>
+        <a class="btn btn-outline btn-sm" asp-page="/Risks/HazardCatalog">К реестру</a>
+      </div>
+    </div>
+
+    <p class="hint" style="margin-top:8px">
+      В картах использовано: @Model.UsedInCardsIds.Count · отмечено сейчас: <span id="risks-hz-checked-count">@Model.CheckedIds.Count</span>
+      @(Model.HasSavedSelection ? " · есть сохранённый выбор" : "")
+    </p>
+
+    <table class="data-grid">
+      <thead>
+        <tr>
+          <th style="width:2.5rem"></th>
+          <th>Номер</th>
+          <th>Наименование</th>
+          <th>Меры</th>
+          <th style="width:7rem">В картах</th>
+        </tr>
+      </thead>
+      <tbody>
+        @foreach (var row in Model.Rows)
+        {
+          var isChecked = Model.CheckedIds.Contains(row.Id);
+          var inCards = Model.UsedInCardsIds.Contains(row.Id);
+          <tr>
+            <td>
+              <input type="checkbox"
+                     name="SelectedIds"
+                     value="@row.Id"
+                     class="js-hz-check"
+                     @(isChecked ? "checked" : null) />
+            </td>
+            <td>@row.Number</td>
+            <td>@row.Title</td>
+            <td class="hint">@row.DefaultMeasures</td>
+            <td class="hint">@(inCards ? "да" : "—")</td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  </form>
+</div>
+
+@section Scripts {
+  <script src="~/js/risks-doc-export.js" asp-append-version="true"></script>
+  <script>
+    (function () {
+      var objectId = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.SelectedObjectId ?? ""));
+      var purpose = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.Purpose ?? ""));
+
+      function refreshHzCount() {
+        var n = document.querySelectorAll('.js-hz-check:checked').length;
+        var el = document.getElementById('risks-hz-checked-count');
+        if (el) el.textContent = String(n);
+      }
+
+      function selectedIds() {
+        return Array.prototype.map.call(
+          document.querySelectorAll('.js-hz-check:checked'),
+          function (c) { return c.value; }
+        ).filter(Boolean);
+      }
+
+      function objectQs() {
+        return objectId ? '&objectId=' + encodeURIComponent(objectId) : '';
+      }
+
+      function purposeQs() {
+        return purpose ? '&purpose=' + encodeURIComponent(purpose) : '';
+      }
+
+      document.getElementById('risks-hz-select-all')?.addEventListener('click', function () {
+        document.querySelectorAll('.js-hz-check').forEach(function (c) { c.checked = true; });
+        refreshHzCount();
+      });
+      document.getElementById('risks-hz-select-none')?.addEventListener('click', function () {
+        document.querySelectorAll('.js-hz-check').forEach(function (c) { c.checked = false; });
+        refreshHzCount();
+      });
+      document.querySelectorAll('.js-hz-check').forEach(function (c) {
+        c.addEventListener('change', refreshHzCount);
+      });
+
+      function openPreview(url) {
+        window.open(url, '_blank');
+      }
+
+      document.getElementById('risks-hz-print-registry')?.addEventListener('click', function () {
+        var ids = selectedIds();
+        if (!ids.length) {
+          window.alert('Отметьте хотя бы одну опасность для реестра.');
+          return;
+        }
+        openPreview('/Risks/Documents/PrintSelection?kind=hazards&ids=' + encodeURIComponent(ids.join(','))
+          + objectQs() + purposeQs());
+      });
+
+      document.getElementById('risks-hz-export-registry-word')?.addEventListener('click', function () {
+        var ids = selectedIds();
+        if (!ids.length) {
+          window.alert('Отметьте хотя бы одну опасность для реестра.');
+          return;
+        }
+        var url = '/Risks/Documents/PrintSelection?kind=hazards&ids=' + encodeURIComponent(ids.join(','))
+          + objectQs() + purposeQs();
+        if (window.zashitaRisksDocExport) {
+          window.zashitaRisksDocExport.exportFromUrl(url, 'word');
+        } else {
+          window.open(url + '&export=word', '_blank');
+        }
+      });
+
+      document.getElementById('risks-hz-print-measures')?.addEventListener('click', function () {
+        var ids = selectedIds();
+        if (!ids.length) {
+          window.alert('Отметьте хотя бы одну опасность для перечня мер.');
+          return;
+        }
+        openPreview('/Risks/Documents/OrgDocPreview?kind=measures&ids=' + encodeURIComponent(ids.join(','))
+          + objectQs());
+      });
+
+      document.getElementById('risks-hz-export-word')?.addEventListener('click', function () {
+        var ids = selectedIds();
+        if (!ids.length) {
+          window.alert('Отметьте хотя бы одну опасность для перечня мер.');
+          return;
+        }
+        var url = '/Risks/Documents/OrgDocPreview?kind=measures&ids=' + encodeURIComponent(ids.join(','))
+          + objectQs();
+        if (window.zashitaRisksDocExport) {
+          window.zashitaRisksDocExport.exportFromUrl(url, 'word');
+        } else {
+          window.open(url + '&export=word', '_blank');
+        }
+      });
+    })();
+  </script>
+}

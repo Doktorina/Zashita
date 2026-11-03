@@ -1,0 +1,112 @@
+@page "/Med/Calendar"
+@model Zashita.Web.Pages.Med.CalendarModel
+@{
+    ViewData["Title"] = "Календарь медосмотров";
+    ViewData["Subtitle"] = Model.Organization;
+}
+
+@section Styles {
+  <link rel="stylesheet" href="~/css/training-planning.css" asp-append-version="true" />
+}
+
+<div class="panel ppe-panel">
+  <div class="ppe-toolbar" style="margin-bottom:10px">
+    <a class="btn btn-outline btn-sm" asp-page="/Med/Schedule">← К графику (потребности)</a>
+  </div>
+
+  <p class="hint">
+    Календарь: сколько человек нужно направить на медосмотр по каждому виду в каждом месяце.
+    Клик по числу открывает список в <b>графике</b> с фильтром по виду и месяцу.
+  </p>
+
+  <form method="get" class="training-report-filters" id="med-calendar-form">
+    <div class="training-planning-filter-grid">
+      <label class="training-planning-filter-item">
+        <span>Год</span>
+        <input type="number" name="planYear" value="@Model.PlanYear" class="ppe-input" min="2000" max="2100" />
+      </label>
+      <label class="training-planning-filter-item">
+        <span>Подразделение</span>
+        <select name="department" class="ppe-input">
+          <option value="">все</option>
+          @foreach (var item in Model.Departments)
+          {
+            if (string.Equals(Model.Department, item, StringComparison.OrdinalIgnoreCase))
+            {
+              <option value="@item" selected>@item</option>
+            }
+            else
+            {
+              <option value="@item">@item</option>
+            }
+          }
+        </select>
+      </label>
+      <label class="training-planning-filter-item training-planning-filter-kinds">
+        <span>Виды медосмотра</span>
+        <div class="training-kind-filter-box">
+          @foreach (var item in Model.ExamTypeOptions)
+          {
+            var isChecked = Model.SelectedExamTypes.Count == 0 ||
+                            Model.SelectedExamTypes.Contains(item, StringComparer.OrdinalIgnoreCase);
+            <label class="training-kind-filter-option">
+              <input type="checkbox" name="examTypes" value="@item" @(isChecked ? "checked" : null) />
+              <span>@item</span>
+            </label>
+          }
+        </div>
+      </label>
+      <div class="training-planning-filter-item med-filter-actions">
+        <span>&nbsp;</span>
+        <button type="submit" class="btn btn-primary">Показать</button>
+      </div>
+    </div>
+  </form>
+
+  <div class="training-status-wrap" style="margin-top:12px;overflow:auto">
+    <table class="data-grid training-calendar-grid">
+      <thead>
+        <tr>
+          <th>Вид медосмотра</th>
+          @foreach (var label in Zashita.Core.Med.MedNeedsCalendarBuilder.MonthLabels)
+          {
+            <th class="med-c">@label</th>
+          }
+        </tr>
+      </thead>
+      <tbody>
+        @if (Model.Matrix.Rows.Count == 0)
+        {
+          <tr><td colspan="13" class="hint">Нет потребностей на выбранный год.</td></tr>
+        }
+        @foreach (var row in Model.Matrix.Rows)
+        {
+          <tr>
+            <td>@row.ExamType</td>
+            @for (var m = 1; m <= 12; m++)
+            {
+              var count = row.MonthCounts[m - 1];
+              <td class="med-c">
+                @if (count > 0)
+                {
+                  <a class="training-calendar-cell"
+                     asp-page="/Med/Schedule"
+                     asp-route-department="@Model.Department"
+                     asp-route-planYear="@Model.PlanYear"
+                     asp-route-dueMonth="@m"
+                     asp-route-examType="@row.ExamType"
+                     asp-route-needFilter="all"
+                     title="Открыть в графике">@count</a>
+                }
+                else
+                {
+                  <span class="hint">—</span>
+                }
+              </td>
+            }
+          </tr>
+        }
+      </tbody>
+    </table>
+  </div>
+</div>

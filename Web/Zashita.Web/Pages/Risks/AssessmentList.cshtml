@@ -1,0 +1,148 @@
+@page "/Risks/AssessmentList"
+@model Zashita.Web.Pages.Risks.AssessmentListModel
+@{
+    ViewData["Title"] = "Перечень рабочих мест, подлежащих оценке профессиональных рисков";
+    ViewData["Subtitle"] = Model.Organization;
+    string Chip(string key) =>
+        string.Equals(Model.ActiveNeed, key, StringComparison.OrdinalIgnoreCase)
+            ? "btn btn-primary btn-sm"
+            : "btn btn-outline btn-sm";
+}
+
+<link rel="stylesheet" href="~/css/risks-report.css" asp-append-version="true" />
+
+<div class="panel ppe-panel">
+  <p class="hint">
+    Список строится по перечню РМ модуля <b>Риски</b> (отдельный от спецоценки).
+    Перечень подгружается из штата 1С автоматически при открытии «Рабочих мест» / «Карт оценки».
+    Показываются рабочие места по выбранному фильтру: без оценки, просроченные, истекающие, оценённые или запланированные.
+  </p>
+
+  <div class="ppe-toolbar">
+    <a class="btn btn-outline btn-sm" asp-page="/Risks/Documents/SelectWorkplaces">Печать перечня (выбор)</a>
+    <a class="btn btn-outline btn-sm" asp-page="/Risks/Workplaces" asp-route-view="assessment">Карты оценки</a>
+    <a class="btn btn-outline btn-sm" asp-page="/Risks/Documents">Документы</a>
+  </div>
+
+  <form method="get" class="training-report-filters training-planning-filters" id="risks-assessment-list-filters">
+    <input type="hidden" name="needFilter" value="@Model.ActiveNeed" />
+    <div class="training-planning-filter-grid">
+      <label class="training-planning-filter-item">
+        <span>Подразделение</span>
+        <select name="department" class="ppe-input" onchange="this.form.submit()">
+          <option value="">все</option>
+          @foreach (var item in Model.Departments)
+          {
+            if (string.Equals(Model.Department, item, StringComparison.OrdinalIgnoreCase))
+            {
+              <option value="@item" selected>@item</option>
+            }
+            else
+            {
+              <option value="@item">@item</option>
+            }
+          }
+        </select>
+      </label>
+      <label class="training-planning-filter-item">
+        <span>Статус</span>
+        <select name="status" class="ppe-input" onchange="this.form.submit()">
+          <option value="">все</option>
+          @foreach (var item in Model.StatusOptions)
+          {
+            if (string.Equals(Model.Status, item, StringComparison.OrdinalIgnoreCase))
+            {
+              <option value="@item" selected>@item</option>
+            }
+            else
+            {
+              <option value="@item">@item</option>
+            }
+          }
+        </select>
+      </label>
+      <label class="training-planning-filter-item">
+        <span>Поиск</span>
+        <input name="q" value="@Model.Q" class="ppe-input" placeholder="профессия, номер РМ" autocomplete="off" />
+      </label>
+    </div>
+
+    <div class="training-report-toolbar" style="margin-top:10px;flex-wrap:wrap;gap:6px">
+      <a class="@Chip("all")"
+         asp-page="/Risks/AssessmentList"
+         asp-route-department="@Model.Department"
+         asp-route-status="@Model.Status"
+         asp-route-q="@Model.Q"
+         asp-route-needFilter="all">Все потребности</a>
+      <a class="@Chip("overdue")"
+         asp-page="/Risks/AssessmentList"
+         asp-route-department="@Model.Department"
+         asp-route-status="@Model.Status"
+         asp-route-q="@Model.Q"
+         asp-route-needFilter="overdue">Просрочено (@Model.OverdueCount)</a>
+      <a class="@Chip("notconducted")"
+         asp-page="/Risks/AssessmentList"
+         asp-route-department="@Model.Department"
+         asp-route-status="@Model.Status"
+         asp-route-q="@Model.Q"
+         asp-route-needFilter="notconducted">Не проведено (@Model.NotConductedCount)</a>
+      <a class="@Chip("expiring")"
+         asp-page="/Risks/AssessmentList"
+         asp-route-department="@Model.Department"
+         asp-route-status="@Model.Status"
+         asp-route-q="@Model.Q"
+         asp-route-needFilter="expiring">Истекает в течение 30 дней (@Model.ExpiringCount)</a>
+      <a class="@Chip("assessed")"
+         asp-page="/Risks/AssessmentList"
+         asp-route-department="@Model.Department"
+         asp-route-status="@Model.Status"
+         asp-route-q="@Model.Q"
+         asp-route-needFilter="assessed">Оценено (@Model.AssessedCount)</a>
+      <a class="@Chip("planned")"
+         asp-page="/Risks/AssessmentList"
+         asp-route-department="@Model.Department"
+         asp-route-status="@Model.Status"
+         asp-route-q="@Model.Q"
+         asp-route-needFilter="planned">Запланировано (@Model.PlannedCount)</a>
+    </div>
+  </form>
+
+  <table class="data-grid">
+    <thead>
+      <tr>
+        <th>№</th>
+        <th>Профессия, должность</th>
+        <th>Подразделение</th>
+        <th>Номер РМ</th>
+        <th>Дата оценки</th>
+        <th>Срок</th>
+        <th>Статус</th>
+        <th></th>
+      </tr>
+    </thead>
+    <tbody>
+      @if (Model.Rows.Count == 0)
+      {
+        <tr><td colspan="8" class="hint">Нет рабочих мест по выбранным фильтрам.</td></tr>
+      }
+      @for (var i = 0; i < Model.Rows.Count; i++)
+      {
+        var row = Model.Rows[i];
+        <tr class="@(row.Traffic == "red" ? "risks-row-alert" : row.Traffic == "yellow" ? "risks-row-warn" : "")">
+          <td>@(i + 1)</td>
+          <td>@row.Profession</td>
+          <td>@(string.IsNullOrWhiteSpace(row.Department) ? "—" : row.Department)</td>
+          <td>@(string.IsNullOrWhiteSpace(row.WorkplaceNumber) ? "—" : row.WorkplaceNumber)</td>
+          <td>@(row.AssessmentDate?.ToString("dd.MM.yyyy") ?? "—")</td>
+          <td>@(row.ExpiresOn?.ToString("dd.MM.yyyy") ?? "—")</td>
+          <td>@row.Status</td>
+          <td>
+            <a class="btn btn-outline btn-sm"
+               asp-page="/Risks/Workplaces/Assessment"
+               asp-route-id="@row.Id">Карта</a>
+          </td>
+        </tr>
+      }
+    </tbody>
+  </table>
+</div>

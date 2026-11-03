@@ -1,0 +1,184 @@
+@page "/Electrical/Commissions"
+@using Zashita.Core.Electrical
+@using Zashita.Web.Pages.Training
+@model Zashita.Web.Pages.Electrical.CommissionsModel
+@{
+    ViewData["Title"] = "Комиссия по ЭБ";
+    ViewData["Subtitle"] = Model.Organization;
+}
+
+<link rel="stylesheet" href="/css/sout-catalog.css" asp-append-version="true" />
+<link rel="stylesheet" href="/css/electrical-register.css" asp-append-version="true" />
+
+@if (!string.IsNullOrWhiteSpace(Model.Message))
+{
+  <p class="text-success">@Model.Message</p>
+}
+
+<div class="panel ppe-panel sout-catalog-panel">
+  <div class="training-report-toolbar" style="margin-bottom:8px">
+    <a class="btn btn-outline" href="/module/обучение">Все разделы модуля</a>
+  </div>
+  <div class="eb-tabs">
+    <a class="eb-tab" asp-page="/Electrical/Register" asp-route-tab="knowledge">Проверка знаний ЭБ</a>
+    <a class="eb-tab eb-tab-active" asp-page="/Electrical/Commissions">Комиссия по ЭБ</a>
+  </div>
+
+  <div class="ppe-toolbar sout-toolbar">
+    <button type="button" class="btn btn-outline btn-sm" id="eb-commissions-add-row-btn">Создать</button>
+    <button type="button" class="btn btn-outline btn-sm" id="eb-commissions-add-group-btn">Создать группу</button>
+    <button type="button" class="btn btn-outline btn-sm" id="eb-commissions-bulk-edit-btn">Изменить выделенные...</button>
+  </div>
+  <p class="hint ppe-no-print">Состав комиссии: ФИО только из реестра «Проверка знаний ЭБ».</p>
+
+  <form method="get" class="sout-workplaces-filters" id="eb-commissions-filter-form">
+    <label class="sout-workplaces-search">
+      <span class="visually-hidden">Поиск</span>
+      <input type="search" name="q" value="@Model.Q" class="ppe-input" placeholder="Поиск (Ctrl+F)" autocomplete="off" />
+    </label>
+  </form>
+
+  <form method="post" asp-page="/Electrical/Commissions" asp-page-handler="Save">
+    <div class="ppe-actions ppe-actions-top">
+      <button type="submit" class="btn btn-primary">Сохранить</button>
+    </div>
+    <div class="eb-table-scroll">
+      <table class="data-grid ppe-edit-grid training-catalog-grid sout-catalog-grid eb-commissions-grid">
+        <thead>
+          <tr>
+            <th class="training-select-col"></th>
+            <th>Наименование</th>
+            <th>Председатель комиссии (ФИО, должность)</th>
+            <th>Члены комиссии (ФИО, должность)</th>
+            <th>Всего человек в комиссии</th>
+            <th>№ и дата приказа о создании комиссии</th>
+            <th>Дата утверждения состава</th>
+            <th>Периодичность проверки состава, мес.</th>
+            <th>Плановая дата проверки</th>
+            <th>Осталось дней</th>
+            <th>Статус по срокам</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody id="eb-commissions-body">
+          @foreach (var item in Model.TreeItems)
+          {
+            var node = item.Node;
+            var computed = ElectricalCommissionCalculator.Compute(node);
+            var total = (node.Members ?? []).Count(m => !string.IsNullOrWhiteSpace(m.Name));
+            var orderText = string.IsNullOrWhiteSpace(node.OrderNumber) && !node.OrderDate.HasValue
+                ? "—"
+                : (string.IsNullOrWhiteSpace(node.OrderNumber)
+                    ? node.OrderDate?.ToString("dd.MM.yyyy")
+                    : (node.OrderDate.HasValue
+                        ? $"№ {node.OrderNumber} от {node.OrderDate:dd.MM.yyyy}"
+                        : $"№ {node.OrderNumber}"));
+            <tr class="training-catalog-row training-tree-row sout-catalog-row @(node.IsGroup ? "training-tree-folder training-tree-open" : "training-tree-file")"
+                data-id="@node.Id"
+                data-parent-id="@(node.ParentId ?? "")"
+                data-is-group="@node.IsGroup.ToString().ToLowerInvariant()"
+                data-depth="@item.Depth">
+              <td class="training-select-col">
+                <input type="checkbox" class="training-row-select" aria-label="Выделить" />
+              </td>
+              <td>
+                <input type="hidden" name="Id" value="@node.Id" />
+                <input type="hidden" name="ParentId" value="@node.ParentId" />
+                <input type="hidden" name="IsGroup" value="@node.IsGroup.ToString().ToLowerInvariant()" />
+                @await Html.PartialAsync("/Pages/Training/_TrainingTreeName.cshtml", new TrainingTreeNameModel
+                {
+                  Depth = item.Depth,
+                  IsGroup = node.IsGroup,
+                  Name = node.Name,
+                  InputClass = node.IsGroup ? "ppe-input training-group-name" : "ppe-input training-item-name"
+                })
+              </td>
+              @if (node.IsGroup)
+              {
+                <td colspan="8" class="hint">—</td>
+              }
+              else
+              {
+                <td>@ElectricalCommissionMemberHelpers.ChairmanDisplay(node)</td>
+                <td>@ElectricalCommissionMemberHelpers.MembersDisplay(node)</td>
+                <td>@(total > 0 ? total.ToString() : "—")</td>
+                <td>@orderText</td>
+                <td>@(node.CompositionApprovalDate?.ToString("dd.MM.yyyy") ?? "—")</td>
+                <td>@(node.CompositionCheckPeriodMonths?.ToString() ?? "—")</td>
+                <td>@(computed.PlannedCheckDate?.ToString("dd.MM.yyyy") ?? "—")</td>
+                <td>@(computed.DaysLeft?.ToString() ?? "—")</td>
+                <td>
+                  @if (computed.DeadlineStatus != "—")
+                  {
+                    <span class="eb-status @computed.DeadlineStatusCssClass">@computed.DeadlineStatus</span>
+                  }
+                  else
+                  {
+                    <span>—</span>
+                  }
+                </td>
+              }
+              <td>
+                <div class="sout-catalog-row-actions">
+                  <a class="suot-action" asp-page="/Electrical/Commissions/Edit" asp-route-id="@node.Id" title="Открыть">✎</a>
+                  <button type="button" class="suot-action suot-action-danger" data-action="delete" title="Удалить">🗑</button>
+                </div>
+                <input type="hidden" name="Delete" value="false" class="training-delete-flag" />
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  </form>
+</div>
+
+@section Scripts {
+  <script src="~/js/training-catalog.js" asp-append-version="true"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', function () {
+      function parentContext() {
+        var treeBody = document.getElementById('eb-commissions-body');
+        var checked = treeBody?.querySelector('.training-row-select:checked');
+        if (!checked) return { parentId: '' };
+        var row = checked.closest('.training-tree-row');
+        if (!row) return { parentId: '' };
+        if (row.classList.contains('training-tree-folder')) {
+          return { parentId: row.getAttribute('data-id') || '' };
+        }
+        return { parentId: row.getAttribute('data-parent-id') || '' };
+      }
+      function openEdit(isGroup) {
+        var ctx = parentContext();
+        var url = '/Electrical/Commissions/Edit' + (isGroup ? '?isGroup=true' : '');
+        if (ctx.parentId) url += (url.indexOf('?') >= 0 ? '&' : '?') + 'parentId=' + encodeURIComponent(ctx.parentId);
+        window.location.href = url;
+      }
+      document.getElementById('eb-commissions-add-row-btn')?.addEventListener('click', function () { openEdit(false); });
+      document.getElementById('eb-commissions-add-group-btn')?.addEventListener('click', function () { openEdit(true); });
+      document.getElementById('eb-commissions-bulk-edit-btn')?.addEventListener('click', function () {
+        var checked = document.querySelector('#eb-commissions-body .training-row-select:checked');
+        var row = checked?.closest('.training-tree-row');
+        var id = row?.getAttribute('data-id');
+        if (!id) { alert('Выделите строку для редактирования.'); return; }
+        window.location.href = '/Electrical/Commissions/Edit?id=' + encodeURIComponent(id);
+      });
+      initTrainingCatalog({
+        addRowBtnId: null,
+        addGroupBtnId: null,
+        bulkEditBtnId: null,
+        treeBodyId: 'eb-commissions-body',
+        parentFromCheckbox: true
+      });
+      var filterForm = document.getElementById('eb-commissions-filter-form');
+      var searchInput = filterForm?.querySelector('input[name="q"]');
+      var searchTimer = null;
+      if (searchInput) {
+        searchInput.addEventListener('input', function () {
+          clearTimeout(searchTimer);
+          searchTimer = setTimeout(function () { filterForm.submit(); }, 400);
+        });
+      }
+    });
+  </script>
+}

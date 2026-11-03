@@ -1,0 +1,54 @@
+@page "/Ppe/InternalOrders"
+@model Zashita.Web.Pages.Ppe.InternalOrdersModel
+@{
+    ViewData["Title"] = "Внутренние заказы";
+    ViewData["Subtitle"] = Model.Organization;
+}
+
+@if (!string.IsNullOrWhiteSpace(Model.Message))
+{
+  <p class="text-success">@Model.Message</p>
+}
+
+<div class="ppe-split">
+  <div class="panel ppe-panel ppe-split-side">
+    <h2 class="ppe-step-title">Заказы</h2>
+    <ul class="ppe-standards-list">
+      @foreach (var row in Model.Rows)
+      {
+        <li class="@(row.Id == Model.EditId ? "active" : "")">
+          <a asp-page="/Ppe/InternalOrders" asp-route-editId="@row.Id">@row.Number — @row.Date.ToString("dd.MM.yyyy")</a>
+        </li>
+      }
+    </ul>
+    <div class="ppe-actions">
+      <a class="btn btn-outline" asp-page="/Ppe/InternalOrders">Новый заказ</a>
+    </div>
+  </div>
+  <div class="panel ppe-panel ppe-split-main">
+    <h2 class="ppe-step-title">@(string.IsNullOrWhiteSpace(Model.EditId) ? "Новый внутренний заказ" : "Внутренний заказ")</h2>
+    <form method="post" asp-page-handler="Save">
+      <input type="hidden" asp-for="EditId" />
+      <label class="ppe-field"><span>Номер</span><input asp-for="Number" class="ppe-input" required /></label>
+      <label class="ppe-field"><span>Дата</span><input asp-for="Date" type="date" class="ppe-input" /></label>
+      <label class="ppe-field"><span>Подразделение</span><input asp-for="Department" class="ppe-input" /></label>
+      <label class="ppe-field"><span>Статус</span><input asp-for="Status" class="ppe-input" /></label>
+      <label class="ppe-field"><span>Комментарий</span><input asp-for="Comment" class="ppe-input" /></label>
+      <div class="ppe-actions">
+        <button type="submit" class="btn btn-primary">Сохранить</button>
+        @if (!string.IsNullOrWhiteSpace(Model.EditId))
+        {
+          <button type="submit"
+                  class="btn btn-outline"
+                  formaction="?handler=Delete"
+                  formmethod="post"
+                  name="deleteId"
+                  value="@Model.EditId"
+                  onclick="return confirm('Удалить заказ?');">
+            Удалить
+          </button>
+        }
+      </div>
+    </form>
+  </div>
+</div>

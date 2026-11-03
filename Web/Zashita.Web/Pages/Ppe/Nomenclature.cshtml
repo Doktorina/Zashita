@@ -1,0 +1,58 @@
+@page "/Ppe/Nomenclature"
+@model Zashita.Web.Pages.Ppe.NomenclatureModel
+@{
+    ViewData["Title"] = "Номенклатура";
+    ViewData["Subtitle"] = "Приложение 1 ЕТН — СИЗ для стандартов выдачи.";
+}
+
+@if (!string.IsNullOrWhiteSpace(Model.Message))
+{
+  <p class="text-success">@Model.Message</p>
+}
+
+<div class="panel ppe-panel">
+  <form method="post" asp-page-handler="Save">
+    <div class="ppe-toolbar" style="margin-bottom:12px">
+      <button type="submit" formaction="?handler=ImportAppendix1" class="btn btn-outline btn-sm"
+              onclick="return confirm('Загрузить позиции из Приложения 1 (строительные профессии)? Текущий список будет заменён.');">
+        Загрузить из Приложения 1
+      </button>
+      <span class="hint">Позиций: @Model.Items.Count</span>
+    </div>
+    <div class="ppe-actions ppe-actions-top">
+      <button type="submit" class="btn btn-primary">Сохранить</button>
+      <button type="submit" formaction="?handler=AddRow" class="btn btn-outline">Добавить строку</button>
+    </div>
+    <table class="data-grid ppe-edit-grid">
+      <thead>
+        <tr>
+          <th>Тип средства защиты</th>
+          <th>Наименование специальной одежды, специальной обуви и других средств индивидуальной защиты</th>
+          <th>Нормы выдачи на год (период) (штуки, пары, комплекты, мл)</th>
+          <th>Пункт типовых норм</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (var i = 0; i < Model.Items.Count; i++)
+        {
+          var item = Model.Items[i];
+          <tr>
+            <td>
+              <input type="hidden" name="Category" value="@item.Category" />
+              <input name="ProtectionType" value="@item.DisplayProtectionType" class="ppe-input" list="ppe-protection-types" />
+            </td>
+            <td><input name="Name" value="@item.Name" class="ppe-input" /></td>
+            <td><input name="Norm" value="@item.Norm" class="ppe-input" /></td>
+            <td><input name="NormParagraph" value="@item.NormParagraph" class="ppe-input" /></td>
+          </tr>
+        }
+      </tbody>
+    </table>
+    <datalist id="ppe-protection-types">
+      @foreach (var type in Model.ProtectionTypes)
+      {
+        <option value="@type"></option>
+      }
+    </datalist>
+  </form>
+</div>

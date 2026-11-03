@@ -1,0 +1,74 @@
+@page "/Ppe/SavedCards"
+@model Zashita.Web.Pages.Ppe.SavedCardsModel
+@{
+    ViewData["Title"] = "Сохранённые карточки СИЗ и ДСИЗ";
+    ViewData["Subtitle"] = $"Показано: {Model.Cards.Count} из {Model.TotalCount}";
+}
+
+<div class="panel ppe-panel">
+  <form method="get" class="ppe-filter-bar ppe-saved-filters">
+    <label>
+      Поиск
+      <input name="q" value="@Model.Q" class="ppe-input" placeholder="организация, профессия, сотрудник, №" />
+    </label>
+    <label>
+      Создана с
+      <input type="date" name="from" value="@(Model.From?.ToString("yyyy-MM-dd") ?? DateTime.Today.AddYears(-3).ToString("yyyy-MM-dd"))" class="ppe-input ppe-input-sm" />
+    </label>
+    <label>
+      по
+      <input type="date" name="to" value="@(Model.To?.ToString("yyyy-MM-dd") ?? DateTime.Today.ToString("yyyy-MM-dd"))" class="ppe-input ppe-input-sm" />
+    </label>
+    <label>
+      Организация
+      <select name="org" class="ppe-input">
+        <option value="">Все</option>
+        @foreach (var org in Model.Organizations)
+        {
+          <option value="@org" selected="@(org == Model.Org)">@org</option>
+        }
+      </select>
+    </label>
+    <button type="submit" class="btn btn-outline">Найти</button>
+  </form>
+
+  <table class="data-grid">
+    <thead>
+      <tr>
+        <th>Создана</th>
+        <th>Обновлена</th>
+        <th>№</th>
+        <th>Организация</th>
+        <th>Документ</th>
+        <th>Профессия</th>
+        <th>Сотрудники</th>
+        <th></th>
+      </tr>
+    </thead>
+    <tbody>
+      @foreach (var card in Model.Cards)
+      {
+        <tr>
+          <td>@card.CreatedAt.ToLocalTime().ToString("dd.MM.yyyy HH:mm")</td>
+          <td>@card.UpdatedAt.ToLocalTime().ToString("dd.MM.yyyy HH:mm")</td>
+          <td>@card.CardNumber</td>
+          <td>@card.Organization</td>
+          <td>@card.DocumentName</td>
+          <td>@card.Profession</td>
+          <td>@string.Join("; ", card.Employees)</td>
+          <td class="ppe-row-actions">
+            <a class="btn btn-sm btn-primary" asp-page="/Ppe/SiosCard/Preview" asp-route-id="@card.Id">Открыть</a>
+            <form method="post" asp-page-handler="Delete" class="inline-form">
+              <input type="hidden" name="id" value="@card.Id" />
+              <button type="submit" class="org-del-btn" onclick="return confirm('Удалить карточку?');">Удалить</button>
+            </form>
+          </td>
+        </tr>
+      }
+    </tbody>
+  </table>
+
+  <div class="ppe-actions">
+    <a class="btn btn-primary" asp-page="/Ppe/CardSelect">Новая карточка</a>
+  </div>
+</div>

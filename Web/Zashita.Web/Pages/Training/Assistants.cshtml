@@ -1,0 +1,37 @@
+@page "/Training/Assistants"
+@model Zashita.Web.Pages.Training.AssistantsModel
+@{
+    ViewData["Title"] = "Помощники по обучению";
+    ViewData["Subtitle"] = "Обучение, инструктажи, проверка знаний, стажировка";
+}
+
+<div class="panel ppe-panel training-assistants-panel">
+  <p class="ppe-subtitle training-assistants-lead">Обучение, инструктажи, проверка знаний, стажировка</p>
+
+  <div class="training-assistants-list" id="training-assistants-list">
+    @foreach (var entry in Model.Entries)
+    {
+      <article class="training-assistant-item" data-assistant-id="@entry.Id">
+        <button type="button" class="training-assistant-toggle" aria-expanded="false">
+          <span class="training-tree-caret" aria-hidden="true">▶</span>
+          @if (!string.IsNullOrWhiteSpace(entry.RouteUrl))
+          {
+            <a class="training-assistant-link" href="@entry.RouteUrl">@entry.Title</a>
+          }
+          else
+          {
+            <span class="training-assistant-link">@entry.Title</span>
+          }
+          <span class="training-assistant-date">(по состоянию на @Model.StateDate)</span>
+        </button>
+        <div class="training-assistant-body training-tree-hidden">
+          <p class="training-assistant-desc">@entry.Description</p>
+        </div>
+      </article>
+    }
+  </div>
+</div>
+
+@section Scripts {
+  <script src="~/js/training-assistants.js" asp-append-version="true"></script>
+}

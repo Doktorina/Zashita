@@ -1,0 +1,4 @@
+<Solution>
+  <Project Path="Web/Zashita.Web/Zashita.Web.csproj" />
+  <Project Path="Web/Zashita.Core/Zashita.Core.csproj" />
+</Solution>

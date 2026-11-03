@@ -1,0 +1,161 @@
+@page "/Risks/UnscheduledOrders/SelectCommission"
+@model Zashita.Web.Pages.Risks.UnscheduledOrders.SelectCommissionModel
+@{
+    ViewData["Title"] = Model.IsChangeMode ? "Изменить комиссию в приказе" : "Приказ о создании комиссии";
+    ViewData["Subtitle"] = Model.Organization;
+}
+
+@section Styles {
+  <link rel="stylesheet" href="~/css/risks-preparation.css" asp-append-version="true" />
+}
+
+<div class="panel ppe-panel sout-assignment-doc">
+  <div class="risks-docs-back-row">
+    <a class="btn btn-outline btn-sm" asp-page="/Risks/Documents">← К документам</a>
+    <a class="btn btn-outline btn-sm" asp-page="/Risks/Commissions">Комиссии</a>
+  </div>
+
+  @if (!string.IsNullOrWhiteSpace(Model.Message))
+  {
+    <p class="text-success">@Model.Message</p>
+  }
+
+  <h2 class="ppe-subtitle" style="margin-top:12px">Выбор комиссии</h2>
+  <p class="hint">Выберите комиссию для приказа. Председатель, состав, номер и дата приказа берутся из карточки комиссии.</p>
+
+  @if (Model.CommissionRows.Count == 0)
+  {
+    <p class="hint" style="margin-top:12px">Комиссий пока нет — задайте комиссию, заполните карточку и вернётесь сюда.</p>
+    <div class="ppe-actions" style="margin-top:12px;justify-content:flex-start">
+      <a class="btn btn-primary"
+         asp-page="/Risks/Commissions/Edit"
+         asp-route-parentId="@Model.RiskFolderId"
+         asp-route-returnUrl="@Model.ReturnHereUrl">Задать комиссию</a>
+    </div>
+  }
+  else
+  {
+    <form method="post" asp-page-handler="Create" id="risks-order-commission-form" style="margin-top:12px">
+      @if (!string.IsNullOrWhiteSpace(Model.OrderId))
+      {
+        <input type="hidden" name="orderId" value="@Model.OrderId" />
+      }
+      <table class="data-grid sout-preparation-grid" id="risks-order-commission-grid">
+        <thead>
+          <tr>
+            <th style="width:3rem"></th>
+            <th>Наименование</th>
+            <th>Председатель</th>
+            <th>Члены</th>
+            <th>Приказ о комиссии</th>
+          </tr>
+        </thead>
+        <tbody>
+          @foreach (var row in Model.CommissionRows)
+          {
+            var isChecked = row.IsRecommended
+                            || string.Equals(row.Id, Model.SelectedCommissionId, StringComparison.OrdinalIgnoreCase);
+            <tr class="@(isChecked ? "training-row-active" : "")">
+              <td>
+                <input type="radio"
+                       name="commissionId"
+                       value="@row.Id"
+                       class="js-order-commission-radio"
+                       @(isChecked ? "checked" : null)
+                       required />
+              </td>
+              <td>
+                <a asp-page="/Risks/Commissions/Edit"
+                   asp-route-id="@row.Id"
+                   asp-route-returnUrl="@Model.ReturnHereUrl">@row.Name</a>
+              </td>
+              <td>@row.Chairman</td>
+              <td>@row.Members</td>
+              <td>@row.OrderInfo</td>
+            </tr>
+          }
+        </tbody>
+      </table>
+
+      <div class="ppe-actions" style="margin-top:16px;justify-content:flex-start;gap:8px;flex-wrap:wrap">
+        <button type="submit"
+                class="btn btn-primary"
+                id="risks-order-print-btn"
+                disabled>Печать</button>
+        <a class="btn btn-outline"
+           asp-page="/Risks/Commissions/Edit"
+           asp-route-parentId="@Model.RiskFolderId"
+           asp-route-returnUrl="@Model.ReturnHereUrl">Задать комиссию</a>
+      </div>
+      <p class="hint" style="margin-top:8px">После выбора комиссии кнопка «Печать» откроет предпечать приказа.</p>
+    </form>
+  }
+
+  <h2 class="ppe-subtitle" style="margin-top:28px">Ранее изданные приказы</h2>
+  @if (Model.OrderRows.Count == 0)
+  {
+    <p class="hint">Приказов пока нет. Выберите комиссию и нажмите «Печать».</p>
+  }
+  else
+  {
+    <table class="data-grid sout-preparation-grid" id="risks-order-history-grid">
+      <thead>
+        <tr>
+          <th>Дата</th>
+          <th>Номер</th>
+          <th>Комиссия</th>
+          <th>Статус</th>
+        </tr>
+      </thead>
+      <tbody>
+        @foreach (var row in Model.OrderRows)
+        {
+          <tr class="sout-preparation-row risks-order-history-row"
+              data-preview-url="/Risks/UnscheduledOrders/Preview?id=@Uri.EscapeDataString(row.Id)&amp;mode=order"
+              style="cursor:pointer"
+              title="Открыть предпечать">
+            <td>@row.Date.ToString("dd.MM.yyyy")</td>
+            <td>
+              <a asp-page="/Risks/UnscheduledOrders/Preview"
+                 asp-route-id="@row.Id"
+                 asp-route-mode="order"
+                 target="_blank"
+                 rel="noopener">@(string.IsNullOrWhiteSpace(row.Number) ? "—" : row.Number)</a>
+            </td>
+            <td>@row.CommissionName</td>
+            <td>@(row.IsPosted ? "Проведён" : "Черновик")</td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  }
+</div>
+
+@section Scripts {
+  <script>
+    (function () {
+      var form = document.getElementById('risks-order-commission-form');
+      var printBtn = document.getElementById('risks-order-print-btn');
+      var radios = document.querySelectorAll('.js-order-commission-radio');
+
+      function syncPrint() {
+        if (!printBtn) return;
+        var checked = document.querySelector('.js-order-commission-radio:checked');
+        printBtn.disabled = !checked;
+      }
+
+      radios.forEach(function (r) {
+        r.addEventListener('change', syncPrint);
+      });
+      syncPrint();
+
+      document.querySelectorAll('.risks-order-history-row').forEach(function (row) {
+        row.addEventListener('click', function (e) {
+          if (e.target.closest('a, button')) return;
+          var url = row.getAttribute('data-preview-url');
+          if (url) window.open(url, '_blank', 'noopener');
+        });
+      });
+    })();
+  </script>
+}

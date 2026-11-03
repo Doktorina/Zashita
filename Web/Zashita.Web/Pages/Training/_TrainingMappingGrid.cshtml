@@ -1,0 +1,89 @@
+@model Zashita.Web.Pages.Training.TrainingMappingPageModel
+@{
+    var bodyId = ViewData["MappingBodyId"] as string ?? "training-mapping-body";
+    var addRowBtnId = ViewData["MappingAddRowBtnId"] as string ?? "mapping-add-row-btn";
+    var sourceColumnTitle = ViewData["MappingSourceColumnTitle"] as string ?? "Программа обучения";
+    var sortedLines = Model.Lines
+        .OrderBy(l => l.SourceProgram, StringComparer.CurrentCultureIgnoreCase)
+        .ThenBy(l => l.TargetKind, StringComparer.CurrentCultureIgnoreCase)
+        .ThenBy(l => l.TargetProgram, StringComparer.CurrentCultureIgnoreCase)
+        .ToList();
+}
+
+@if (!string.IsNullOrWhiteSpace(Model.Message))
+{
+  <p class="text-success">@Model.Message</p>
+}
+
+<div class="panel ppe-panel">
+  <div class="ppe-toolbar">
+    <button type="button" class="btn btn-outline btn-sm" id="@addRowBtnId">Создать</button>
+    <div class="ppe-toolbar-dropdown">
+      <button type="button" class="btn btn-outline btn-sm" disabled title="Скоро">Заполнить ▾</button>
+    </div>
+  </div>
+
+  <form method="post" asp-page-handler="Save">
+    <div class="ppe-actions ppe-actions-top">
+      <button type="submit" class="btn btn-primary">Сохранить</button>
+    </div>
+    <table class="data-grid ppe-edit-grid training-mapping-grid">
+      <thead>
+        <tr>
+          <th class="training-select-col"></th>
+          <th colspan="1" class="training-mapping-section">Минтруд</th>
+          <th colspan="2" class="training-mapping-section">Охрана труда</th>
+        </tr>
+        <tr>
+          <th class="training-select-col"></th>
+          <th>@sourceColumnTitle</th>
+          <th>Вид обучения</th>
+          <th>Программа</th>
+        </tr>
+      </thead>
+      <tbody id="@bodyId">
+        @foreach (var line in sortedLines)
+        {
+          <tr class="training-mapping-row" data-id="@line.Id">
+            <td class="training-select-col">
+              <input type="checkbox" class="training-row-select" aria-label="Выделить" />
+            </td>
+            <td>
+              <input type="hidden" name="Id" value="@line.Id" />
+              <input name="SourceProgram" value="@line.SourceProgram" class="ppe-input" />
+            </td>
+            <td>
+              <input name="TargetKind" value="@line.TargetKind" class="ppe-input" />
+            </td>
+            <td>
+              <div class="training-mapping-row-actions">
+                <input name="TargetProgram" value="@line.TargetProgram" class="ppe-input" />
+                <button type="button" class="suot-action suot-action-danger training-mapping-delete" title="Удалить">🗑</button>
+              </div>
+              <input type="hidden" name="Delete" value="false" class="training-delete-flag" />
+            </td>
+          </tr>
+        }
+        <tr id="@(bodyId)-row-template" class="training-mapping-row" hidden data-id="">
+          <td class="training-select-col">
+            <input type="checkbox" class="training-row-select" aria-label="Выделить" />
+          </td>
+          <td>
+            <input type="hidden" name="Id" value="" />
+            <input name="SourceProgram" value="" class="ppe-input" placeholder="Программа обучения (Минтруд)" />
+          </td>
+          <td>
+            <input name="TargetKind" value="" class="ppe-input" />
+          </td>
+          <td>
+            <div class="training-mapping-row-actions">
+              <input name="TargetProgram" value="" class="ppe-input" />
+              <button type="button" class="suot-action suot-action-danger training-mapping-delete" title="Удалить">🗑</button>
+            </div>
+            <input type="hidden" name="Delete" value="false" class="training-delete-flag" />
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </form>
+</div>

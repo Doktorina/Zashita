@@ -1,0 +1,131 @@
+﻿@page "/Risks/Documents/OrgDocPreview"
+@model Zashita.Web.Pages.Risks.Documents.OrgDocPreviewModel
+@{
+    Layout = null;
+    var landscape = string.Equals(Model.KindNormalized, "identification-cards", StringComparison.OrdinalIgnoreCase);
+}
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>@Model.Title</title>
+    <partial name="_SiteIconLinks" />
+<link rel="stylesheet" href="/css/zashita.css" asp-append-version="true" />
+  <link rel="stylesheet" href="/css/ppe-doc-print.css" asp-append-version="true" />
+  <link rel="stylesheet" href="/css/risks-preparation.css" asp-append-version="true" />
+  <style>
+    @@media print {
+      .ppe-no-print { display: none !important; }
+      body { background: #fff; }
+      .risks-a4-sheet,
+      .risks-a4-landscape {
+        width: 100% !important;
+        min-height: auto !important;
+        height: auto !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        box-shadow: none !important;
+      }
+    }
+    @if (landscape)
+    {
+      <text>
+    @@page { size: A4 landscape; margin: 10mm; }
+    @@media print {
+      body { margin: 0; }
+      .sout-preview-shell, .sout-preview-doc-wrap { margin: 0; padding: 0; box-shadow: none; }
+      .risks-page-break {
+        page-break-before: always;
+        break-before: page;
+        height: 0;
+        margin: 0;
+        padding: 0;
+        border: none;
+      }
+      .risks-card-acq-sheet {
+        page-break-before: auto;
+        break-before: auto;
+        width: auto;
+        min-height: auto;
+        margin: 0;
+        padding: 0;
+      }
+      .risks-card-compiled, .risks-card-page-foot {
+        page-break-before: avoid;
+        page-break-inside: avoid;
+      }
+    }
+      </text>
+    }
+    else
+    {
+      <text>
+    @@page { size: A4 portrait; margin: 15mm; }
+      </text>
+    }
+  </style>
+</head>
+<body class="sout-preview-page">
+  <div class="sout-preview-shell">
+    <div class="risks-docs-back-row ppe-no-print">
+      <a class="btn btn-outline btn-sm" href="/Risks/Documents">← К документам</a>
+    </div>
+    <div class="sout-preview-toolbar ppe-no-print">
+      <div class="sout-preview-toolbar-left">
+        <button type="button" class="btn btn-primary btn-sm"
+                onclick="zashitaRecordPrint({ category: 'risks', title: document.title, summary: 'Печать документа ОПР' })">Печать</button>
+        <button type="button" class="btn btn-outline btn-sm" id="risks-doc-word-btn">Сохранить в Word</button>
+        @if (!string.IsNullOrWhiteSpace(Model.SelectionHint))
+        {
+          <span class="hint">@Model.SelectionHint</span>
+        }
+        @if (string.Equals(Model.KindNormalized, "measures", StringComparison.OrdinalIgnoreCase))
+        {
+          <a class="btn btn-outline btn-sm"
+             href="/Risks/Documents/SelectHazards?purpose=measures@(string.IsNullOrWhiteSpace(Model.ObjectId) ? "" : $"&objectId={Uri.EscapeDataString(Model.ObjectId)}")">Изменить выбор опасностей</a>
+        }
+      </div>
+      <div class="sout-preview-toolbar-right">
+        @if (Model.ShowOrgEditBar)
+        {
+          <form method="get" class="ppe-no-print" style="display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin-right:8px">
+            <input type="hidden" name="kind" value="@Model.KindNormalized" />
+            <input type="hidden" name="ids" value="@Model.Ids" />
+            @if (!string.IsNullOrWhiteSpace(Model.ObjectId))
+            {
+              <input type="hidden" name="objectId" value="@Model.ObjectId" />
+            }
+            <input type="text" name="orgName" value="@(Model.OrgName ?? Model.Organization)" class="ppe-input" style="min-width:14rem" title="Организация" placeholder="Организация" />
+            <input type="text" name="manager" value="@Model.Manager" class="ppe-input" style="min-width:10rem" title="Руководитель" placeholder="Руководитель" />
+            <button type="submit" class="btn btn-outline btn-sm">Подставить</button>
+          </form>
+          @if (string.Equals(Model.KindNormalized, "regulation", StringComparison.OrdinalIgnoreCase)
+               || string.Equals(Model.KindNormalized, "methodology", StringComparison.OrdinalIgnoreCase))
+          {
+            <a class="btn btn-outline btn-sm" href="/Risks/Documents/RegulationTemplate">Шаблон</a>
+          }
+        }
+      </div>
+    </div>
+    <div class="sout-preview-doc-wrap" id="risks-org-doc-print-area">
+      <div class="risks-a4-sheet @(landscape ? "risks-a4-landscape" : "")">
+        @Html.Raw(Model.PreviewHtml)
+      </div>
+    </div>
+  </div>
+  <script src="~/js/risks-doc-export.js" asp-append-version="true"></script>
+  <script src="/js/print-history.js" asp-append-version="true"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', function () {
+      if (window.zashitaRisksDocExport) {
+        window.zashitaRisksDocExport.bind({
+          sourceSelector: '#risks-org-doc-print-area',
+          fileName: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.Title)),
+          landscape: @(landscape ? "true" : "false")
+        });
+      }
+    });
+  </script>
+</body>
+</html>

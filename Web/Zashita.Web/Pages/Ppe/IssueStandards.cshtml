@@ -1,0 +1,285 @@
+@page "/Ppe/IssueStandards"
+@model Zashita.Web.Pages.Ppe.IssueStandardsModel
+@{
+    ViewData["Title"] = "Стандарты выдачи";
+    ViewData["Subtitle"] = Model.Organization;
+}
+
+@if (!string.IsNullOrWhiteSpace(Model.Message))
+{
+  <p class="form-error">@Model.Message</p>
+}
+@if (!string.IsNullOrWhiteSpace(Model.InfoMessage))
+{
+  <p class="text-success">@Model.InfoMessage</p>
+}
+
+<div class="ppe-split">
+  <div class="panel ppe-panel ppe-split-side">
+    <div class="ppe-toolbar">
+      <a class="btn btn-outline" asp-page="/Ppe/IssueStandards">Новый</a>
+    </div>
+    <form method="get" class="ppe-field" style="margin-bottom:10px">
+      <input type="hidden" asp-for="EditId" />
+      <span>Поиск</span>
+      <div style="display:flex; gap:8px; align-items:center">
+        <input asp-for="Q" class="ppe-input" placeholder="название, профессия, позиция" autocomplete="off" />
+        <button type="submit" class="btn btn-outline btn-sm">Найти</button>
+      </div>
+    </form>
+    <ul class="ppe-standards-list">
+      @foreach (var s in Model.Standards)
+      {
+        <li class="@(s.Id == Model.EditId ? "active" : "")">
+          <a asp-page="/Ppe/IssueStandards" asp-route-editId="@s.Id" asp-route-q="@Model.Q">@s.ListDisplayName</a>
+          <span class="ppe-muted">@s.Profession</span>
+        </li>
+      }
+    </ul>
+  </div>
+
+  <div class="panel ppe-panel ppe-split-main">
+    <h2 class="ppe-step-title">@(string.IsNullOrWhiteSpace(Model.EditId) ? "Новый стандарт" : "Редактирование")</h2>
+    <div class="ppe-actions ppe-actions-top issue-standards-actions">
+      <button type="submit" form="issue-standards-form" class="btn btn-primary">Сохранить</button>
+      @if (!string.IsNullOrWhiteSpace(Model.EditId))
+      {
+        <button type="submit"
+                class="btn btn-danger"
+                form="issue-standards-delete-form"
+                onclick="return confirm('Удалить стандарт?');">Удалить</button>
+      }
+    </div>
+    <form method="post" asp-page-handler="Save" id="issue-standards-form">
+      <input type="hidden" name="EditId" value="@Model.EditId" />
+      <input type="hidden" name="ReturnTo" value="@Model.ReturnTo" />
+      <input type="hidden" name="ReturnDoc" value="@Model.ReturnDoc" />
+      <input type="hidden" name="ReturnStep" value="@Model.ReturnStep" />
+      @if (!string.IsNullOrWhiteSpace(Model.ReturnTo))
+      {
+        <p class="hint" style="margin-bottom:10px">После сохранения вернётесь к созданию карточки СИЗ (шаг 3).</p>
+      }
+      <label class="ppe-field">
+        <span>Название шаблона</span>
+        <input name="Name" value="@Model.Name" class="ppe-input" required />
+      </label>
+      <label class="ppe-field">
+        <span>Профессия</span>
+        <select name="Profession" id="iss-profession" class="ppe-input" required>
+          <option value="">— выберите —</option>
+          @foreach (var p in Model.Professions)
+          {
+            if (p == Model.Profession)
+            {
+              <option value="@p" selected>@p</option>
+            }
+            else
+            {
+              <option value="@p">@p</option>
+            }
+          }
+          @if (!string.IsNullOrWhiteSpace(Model.Profession) &&
+               !Model.Professions.Contains(Model.Profession, StringComparer.OrdinalIgnoreCase))
+          {
+            <option value="@Model.Profession" selected>@Model.Profession</option>
+          }
+        </select>
+        @if (Model.Professions.Count == 0)
+        {
+          <span class="hint">Нет профессий у «@Model.Organization». Загрузите сотрудников из 1С или добавьте их в Организации.</span>
+        }
+      </label>
+      <label class="ppe-field">
+        <span>Тип средства защиты</span>
+        <select name="ProtectionTypeFilter" id="iss-protection-type" class="ppe-input">
+          <option value="">Все типы</option>
+          @foreach (var type in Model.ProtectionTypes)
+          {
+            <option value="@type" selected="@(type == Model.ProtectionTypeFilter)">@type</option>
+          }
+        </select>
+        <span class="hint">Ступенчатый фильтр: сначала профессия / тип, затем позиции ниже.</span>
+      </label>
+      <div class="ppe-field">
+        <span>Категория средств</span>
+        <div class="ui-segmented qual-segmented"
+             data-target="item-category-value"
+             role="group"
+             aria-label="Категория средств">
+          @foreach (var category in Model.CategoryOptions)
+          {
+            <button type="button"
+                    class="ui-segmented-btn @(category == Model.ItemCategory ? "active" : "")"
+                    data-value="@category">@category</button>
+          }
+        </div>
+        <input type="hidden" name="ItemCategory" id="item-category-value" value="@Model.ItemCategory" />
+        <span class="hint">Выберите СИЗ или ДСИЗ — список позиций и типы защиты обновятся.</span>
+      </div>
+      <div class="ppe-actions" style="margin-bottom:8px">
+        <button type="submit" formaction="?handler=FillFromAppendix" class="btn btn-outline btn-sm">
+          Заполнить позиции по Приложению 1
+        </button>
+      </div>
+      <h3 class="ppe-subtitle">Позиции из номенклатуры (<span id="iss-visible-count">@Model.FilteredNomenclature.Count</span>)</h3>
+      <p class="hint" style="margin-top:-4px;margin-bottom:8px">
+        СИЗ: <a asp-page="/Ppe/EtnNomenclature">Номенклатура ЕТН</a>
+        · ДСИЗ: <a asp-page="/Ppe/PollutantsEtn">Производственные загрязнители ЕТН</a>
+      </p>
+      <label class="ppe-field" style="margin-bottom:8px">
+        <span>Поиск</span>
+        <input type="search"
+               id="iss-nomenclature-search"
+               class="ppe-input"
+               placeholder="Введите наименование позиции..."
+               autocomplete="off" />
+      </label>
+      <div class="ppe-checklist ppe-checklist-tall" id="iss-nomenclature-list">
+        @foreach (var item in Model.FilteredNomenclature)
+        {
+          <label class="ppe-check-item"
+                 data-protection-type="@item.DisplayProtectionType"
+                 data-category="@item.Category"
+                 data-search="@($"{item.DisplayProtectionType} {item.Name} {item.Norm}".ToLowerInvariant())">
+            <input type="checkbox" name="SelectedItems" value="@item.Name"
+                   checked="@Model.SelectedItems.Contains(item.Name)" />
+            <span>
+              <em class="ppe-muted">@item.DisplayProtectionType</em>
+              — @item.Name
+              @if (!string.IsNullOrWhiteSpace(item.Norm) && item.Norm != "По норме")
+              {
+                <span class="ppe-muted">(@item.Norm)</span>
+              }
+            </span>
+          </label>
+        }
+      </div>
+    </form>
+    @if (!string.IsNullOrWhiteSpace(Model.EditId))
+    {
+      <form id="issue-standards-delete-form" method="post" asp-page-handler="Delete" hidden>
+        <input type="hidden" name="id" value="@Model.EditId" />
+      </form>
+    }
+  </div>
+</div>
+
+@section Styles {
+<style>
+  .issue-standards-actions {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 12px;
+    margin-top: 0;
+    margin-bottom: 12px;
+  }
+
+  .issue-standards-actions .btn-danger {
+    background: #d32f2f !important;
+    color: #fff !important;
+    border-color: #d32f2f !important;
+  }
+
+  .issue-standards-actions .btn-danger:hover {
+    background: #b71c1c !important;
+    border-color: #b71c1c !important;
+  }
+
+  #iss-nomenclature-search {
+    max-width: 28rem;
+  }
+</style>
+}
+
+@section Scripts {
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+  var typeSelect = document.getElementById('iss-protection-type');
+  var list = document.getElementById('iss-nomenclature-list');
+  var profession = document.getElementById('iss-profession');
+  var categoryInput = document.getElementById('item-category-value');
+  var searchInput = document.getElementById('iss-nomenclature-search');
+  var visibleCount = document.getElementById('iss-visible-count');
+  if (!list) return;
+
+  function buildReloadUrl(overrides) {
+    var url = new URL(window.location.href);
+    var editId = url.searchParams.get('editId');
+    url.search = '';
+    if (editId) {
+      url.searchParams.set('editId', editId);
+    }
+    if (profession && profession.value) {
+      url.searchParams.set('profession', profession.value);
+    }
+    if (typeSelect && typeSelect.value) {
+      url.searchParams.set('protectionTypeFilter', typeSelect.value);
+    }
+    if (categoryInput && categoryInput.value) {
+      url.searchParams.set('itemCategory', categoryInput.value);
+    }
+    if (overrides) {
+      Object.keys(overrides).forEach(function (key) {
+        if (overrides[key] === null || overrides[key] === undefined || overrides[key] === '') {
+          url.searchParams.delete(key);
+        } else {
+          url.searchParams.set(key, overrides[key]);
+        }
+      });
+    }
+    return url.toString();
+  }
+
+  function applyClientFilters() {
+    var type = typeSelect ? (typeSelect.value || '').trim().toLowerCase() : '';
+    var query = searchInput ? (searchInput.value || '').trim().toLowerCase() : '';
+    var visible = 0;
+    list.querySelectorAll('.ppe-check-item').forEach(function (row) {
+      var rowType = (row.getAttribute('data-protection-type') || '').toLowerCase();
+      var searchText = row.getAttribute('data-search') || row.textContent.toLowerCase();
+      var typeOk = !type || rowType === type;
+      var searchOk = !query || searchText.indexOf(query) >= 0;
+      var show = typeOk && searchOk;
+      row.style.display = show ? '' : 'none';
+      if (show) {
+        visible += 1;
+      }
+    });
+    if (visibleCount) {
+      visibleCount.textContent = String(visible);
+    }
+  }
+
+  if (typeSelect) {
+    typeSelect.addEventListener('change', applyClientFilters);
+  }
+
+  if (searchInput) {
+    searchInput.addEventListener('input', applyClientFilters);
+  }
+
+  if (profession) {
+    profession.addEventListener('change', function () {
+      window.location.href = buildReloadUrl({ profession: profession.value, protectionTypeFilter: null });
+    });
+  }
+
+  if (categoryInput) {
+    document.querySelectorAll('.ui-segmented[data-target="item-category-value"] .ui-segmented-btn')
+      .forEach(function (button) {
+        button.addEventListener('click', function () {
+          var category = button.getAttribute('data-value') || '';
+          if (category && category !== categoryInput.value) {
+            window.setTimeout(function () {
+              window.location.href = buildReloadUrl({ itemCategory: category, protectionTypeFilter: null });
+            }, 0);
+          }
+        });
+      });
+  }
+
+  applyClientFilters();
+});
+</script>
+}

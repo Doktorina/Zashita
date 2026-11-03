@@ -1,0 +1,141 @@
+@page "/Training/Kinds/Edit"
+@model Zashita.Web.Pages.Training.Kinds.EditModel
+@{
+    var r = Model.Record;
+    var isGroup = r.IsGroup || Model.IsGroup;
+    ViewData["Title"] = Model.IsNew ? $"{ViewData["Title"]} (создание)" : ViewData["Title"];
+}
+
+<link rel="stylesheet" href="/css/sout-catalog.css" asp-append-version="true" />
+
+@if (!string.IsNullOrWhiteSpace(Model.Message))
+{
+  <p class="@(Model.IsError ? "form-error" : "text-success")">@Model.Message</p>
+}
+
+<div class="panel ppe-panel sout-catalog-edit" id="sout-catalog-edit">
+  <form method="post" asp-page="/Training/Kinds/Edit">
+    <input type="hidden" name="recordId" value="@r.Id" />
+    <input type="hidden" asp-for="Id" />
+    <input type="hidden" name="isGroup" value="@isGroup.ToString().ToLowerInvariant()" />
+
+    <div class="sout-assignment-toolbar sout-catalog-edit-toolbar">
+      <div class="sout-assignment-toolbar-left">
+        <a class="btn btn-outline btn-sm" asp-page="/Training/Kinds">←</a>
+        <button type="submit" asp-page-handler="SaveAndClose" class="btn btn-primary btn-sm">Записать и закрыть</button>
+        <button type="submit" asp-page-handler="Save" class="btn btn-outline btn-sm">Записать</button>
+      </div>
+    </div>
+
+    <div class="sout-catalog-edit-header">
+      <label class="ppe-field sout-catalog-edit-name">
+        <span>Наименование</span>
+        <input name="name" value="@r.Name" class="ppe-input" required autofocus />
+      </label>
+      <label class="ppe-field sout-catalog-edit-code">
+        <span>Код</span>
+        <input name="code" value="@(string.IsNullOrWhiteSpace(r.Code) ? "<Авто>" : r.Code)" class="ppe-input" readonly />
+      </label>
+      <label class="ppe-field" style="grid-column:1/-1">
+        <span>Раздел</span>
+        <input name="section" value="@r.Section" class="ppe-input" list="kind-edit-sections" placeholder="Охрана труда, Электробезопасность…" autocomplete="off" />
+        <span class="hint">Раздел для фильтров и планирования. Для группы — применится к вложенным видам с тем же/пустым разделом.</span>
+      </label>
+    </div>
+
+    <div class="sout-catalog-edit-body">
+      <div class="sout-catalog-edit-layout">
+        <nav class="sout-catalog-edit-nav" aria-label="Разделы">
+          <button type="button" class="sout-catalog-edit-nav-item sout-catalog-edit-nav-active" data-section="general">Основное</button>
+        </nav>
+        <div class="sout-catalog-edit-content">
+          <section class="sout-catalog-edit-section sout-catalog-edit-section-active" data-section-panel="general">
+            <label class="ppe-field">
+              <span>Входит в группу</span>
+              <select name="parentId" class="ppe-input">
+                <option value="">—</option>
+                @foreach (var group in Model.GroupOptions.Where(g => g.Id != r.Id))
+                {
+                  if (string.Equals(r.ParentId, group.Id, StringComparison.Ordinal))
+                  {
+                    <option value="@group.Id" selected>@group.Name</option>
+                  }
+                  else
+                  {
+                    <option value="@group.Id">@group.Name</option>
+                  }
+                }
+              </select>
+            </label>
+
+            <datalist id="kind-edit-sections">
+              @foreach (var sectionName in Model.SectionOptions)
+              {
+                <option value="@sectionName"></option>
+              }
+            </datalist>
+
+            @if (!isGroup)
+            {
+              <label class="ppe-field">
+                <span>Тип</span>
+                <select name="type" class="ppe-input">
+                  @foreach (var type in Model.TypeOptions)
+                  {
+                    if (string.Equals(r.Type, type, StringComparison.OrdinalIgnoreCase))
+                    {
+                      <option value="@type" selected>@type</option>
+                    }
+                    else
+                    {
+                      <option value="@type">@type</option>
+                    }
+                  }
+                </select>
+              </label>
+              <label class="ppe-field">
+                <span>Периодичность</span>
+                <input name="periodicity" value="@r.Periodicity" class="ppe-input" list="kind-periodicity" />
+              </label>
+              <label class="ppe-field">
+                <span>Категория персонала</span>
+                <select name="personnelCategory" class="ppe-input">
+                  <option value="">Все</option>
+                  @foreach (var category in Model.PersonnelCategoryOptions)
+                  {
+                    if (string.Equals(r.PersonnelCategory, category, StringComparison.OrdinalIgnoreCase))
+                    {
+                      <option value="@category" selected>@category</option>
+                    }
+                    else
+                    {
+                      <option value="@category">@category</option>
+                    }
+                  }
+                </select>
+              </label>
+            }
+            else
+            {
+              <input type="hidden" name="type" value="@(string.IsNullOrWhiteSpace(r.Type) ? "Обучение" : r.Type)" />
+              <input type="hidden" name="periodicity" value="@r.Periodicity" />
+              <input type="hidden" name="personnelCategory" value="@r.PersonnelCategory" />
+            }
+          </section>
+        </div>
+      </div>
+    </div>
+  </form>
+</div>
+
+<datalist id="kind-periodicity">
+  <option value="1 раз в год"></option>
+  <option value="1 раз в 3 года"></option>
+  <option value="1 раз в 5 лет"></option>
+  <option value="1 раз в 3 месяца"></option>
+  <option value="однократно"></option>
+</datalist>
+
+@section Scripts {
+  <script src="~/js/sout-catalog-edit.js" asp-append-version="true"></script>
+}

@@ -1,0 +1,45 @@
+@model Zashita.Web.Pages.Organizations.OrganizationGroupFormModel
+@{
+    var selected = (Model.Group?.Organizations ?? [])
+        .ToHashSet(StringComparer.OrdinalIgnoreCase);
+    var isNew = Model.Group is null;
+}
+
+<form method="post" asp-page="/Organizations/Index" asp-page-handler="SaveGroup" class="org-group-form">
+  <input type="hidden" name="company" value="@Model.Company" />
+  <input type="hidden" name="groupId" value="@(Model.Group?.Id ?? "")" />
+
+  <label class="ppe-field org-group-field">
+    <span>Название группы</span>
+    <input name="groupName"
+           class="org-input"
+           value="@(Model.Group?.Name ?? "")"
+           placeholder="Например: Контур Виктория"
+           required />
+  </label>
+
+  <div class="ppe-field org-group-field">
+    <span>Компании в группе</span>
+    <input type="search"
+           class="org-input org-group-search"
+           placeholder="Поиск компании..."
+           autocomplete="off" />
+    <div class="training-kind-filter-box org-group-members-box">
+      @foreach (var org in Model.Organizations)
+      {
+        <label class="training-kind-filter-option" data-org-name="@org.ToLowerInvariant()">
+          <input type="checkbox"
+                 name="groupOrganizations"
+                 value="@org"
+                 @(selected.Contains(org) ? "checked" : null) />
+          <span>@org</span>
+        </label>
+      }
+    </div>
+  </div>
+
+  <div class="org-group-form-actions">
+    <button type="submit" class="btn btn-primary btn-sm">@(isNew ? "Создать группу" : "Сохранить изменения")</button>
+    <a class="btn btn-outline btn-sm" asp-page="/Organizations/Index" asp-route-company="@Model.Company">Отмена</a>
+  </div>
+</form>

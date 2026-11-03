@@ -1,0 +1,135 @@
+@page "/Med/Exams"
+@model Zashita.Web.Pages.Med.ExamsModel
+@{
+    var title = string.Equals(Model.Type, "shift", StringComparison.OrdinalIgnoreCase)
+        ? "Проведение ежесменного медосмотра"
+        : "Проведение медосмотра";
+    ViewData["Title"] = title;
+    ViewData["Subtitle"] = Model.Organization;
+}
+
+@if (!string.IsNullOrWhiteSpace(Model.Message))
+{
+    <p class="form-error">@Model.Message</p>
+}
+
+<div class="ppe-split">
+    <div class="panel ppe-panel ppe-split-side">
+        <div class="ppe-toolbar">
+            <a class="btn btn-outline" asp-page="/Med/Exams" asp-route-type="@Model.Type" asp-route-editId="">Новая запись</a>
+        </div>
+        <table class="data-grid">
+            <thead>
+                <tr>
+                    <th>Дата</th>
+                    <th>Сотрудник</th>
+                    <th>След. осмотр</th>
+                    <th>Статус</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var row in Model.Rows)
+                {
+                    <tr class="@(row.Id == Model.EditId ? "traffic-blue" : "")">
+                        <td><a asp-page="/Med/Exams" asp-route-type="@Model.Type" asp-route-editId="@row.Id">@row.ExamDate.ToString("dd.MM.yyyy")</a></td>
+                        <td>@row.EmployeeName</td>
+                        <td>@(row.NextExamDate?.ToString("dd.MM.yyyy") ?? "—")</td>
+                        <td>@row.Status</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+
+    <div class="panel ppe-panel ppe-split-main">
+        <h2 class="ppe-step-title">@(string.IsNullOrWhiteSpace(Model.EditId) ? "Новая запись" : "Редактирование")</h2>
+        <p class="hint">ФИО, дату рождения и должность вводите вручную — для устраивающихся сотрудников ещё нет в 1С.</p>
+        <form method="post" asp-page-handler="Save">
+            <input type="hidden" asp-for="EditId" />
+            <input type="hidden" asp-for="Type" />
+            <label class="ppe-field">
+                <span>ФИО</span>
+                <input asp-for="EmployeeName" class="ppe-input" placeholder="Фамилия Имя Отчество" required autocomplete="off" />
+            </label>
+            <label class="ppe-field">
+                <span>Дата рождения</span>
+                <input asp-for="BirthDate" type="date" class="ppe-input" />
+            </label>
+            <label class="ppe-field">
+                <span>Должность / профессия</span>
+                <input asp-for="Profession" class="ppe-input" placeholder="Должность" autocomplete="off" />
+            </label>
+            <label class="ppe-field">
+                <span>Номер пункта</span>
+                <select asp-for="ItemNumber" class="ppe-input" id="med-exam-item">
+                    <option value="">— выберите пункт —</option>
+                    @foreach (var item in Model.FactorItems)
+                    {
+                        <option value="@item.ItemNumber"
+                                data-periodicity="@item.Periodicity"
+                                selected="@(item.ItemNumber == Model.ItemNumber)">
+                            @item.Display
+                        </option>
+                    }
+                </select>
+            </label>
+            <label class="ppe-field">
+                <span>Периодичность</span>
+                <select asp-for="Periodicity" class="ppe-input" id="med-exam-periodicity">
+                    @foreach (var option in Model.PeriodicityOptions)
+                    {
+                        <option value="@option" selected="@(option == Model.Periodicity)">@option</option>
+                    }
+                </select>
+            </label>
+            <label class="ppe-field">
+                <span>Тип медосмотра</span>
+                <select asp-for="ExamType" class="ppe-input">
+                    <option value="Предварительный">Предварительный</option>
+                    <option value="Периодический">Периодический</option>
+                    <option value="Предсменный">Предсменный</option>
+                </select>
+            </label>
+            <label class="ppe-field">
+                <span>Дата осмотра</span>
+                <input asp-for="ExamDate" type="date" class="ppe-input" />
+            </label>
+            <label class="ppe-field">
+                <span>Статус</span>
+                <select asp-for="Status" class="ppe-input">
+                    <option value="Запланирован">Запланирован</option>
+                    <option value="Пройден">Пройден</option>
+                    <option value="Не пройден">Не пройден</option>
+                </select>
+            </label>
+            @if (Model.ComputedNextExamDate is { } next)
+            {
+                <p class="hint">Следующий медосмотр: <strong>@next.ToString("dd.MM.yyyy")</strong> (@Model.Periodicity)</p>
+            }
+            <div class="ppe-actions">
+                <button type="submit" class="btn btn-primary">Сохранить</button>
+                @if (!string.IsNullOrWhiteSpace(Model.EditId))
+                {
+                    <button type="submit" class="btn btn-outline" formaction="?handler=Delete" name="deleteId" value="@Model.EditId">Удалить</button>
+                }
+            </div>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+  var item = document.getElementById('med-exam-item');
+  var period = document.getElementById('med-exam-periodicity');
+  if (!item || !period) return;
+  item.addEventListener('change', function () {
+    var opt = item.options[item.selectedIndex];
+    var p = opt && opt.getAttribute('data-periodicity');
+    if (p && Array.from(period.options).some(function (o) { return o.value === p; })) {
+      period.value = p;
+    }
+  });
+});
+</script>
+}

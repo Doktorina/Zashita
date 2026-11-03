@@ -1,0 +1,122 @@
+@page "/Med/ImportConclusions"
+@model Zashita.Web.Pages.Med.ImportConclusionsModel
+@using Zashita.Core.Med
+@{
+    ViewData["Title"] = "Импорт заключений из Word / PDF";
+    ViewData["Subtitle"] = Model.Organization;
+}
+
+<div class="panel ppe-panel">
+  <p class="hint">
+    Загрузите <b>один или несколько</b> файлов <b>.docx</b> или <b>.pdf</b> с заключениями медосмотра
+    (форма «ЗАКЛЮЧЕНИЕ … МЕДИЦИНСКОГО ОСМОТРА»). В одном файле может быть несколько заключений —
+    они разберутся и подставятся в отчёт, как карты в модуле «Риски».
+  </p>
+
+  @if (!string.IsNullOrWhiteSpace(Model.Message))
+  {
+    <p class="@(Model.IsError ? "form-error" : "text-success")">@Model.Message</p>
+  }
+
+  <div class="ppe-toolbar" style="margin-bottom:14px">
+    <a class="btn btn-outline btn-sm" asp-page="/Med/Status">Отчёт по медосмотрам</a>
+  </div>
+
+  <form method="post" asp-page-handler="Upload" enctype="multipart/form-data" class="ppe-form">
+    <label class="ppe-field">
+      <span>Файлы .docx / .pdf (можно несколько)</span>
+      <input type="file"
+             name="uploadFiles"
+             accept=".docx,.pdf,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+             class="ppe-input"
+             multiple />
+    </label>
+    <label class="ppe-field" style="display:flex;align-items:center;gap:8px">
+      <input type="checkbox" name="autoApply" value="true" checked />
+      <span>сразу записать в отчёт (без превью)</span>
+    </label>
+    <label class="ppe-field" style="display:flex;align-items:center;gap:8px">
+      <input type="checkbox" name="overwriteExisting" value="true" />
+      <span>перезаписать уже заполненные строки</span>
+    </label>
+    <div class="ppe-actions">
+      <button type="submit" class="btn btn-primary">Загрузить и вставить</button>
+    </div>
+  </form>
+
+  @if (Model.Draft is { Items.Count: > 0 })
+  {
+    <hr style="margin:22px 0" />
+    <h3 class="ppe-step-title">Превью: @Model.Draft.Items.Count заключений из «@Model.Draft.SourceFileName»</h3>
+
+    <form method="post" asp-page-handler="Apply">
+      <input type="hidden" name="draftId" value="@Model.Draft.Id" />
+
+      <table class="data-grid">
+        <thead>
+          <tr>
+            <th></th>
+            <th>ФИО / организация</th>
+            <th>Должность / пункты</th>
+            <th>Заключение / дата</th>
+            <th>В отчёте</th>
+            <th>Перезаписать</th>
+          </tr>
+        </thead>
+        <tbody>
+        @foreach (var item in Model.Draft.Items)
+        {
+          var c = item.Conclusion;
+          <tr>
+            <td>
+              <input type="checkbox" name="selected" value="@item.ItemKey" @(item.Selected ? "checked" : null) />
+            </td>
+            <td>
+              <div>@(string.IsNullOrWhiteSpace(c.EmployeeName) ? "—" : c.EmployeeName)</div>
+              <div class="hint">@(string.IsNullOrWhiteSpace(c.Organization) ? Model.Organization : c.Organization)</div>
+              @if (!string.IsNullOrWhiteSpace(item.MatchNote))
+              {
+                <div class="hint">@item.MatchNote</div>
+              }
+            </td>
+            <td>
+              <div>@(string.IsNullOrWhiteSpace(c.Profession) ? "—" : c.Profession)</div>
+              <div class="hint">
+                @(c.ItemNumbers.Count == 0
+                    ? "—"
+                    : string.Join(", ", c.ItemNumbers.Select(MedItemNumber.Display)))
+              </div>
+              <div class="hint">@c.ExamType</div>
+            </td>
+            <td>
+              <div>@(string.IsNullOrWhiteSpace(c.Conclusion) ? "—" : c.Conclusion)</div>
+              <div class="hint">@(c.ConclusionDate?.ToString("dd.MM.yyyy") ?? "—")</div>
+            </td>
+            <td>
+              строк: @item.MatchedExamCount
+              @if (item.HasExistingData)
+              {
+                <div class="hint">уже есть даты/заключение</div>
+              }
+            </td>
+            <td>
+              @if (item.HasExistingData)
+              {
+                <input type="checkbox" name="overwrite" value="@item.ItemKey" />
+              }
+              else
+              {
+                <span class="hint">—</span>
+              }
+            </td>
+          </tr>
+        }
+        </tbody>
+      </table>
+
+      <div class="ppe-actions" style="margin-top:14px">
+        <button type="submit" class="btn btn-primary">Записать в отчёт</button>
+      </div>
+    </form>
+  }
+</div>

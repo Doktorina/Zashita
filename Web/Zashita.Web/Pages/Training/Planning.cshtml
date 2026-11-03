@@ -1,0 +1,332 @@
+@page "/Training/Planning"
+@model Zashita.Web.Pages.Training.PlanningModel
+@{
+    ViewData["Title"] = "Планирование обучения, инструктажей, проверок знаний, стажировок";
+    ViewData["Subtitle"] = "Потребности в обучении и формирование заявок";
+}
+
+@if (!string.IsNullOrWhiteSpace(Model.Message))
+{
+  <p class="@(Model.IsError ? "form-error" : "text-success")">@Model.Message</p>
+}
+
+<div class="panel ppe-panel">
+  <div class="training-planning-actions-row">
+    <a class="btn btn-primary training-planning-action-btn" asp-page="/Training/Calendar">Календарь потребностей</a>
+    <a class="btn training-planning-action-btn training-planning-action-application"
+       asp-page="/Training/Applications"
+       asp-route-create="true">Формирование заявки</a>
+    <a class="btn btn-outline btn-sm training-planning-action-secondary" asp-page="/Training/Applications">Заявки на обучение</a>
+  </div>
+
+  <p class="hint">
+    Ниже — сотрудники из <b>отчёта по обучению</b>, которым нужно обучение.
+    Фильтры: просрочено / не проведено / истекает за 30 дней.
+  </p>
+
+  <form method="get" id="planning-select-form" class="training-report-filters training-planning-filters">
+    <input type="hidden" name="needFilter" id="planning-need-filter" value="@Model.NeedFilter" />
+    <div class="training-planning-filter-grid">
+      <label class="training-planning-filter-item">
+        <span>Подразделение</span>
+        <select name="department" class="ppe-input js-auto-filter">
+          <option value="">все</option>
+          @foreach (var item in Model.Departments)
+          {
+            if (string.Equals(Model.Department, item, StringComparison.OrdinalIgnoreCase))
+            {
+              <option value="@item" selected>@item</option>
+            }
+            else
+            {
+              <option value="@item">@item</option>
+            }
+          }
+        </select>
+      </label>
+      <label class="training-planning-filter-item">
+        <span>Раздел</span>
+        <select name="section" class="ppe-input js-auto-filter">
+          <option value="">все</option>
+          @foreach (var item in Model.Sections)
+          {
+            if (string.Equals(Model.Section, item, StringComparison.OrdinalIgnoreCase))
+            {
+              <option value="@item" selected>@item</option>
+            }
+            else
+            {
+              <option value="@item">@item</option>
+            }
+          }
+        </select>
+      </label>
+      <label class="training-planning-filter-item">
+        <span>Поиск</span>
+        <input name="q" value="@Model.Q" class="ppe-input" placeholder="номер, содержание, ФИО" autocomplete="off" />
+      </label>
+    </div>
+
+    @{
+      var nf = string.IsNullOrWhiteSpace(Model.NeedFilter) ? "all" : Model.NeedFilter.Trim();
+      string NeedChip(string key, string label, int count)
+      {
+        var active = string.Equals(nf, key, StringComparison.OrdinalIgnoreCase);
+        return active ? "btn btn-primary btn-sm" : "btn btn-outline btn-sm";
+      }
+    }
+    <div class="training-report-toolbar" style="margin-top:10px;flex-wrap:wrap;gap:6px">
+      <a class="@NeedChip("all", "Все", 0)"
+         asp-page="/Training/Planning"
+         asp-route-department="@Model.Department"
+         asp-route-section="@Model.Section"
+         asp-route-q="@Model.Q"
+         asp-route-needFilter="all"
+         asp-route-dueMonth="@Model.DueMonth"
+         asp-route-planYear="@Model.PlanYear">Все потребности</a>
+      <a class="@NeedChip("overdue", "Просрочено", Model.NeedsOverdueCount)"
+         asp-page="/Training/Planning"
+         asp-route-department="@Model.Department"
+         asp-route-section="@Model.Section"
+         asp-route-q="@Model.Q"
+         asp-route-needFilter="overdue"
+         asp-route-dueMonth="@Model.DueMonth"
+         asp-route-planYear="@Model.PlanYear">Просрочено (@Model.NeedsOverdueCount)</a>
+      <a class="@NeedChip("notconducted", "Не проведено", Model.NeedsNotConductedCount)"
+         asp-page="/Training/Planning"
+         asp-route-department="@Model.Department"
+         asp-route-section="@Model.Section"
+         asp-route-q="@Model.Q"
+         asp-route-needFilter="notconducted"
+         asp-route-dueMonth="@Model.DueMonth"
+         asp-route-planYear="@Model.PlanYear">Не проведено (@Model.NeedsNotConductedCount)</a>
+      <a class="@NeedChip("expiring", "Истекает 30 дн.", Model.NeedsExpiringCount)"
+         asp-page="/Training/Planning"
+         asp-route-department="@Model.Department"
+         asp-route-section="@Model.Section"
+         asp-route-q="@Model.Q"
+         asp-route-needFilter="expiring"
+         asp-route-dueMonth="@Model.DueMonth"
+         asp-route-planYear="@Model.PlanYear">Истекает в течение 30 дней (@Model.NeedsExpiringCount)</a>
+      <a class="@NeedChip("trained", "Обучено", Model.NeedsTrainedCount)"
+         asp-page="/Training/Planning"
+         asp-route-department="@Model.Department"
+         asp-route-section="@Model.Section"
+         asp-route-q="@Model.Q"
+         asp-route-needFilter="trained"
+         asp-route-dueMonth="@Model.DueMonth"
+         asp-route-planYear="@Model.PlanYear">Обучено (@Model.NeedsTrainedCount)</a>
+      <a class="@NeedChip("planned", "Запланировано", Model.NeedsPlannedCount)"
+         asp-page="/Training/Planning"
+         asp-route-department="@Model.Department"
+         asp-route-section="@Model.Section"
+         asp-route-q="@Model.Q"
+         asp-route-needFilter="planned"
+         asp-route-dueMonth="@Model.DueMonth"
+         asp-route-planYear="@Model.PlanYear">Запланировано (@Model.NeedsPlannedCount)</a>
+    </div>
+  </form>
+
+  <form method="post" asp-page-handler="ApplyKinds" id="planning-kinds-form" class="training-planning-kinds-form">
+    <input type="hidden" name="department" value="@Model.Department" />
+    <input type="hidden" name="section" value="@Model.Section" />
+    <input type="hidden" name="q" value="@Model.Q" />
+    <input type="hidden" name="needFilter" value="@Model.NeedFilter" />
+    <input type="hidden" name="dueMonth" value="@Model.DueMonth" />
+    <input type="hidden" name="planYear" value="@Model.PlanYear" />
+    <label class="training-planning-filter-item training-planning-filter-kinds">
+      <span>Вид обучения</span>
+      <partial name="_TrainingKindSectionFilter" model="@(new TrainingKindSectionFilterModel
+      {
+          CheckboxName = "trainingKinds",
+          Groups = Model.TrainingKindGroups,
+          Selected = Model.SelectedTrainingKinds,
+          TreatEmptyAsAll = true
+      })" />
+      <div style="margin-top:8px;display:flex;gap:8px;flex-wrap:wrap">
+        <button type="submit" class="btn btn-primary btn-sm">Применить виды</button>
+        <button type="button" class="btn btn-outline btn-sm" id="planning-kinds-all">Все</button>
+        <button type="button" class="btn btn-outline btn-sm" id="planning-kinds-none">Снять</button>
+      </div>
+      <span class="hint">Отметьте нужные виды, затем нажмите «Применить виды».</span>
+    </label>
+  </form>
+
+  @{
+    var listFilter = string.IsNullOrWhiteSpace(Model.NeedFilter) ? "all" : Model.NeedFilter.Trim();
+    var listTitle = string.Equals(listFilter, "trained", StringComparison.OrdinalIgnoreCase)
+        ? "Обучено (из отчёта)"
+        : string.Equals(listFilter, "planned", StringComparison.OrdinalIgnoreCase)
+            ? "Запланировано (заявки)"
+            : "Требуют обучения (из отчёта)";
+  }
+  <h3 class="ppe-subtitle" style="margin-top:12px">@listTitle</h3>
+  <form method="post" asp-page-handler="CreateFromNeeds" id="planning-needs-form">
+    <div class="training-status-wrap training-status-scroll training-planning-table-shell">
+      <div class="training-report-toolbar training-status-save-bar report-save-bar" style="flex-wrap:wrap;gap:8px">
+        <button type="submit" class="btn btn-primary btn-sm" id="planning-create-from-needs">Сформировать заявку</button>
+        <button type="submit"
+                class="btn btn-outline btn-sm"
+                formaction="?handler=MarkConducted"
+                id="planning-mark-conducted">Отметить проведение</button>
+        <span class="hint">Отметьте сотрудников галочками; «Отметить проведение» откроет форму.</span>
+      </div>
+      <div class="training-needs-wrap">
+      <table class="data-grid training-needs-grid grid-selectable training-sticky-head-grid report-sticky-head-grid">
+      <thead>
+        <tr>
+          <th class="grid-select-col">
+            <input type="checkbox" id="planning-needs-select-all" aria-label="Выбрать всех" />
+          </th>
+          <th>ФИО</th>
+          <th>Подразделение</th>
+          <th>Должность</th>
+          <th>Программа / вид</th>
+          <th>Дата обучения</th>
+          <th>Дата сл. обучения</th>
+          <th>Статус</th>
+        </tr>
+      </thead>
+      <tbody>
+        @if (Model.NeedPersonGroups.Count == 0)
+        {
+          <tr>
+            <td colspan="8" class="hint">Нет записей по текущим фильтрам (или отчёт пуст).</td>
+          </tr>
+        }
+        @foreach (var group in Model.NeedPersonGroups)
+        {
+          var items = group.Items.ToList();
+          for (var i = 0; i < items.Count; i++)
+          {
+            var need = items[i];
+            <tr class="training-needs-person-row" data-person-key="@group.Key">
+              @if (i == 0)
+              {
+                <td rowspan="@items.Count" class="grid-select-col">
+                  <input type="checkbox"
+                         class="grid-row-check planning-needs-check"
+                         name="selectedNeeds"
+                         value="@group.Key"
+                         aria-label="Выбрать @group.Person" />
+                </td>
+                <td rowspan="@items.Count">@group.Person</td>
+                <td rowspan="@items.Count">@group.Department</td>
+                <td rowspan="@items.Count">@group.Profession</td>
+              }
+              <td>
+                @need.Program
+                <input type="hidden" name="conductId" value="@need.ConductId" />
+                <input type="hidden" name="organization" value="@need.Organization" />
+                <input type="hidden" name="department" value="@need.Department" />
+                <input type="hidden" name="profession" value="@need.Profession" />
+                <input type="hidden" name="person" value="@need.Person" />
+                <input type="hidden" name="program" value="@need.Program" />
+              </td>
+              <td>@(string.IsNullOrWhiteSpace(need.TrainingDate) ? "—" : need.TrainingDate)</td>
+              <td>@(string.IsNullOrWhiteSpace(need.NextTrainingDate) ? "—" : need.NextTrainingDate)</td>
+              <td>@need.Status</td>
+            </tr>
+          }
+        }
+      </tbody>
+    </table>
+      </div>
+    </div>
+  </form>
+</div>
+
+@section Scripts {
+  <script>
+    document.addEventListener('DOMContentLoaded', function () {
+      var form = document.getElementById('planning-select-form');
+      if (form) {
+        form.querySelectorAll('.js-auto-filter').forEach(function (el) {
+          el.addEventListener('change', function () { form.submit(); });
+        });
+      }
+
+      var kindsForm = document.getElementById('planning-kinds-form');
+      if (kindsForm) {
+        document.getElementById('planning-kinds-all')?.addEventListener('click', function () {
+          kindsForm.querySelectorAll('.js-kind-filter').forEach(function (el) { el.checked = true; });
+          kindsForm.querySelectorAll('.js-kind-section-toggle').forEach(function (el) { el.checked = true; });
+        });
+        document.getElementById('planning-kinds-none')?.addEventListener('click', function () {
+          kindsForm.querySelectorAll('.js-kind-filter').forEach(function (el) { el.checked = false; });
+          kindsForm.querySelectorAll('.js-kind-section-toggle').forEach(function (el) { el.checked = false; });
+        });
+        kindsForm.querySelectorAll('.js-kind-section-toggle').forEach(function (toggle) {
+          toggle.addEventListener('click', function (event) { event.stopPropagation(); });
+          toggle.addEventListener('change', function () {
+            var details = toggle.closest('details');
+            if (!details) {
+              return;
+            }
+            details.querySelectorAll('.js-kind-filter').forEach(function (el) {
+              el.checked = toggle.checked;
+            });
+          });
+        });
+      }
+
+      var needsForm = document.getElementById('planning-needs-form');
+      var selectAll = document.getElementById('planning-needs-select-all');
+
+      function getNeedChecks() {
+        return needsForm
+          ? Array.prototype.slice.call(needsForm.querySelectorAll('.planning-needs-check'))
+          : [];
+      }
+
+      function syncSelectAllState() {
+        var needChecks = getNeedChecks();
+        if (!selectAll || needChecks.length === 0) {
+          if (selectAll) {
+            selectAll.checked = false;
+            selectAll.indeterminate = false;
+          }
+          return;
+        }
+
+        var checkedCount = needChecks.filter(function (item) { return item.checked; }).length;
+        selectAll.checked = checkedCount > 0 && checkedCount === needChecks.length;
+        selectAll.indeterminate = checkedCount > 0 && checkedCount < needChecks.length;
+      }
+
+      if (selectAll) {
+        selectAll.addEventListener('click', function (event) {
+          event.stopPropagation();
+        });
+        selectAll.addEventListener('change', function (event) {
+          event.stopPropagation();
+          var on = !!selectAll.checked;
+          getNeedChecks().forEach(function (item) {
+            item.checked = on;
+            item.dispatchEvent(new Event('change', { bubbles: true }));
+          });
+          selectAll.indeterminate = false;
+        });
+      }
+
+      if (needsForm) {
+        needsForm.addEventListener('change', function (event) {
+          if (event.target && event.target.classList && event.target.classList.contains('planning-needs-check')) {
+            syncSelectAllState();
+          }
+        });
+        needsForm.addEventListener('submit', function (event) {
+          var submitter = event.submitter;
+          var needsSelection = submitter && (
+            submitter.id === 'planning-create-from-needs'
+            || submitter.id === 'planning-mark-conducted');
+          if (needsSelection && !getNeedChecks().some(function (item) { return item.checked; })) {
+            event.preventDefault();
+            window.alert('Выберите хотя бы одного сотрудника.');
+          }
+        });
+      }
+      syncSelectAllState();
+    });
+  </script>
+}

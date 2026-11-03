@@ -1,0 +1,249 @@
+@page "/Training/Calendar"
+@model Zashita.Web.Pages.Training.CalendarModel
+@using Zashita.Core.Training
+@{
+    ViewData["Title"] = "Календарь потребностей в обучении";
+    ViewData["Subtitle"] = Model.Organization;
+    string[] fullMonths =
+    [
+        "Январь", "Февраль", "Март", "Апрель", "Май", "Июнь",
+        "Июль", "Август", "Сентябрь", "Октябрь", "Ноябрь", "Декабрь"
+    ];
+}
+
+<div class="panel training-report-panel">
+  <div class="training-report-toolbar" style="margin-bottom:8px;flex-wrap:wrap;gap:8px">
+    <a class="btn btn-outline" asp-page="/Training/Planning">← Планирование</a>
+    <a class="btn btn-outline" asp-page="/Training/Status">Отчет по обучению</a>
+  </div>
+
+  <p class="hint">
+    Календарь: сколько человек нужно обучить по каждому виду в каждом месяце.
+    Клик по числу открывает список в <b>Планировании</b> с фильтром по виду и месяцу.
+    Виды отмечаются галочками, затем нажмите «Показать».
+  </p>
+
+  <form method="post" asp-page-handler="ApplyFilters" id="training-calendar-filters">
+    <div class="training-filter-grid" style="margin-bottom:10px">
+      <label class="ppe-field">
+        <span>Год</span>
+        <input type="number" name="planYear" value="@Model.PlanYear" class="ppe-input" min="2000" max="2100" />
+      </label>
+      <label class="ppe-field">
+        <span>Подразделение</span>
+        <select name="department" class="ppe-input">
+          <option value="">все</option>
+          @foreach (var d in Model.Departments)
+          {
+            if (string.Equals(Model.Department, d, StringComparison.OrdinalIgnoreCase))
+            {
+              <option value="@d" selected>@d</option>
+            }
+            else
+            {
+              <option value="@d">@d</option>
+            }
+          }
+        </select>
+      </label>
+      <div class="ppe-field" style="align-self:end">
+        <button type="submit" class="btn btn-primary">Показать</button>
+      </div>
+    </div>
+
+    <label class="training-planning-filter-item training-planning-filter-kinds" style="display:block;margin-bottom:12px">
+      <span>Вид обучения</span>
+      <partial name="_TrainingKindSectionFilter" model="@(new TrainingKindSectionFilterModel
+      {
+          CheckboxName = "kinds",
+          Groups = Model.Matrix.Groups,
+          Selected = Model.Matrix.SelectedPrograms,
+          TreatEmptyAsAll = false
+      })" />
+      <div style="margin-top:8px;display:flex;gap:8px;flex-wrap:wrap">
+        <button type="submit" class="btn btn-primary btn-sm">Применить виды</button>
+        <button type="button" class="btn btn-outline btn-sm" id="kinds-all">Все</button>
+        <button type="button" class="btn btn-outline btn-sm" id="kinds-none">Снять</button>
+      </div>
+      <span class="hint">Отметьте нужные виды, затем нажмите «Применить виды» / «Показать».</span>
+    </label>
+
+    <div class="training-status-wrap" style="overflow:auto">
+      <table class="data-grid training-calendar-grid">
+        <thead>
+          <tr>
+            <th style="min-width:16rem">Виды обучения</th>
+            @for (var m = 0; m < 12; m++)
+            {
+              <th style="text-align:center;min-width:3.2rem">@fullMonths[m]</th>
+            }
+            <th style="text-align:center">Итого</th>
+          </tr>
+          <tr>
+            <th>Программа</th>
+            <th colspan="13" style="text-align:center;font-weight:600">
+              Количество человек которое нужно обучить
+            </th>
+          </tr>
+        </thead>
+        <tbody>
+          @if (Model.Matrix.Rows.Count == 0)
+          {
+            <tr>
+              <td colspan="14" class="hint">Нет данных — выберите виды обучения или проверьте стандарты / отчёт.</td>
+            </tr>
+          }
+          @foreach (var row in Model.Matrix.Rows)
+          {
+            var rowTotal = row.MonthCounts.Sum();
+            <tr>
+              <td>@row.Program</td>
+              @for (var m = 1; m <= 12; m++)
+              {
+                var count = row.MonthCounts[m - 1];
+                <td style="text-align:center">
+                  @if (count > 0)
+                  {
+                    <a class="training-calendar-cell"
+                       asp-page="/Training/Planning"
+                       asp-route-department="@Model.Department"
+                       asp-route-planYear="@Model.PlanYear"
+                       asp-route-dueMonth="@m"
+                       asp-route-trainingKind="@row.Program"
+                       asp-route-needFilter="all"
+                       title="Открыть в планировании">@count</a>
+                  }
+                  else
+                  {
+                    <span class="hint">·</span>
+                  }
+                </td>
+              }
+              <td style="text-align:center"><b>@(rowTotal > 0 ? rowTotal.ToString() : "·")</b></td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  </form>
+
+  @if (!string.IsNullOrWhiteSpace(Model.DrillProgram) && Model.DrillMonth is >= 1 and <= 12)
+  {
+    var monthName = fullMonths[Model.DrillMonth.Value - 1];
+    <div class="panel" style="margin-top:16px;padding:12px" id="calendar-drill">
+      <h3 class="ppe-subtitle" style="margin-top:0">
+        @Model.DrillProgram — @monthName @Model.PlanYear
+        <span class="hint">(человек: @Model.DrillRows.Count)</span>
+      </h3>
+      <table class="data-grid">
+        <thead>
+          <tr>
+            <th>ФИО</th>
+            <th>Подразделение</th>
+            <th>Должность</th>
+            <th>Статус</th>
+            <th>Дата сл. обучения</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          @if (Model.DrillRows.Count == 0)
+          {
+            <tr><td colspan="6" class="hint">Список пуст.</td></tr>
+          }
+          @foreach (var person in Model.DrillRows)
+          {
+            <tr>
+              <td>@person.Person</td>
+              <td>@person.Department</td>
+              <td>@person.Profession</td>
+              <td>@person.Status</td>
+              <td>@(person.NextTrainingDate ?? "—")</td>
+              <td>
+                <a class="btn btn-outline btn-sm"
+                   asp-page="/Training/Applications"
+                   asp-page-handler="FromNeed"
+                   asp-route-person="@person.Person"
+                   asp-route-program="@person.Program"
+                   asp-route-department="@person.Department"
+                   asp-route-profession="@person.Profession">В заявку</a>
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  }
+</div>
+
+<style>
+  .training-calendar-cell {
+    display: inline-block;
+    min-width: 1.6rem;
+    padding: 2px 6px;
+    border-radius: 4px;
+    background: #e8f5e9;
+    color: #1b5e20;
+    text-decoration: none;
+    font-weight: 600;
+  }
+  .training-calendar-cell:hover { background: #c8e6c9; }
+  .training-kind-picker {
+    position: relative;
+  }
+  .training-kind-picker > summary {
+    cursor: pointer;
+    color: #215dc7;
+    font-weight: 600;
+    list-style: none;
+    white-space: nowrap;
+  }
+  .training-kind-picker > summary::-webkit-details-marker { display: none; }
+  .training-kind-picker-body {
+    position: absolute;
+    z-index: 20;
+    left: 0;
+    top: 100%;
+    margin-top: 4px;
+    min-width: 22rem;
+    max-width: min(36rem, 90vw);
+    max-height: 320px;
+    overflow: auto;
+    padding: 12px;
+    background: #fff;
+    border: 1px solid #d0d5dd;
+    border-radius: 8px;
+    box-shadow: 0 8px 24px rgba(16, 24, 40, 0.12);
+    text-align: left;
+  }
+</style>
+
+<script>
+  (function () {
+    var allBtn = document.getElementById('kinds-all');
+    var noneBtn = document.getElementById('kinds-none');
+    var form = document.getElementById('training-calendar-filters');
+    if (!form) {
+      return;
+    }
+    var boxes = form.querySelectorAll('input[name="kinds"]');
+    if (allBtn) allBtn.addEventListener('click', function () {
+      boxes.forEach(function (b) { b.checked = true; });
+      form.querySelectorAll('.js-kind-section-toggle').forEach(function (el) { el.checked = true; });
+    });
+    if (noneBtn) noneBtn.addEventListener('click', function () {
+      boxes.forEach(function (b) { b.checked = false; });
+      form.querySelectorAll('.js-kind-section-toggle').forEach(function (el) { el.checked = false; });
+    });
+    form.querySelectorAll('.js-kind-section-toggle').forEach(function (toggle) {
+      toggle.addEventListener('click', function (event) { event.stopPropagation(); });
+      toggle.addEventListener('change', function () {
+        var details = toggle.closest('details');
+        if (!details) return;
+        details.querySelectorAll('.js-kind-filter').forEach(function (el) {
+          el.checked = toggle.checked;
+        });
+      });
+    });
+  })();
+</script>

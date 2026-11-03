@@ -1,0 +1,1020 @@
+@model Zashita.Web.Pages.Training.StatusModel
+@using Zashita.Core.Employees
+@using Zashita.Core.Training
+
+@if (!string.IsNullOrWhiteSpace(Model.Message))
+{
+  <p class="text-success">@Model.Message</p>
+}
+
+@await Component.InvokeAsync("StaffingOnboardingAlerts", new { organization = Model.Organization, moduleKey = "обучение" })
+
+<div class="panel training-report-panel@(Model.IsArchive ? " training-archive-page" : "")">
+  <div class="training-report-toolbar" style="margin-bottom:8px">
+    <a class="btn btn-outline" href="/module/обучение">Все разделы модуля</a>
+    @if (Model.IsArchive)
+    {
+      <a class="btn btn-outline" asp-page="/Training/Status">Отчет по обучению</a>
+    }
+    else
+    {
+      <a class="btn btn-outline" asp-page="/Training/Archive">Архив обучений</a>
+    }
+  </div>
+  @if (Model.IsArchive)
+  {
+    <p class="hint">
+      Уволенные и данные по прежним должностям (перевод) сохраняются здесь. Работающие сотрудники — в <a asp-page="/Training/Status">отчёте по обучению</a>.
+    </p>
+  }
+
+  <form method="get" class="training-report-filters" id="training-status-filters">
+    @if (Model.ExpandPrograms)
+    {
+      <input type="hidden" name="expandPrograms" value="true" />
+    }
+    <div class="training-filter-grid">
+      <label class="ppe-field" style="grid-column:1 / -1">
+        <span>Поиск сотрудников</span>
+        <input type="search" asp-for="PersonQ" class="ppe-input" placeholder="ФИО…" autocomplete="off" />
+      </label>
+      <label class="ppe-field">
+        <span>Подразделение</span>
+        <select asp-for="Department" class="ppe-input js-auto-filter">
+          <option value="">все</option>
+          @foreach (var item in Model.DepartmentOptions)
+          {
+            <option value="@item">@item</option>
+          }
+        </select>
+      </label>
+      <label class="ppe-field">
+        <span>Тип / статус</span>
+        <select asp-for="TrainingType" class="ppe-input js-auto-filter">
+          <option value="">все</option>
+          @foreach (var item in Model.TrainingTypeOptions)
+          {
+            <option value="@item">@item</option>
+          }
+        </select>
+      </label>
+      <label class="ppe-field">
+        <span>Вид обучения</span>
+        <select asp-for="TrainingKind" class="ppe-input js-auto-filter">
+          <option value="">все</option>
+          @foreach (var item in Model.TrainingKindOptions)
+          {
+            <option value="@item">@item</option>
+          }
+        </select>
+      </label>
+      <label class="ppe-field">
+        <span>Профессия</span>
+        <select asp-for="Profession" class="ppe-input js-auto-filter">
+          <option value="">все</option>
+          @foreach (var item in Model.ProfessionOptions)
+          {
+            <option value="@item">@item</option>
+          }
+        </select>
+      </label>
+      <label class="ppe-field">
+        <span>Движение протокола</span>
+        <select asp-for="ProtocolMovement" class="ppe-input js-auto-filter">
+          <option value="">все</option>
+          @foreach (var item in Model.ProtocolMovementOptions)
+          {
+            <option value="@item">@item</option>
+          }
+        </select>
+      </label>
+      <label class="ppe-field">
+        <span>УПД</span>
+        <select asp-for="UpdStatus" class="ppe-input js-auto-filter">
+          <option value="">все</option>
+          @foreach (var item in Model.UpdStatusOptions)
+          {
+            <option value="@item">@item</option>
+          }
+        </select>
+      </label>
+    </div>
+
+    <div class="training-report-toolbar">
+      <button type="submit" class="btn btn-outline">Найти</button>
+      <a class="btn btn-outline" asp-page="@(Model.IsArchive ? "/Training/Archive" : "/Training/Status")">Сбросить</a>
+    </div>
+  </form>
+
+  <div class="training-status-wrap training-status-scroll">
+    <div class="training-report-toolbar training-status-save-bar report-save-bar">
+      <button type="submit" form="training-status-save" class="btn btn-primary">Сохранить даты, протоколы, комментарии и объекты</button>
+      @if (Model.ExpandPrograms)
+      {
+        <a class="btn btn-outline"
+           id="training-collapse-programs-link"
+           asp-page="@(Model.IsArchive ? "/Training/Archive" : "/Training/Status")"
+           asp-route-selectedOrganization="@Model.SelectedOrganization"
+           asp-route-department="@Model.Department"
+           asp-route-trainingType="@Model.TrainingType"
+           asp-route-trainingKind="@Model.TrainingKind"
+           asp-route-profession="@Model.Profession"
+           asp-route-personQ="@Model.PersonQ"
+           asp-route-protocolMovement="@Model.ProtocolMovement"
+           asp-route-updStatus="@Model.UpdStatus"
+           title="Без строк программ страница открывается быстрее">Свернуть программы</a>
+      }
+      else
+      {
+        <a class="btn btn-outline"
+           id="training-expand-programs"
+           asp-page="@(Model.IsArchive ? "/Training/Archive" : "/Training/Status")"
+           asp-route-expandPrograms="true"
+           asp-route-selectedOrganization="@Model.SelectedOrganization"
+           asp-route-department="@Model.Department"
+           asp-route-trainingType="@Model.TrainingType"
+           asp-route-trainingKind="@Model.TrainingKind"
+           asp-route-profession="@Model.Profession"
+           asp-route-personQ="@Model.PersonQ"
+           asp-route-protocolMovement="@Model.ProtocolMovement"
+           asp-route-updStatus="@Model.UpdStatus"
+           title="Показать все программы сразу (страница станет тяжелее)">Развернуть программы</a>
+        <button type="button" class="btn btn-outline" id="training-collapse-programs" title="Скрыть уже подгруженные программы">Свернуть на экране</button>
+      }
+      <a class="btn btn-outline"
+         asp-page="@(Model.IsArchive ? "/Training/Archive" : "/Training/Status")"
+         asp-page-handler="Export"
+         asp-route-reportDate="@Model.ReportDate.ToString("yyyy-MM-dd")"
+         asp-route-selectedOrganization="@Model.SelectedOrganization"
+         asp-route-department="@Model.Department"
+         asp-route-trainingType="@Model.TrainingType"
+         asp-route-trainingKind="@Model.TrainingKind"
+         asp-route-profession="@Model.Profession"
+         asp-route-personQ="@Model.PersonQ"
+         asp-route-protocolMovement="@Model.ProtocolMovement"
+         asp-route-updStatus="@Model.UpdStatus">Скачать Excel</a>
+      <form method="post"
+            asp-page="@(Model.IsArchive ? "/Training/Archive" : "/Training/Status")"
+            asp-page-handler="ImportSchedule"
+            enctype="multipart/form-data"
+            class="training-schedule-import"
+            id="training-schedule-import">
+        <input type="hidden" asp-for="ReportDate" />
+        <input type="hidden" asp-for="SelectedOrganization" />
+        <input type="hidden" asp-for="Department" />
+        <input type="hidden" asp-for="TrainingType" />
+        <input type="hidden" asp-for="TrainingKind" />
+        <input type="hidden" asp-for="Profession" />
+        <input type="hidden" asp-for="PersonQ" />
+        <input type="hidden" asp-for="ProtocolMovement" />
+        <input type="hidden" asp-for="UpdStatus" />
+        @if (Model.ExpandPrograms)
+        {
+          <input type="hidden" name="expandPrograms" value="true" />
+        }
+        <label class="btn btn-outline training-schedule-import-label"
+               title="@(Model.IsArchive
+                   ? "Импорт в архив для открытой организации. Принимает ту же таблицу, что «Скачать Excel», либо график обучения (как в отчёте)."
+                   : "Импорт для открытой организации. Принимает выгрузку «Скачать Excel» или график обучения.")">
+          Загрузить из Excel
+          <input type="file"
+                 name="scheduleFile"
+                 accept=".xlsx,.xls,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel"
+                 class="training-schedule-import-input"
+                 onchange="if(this.files&&this.files.length&&this.form)this.form.submit()" />
+        </label>
+        <label class="training-schedule-import-opt"
+               title="По умолчанию из Excel берутся только строки без протокола и даты. Включите галочку, чтобы заменить уже введённые данные.">
+          <input type="checkbox" name="overwriteExisting" value="true" />
+          <span>перезаписать уже заполненные</span>
+        </label>
+        <span class="hint training-schedule-import-hint">по умолчанию — только незаполненные</span>
+      </form>
+      <div class="training-format-toolbar" id="training-format-toolbar" title="Кликните или выделите текст в поле (протокол, программа, комментарий, объект), затем Ж или цвет — оформление применяется ко всему полю">
+        <span class="hint">Оформление:</span>
+        <button type="button" class="btn btn-outline js-format-bold" title="Жирный">Ж</button>
+        <button type="button" class="btn btn-outline js-format-color" data-color="#b91c1c" title="Красный" style="color:#b91c1c">А</button>
+        <button type="button" class="btn btn-outline js-format-color" data-color="#1d4ed8" title="Синий" style="color:#1d4ed8">А</button>
+        <button type="button" class="btn btn-outline js-format-color" data-color="#15803d" title="Зелёный" style="color:#15803d">А</button>
+        <button type="button" class="btn btn-outline js-format-color" data-color="#a16207" title="Коричневый" style="color:#a16207">А</button>
+        <button type="button" class="btn btn-outline js-format-reset" title="Сбросить оформление">Сброс</button>
+      </div>
+      <span class="hint" title="Людей = штат 1С (человек×компания), как в медосмотрах/рисках. Строк = программы обучения.">Людей: @Model.PeopleCount · строк: @Model.Rows.Count</span>
+      @if (Model.StandardOptions.Count == 0)
+      {
+        <span class="hint">Нет стандартов —
+          <a asp-page="/Training/Standards">создайте стандарт обучения</a>
+          (программы из «Виды обучения»).
+        </span>
+      }
+    </div>
+
+    <form method="post" asp-page-handler="Save" id="training-status-save">
+      <input type="hidden" asp-for="ReportDate" />
+      @* Имена filter* — не совпадать с полями строк (department/profession/…), иначе массивы сдвигаются *@
+      <input type="hidden" name="filterSelectedOrganization" value="@Model.SelectedOrganization" />
+      <input type="hidden" name="filterDepartment" value="@Model.Department" />
+      <input type="hidden" name="filterTrainingType" value="@Model.TrainingType" />
+      <input type="hidden" name="filterTrainingKind" value="@Model.TrainingKind" />
+      <input type="hidden" name="filterProfession" value="@Model.Profession" />
+      <input type="hidden" name="filterPersonQ" value="@Model.PersonQ" />
+      <input type="hidden" name="filterProtocolMovement" value="@Model.ProtocolMovement" />
+      <input type="hidden" name="filterUpdStatus" value="@Model.UpdStatus" />
+      @if (Model.ExpandPrograms)
+      {
+        <input type="hidden" name="expandPrograms" value="true" />
+      }
+    </form>
+
+    <div class="training-status-table-hscroll">
+    <table class="data-grid training-status-grid training-catalog-grid training-sticky-head-grid" id="training-status-grid">
+      <colgroup>
+        <col class="ts-col-tree" />
+        <col class="ts-col-period" />
+        <col class="ts-col-protocol" />
+        <col class="ts-col-date" />
+        <col class="ts-col-next" />
+        <col class="ts-col-move" />
+        <col class="ts-col-upd" />
+        <col class="ts-col-comment" />
+        <col class="ts-col-status" />
+      </colgroup>
+      <thead>
+        <tr>
+          <th class="col-tree">Структура / Программа</th>
+          <th>Периодичность</th>
+          <th>Номер протокола</th>
+          <th>Дата обучения</th>
+          <th>Дата следующего</th>
+          <th>Движение протокола</th>
+          <th>УПД</th>
+          <th>Комментарий</th>
+          <th>Статус</th>
+        </tr>
+      </thead>
+      <tbody id="training-status-body">
+        @if (Model.TreeLines.Count == 0)
+        {
+          <tr>
+            <td colspan="9" class="hint">
+              @(Model.IsArchive
+                  ? "Нет уволенных сотрудников с данными об обучении для выбранной организации."
+                  : "Нет сотрудников или стандартов обучения для выбранной организации.")
+            </td>
+          </tr>
+        }
+        @{
+          var saveCounter = new Zashita.Web.Pages.Training.TrainingSaveIndexCounter();
+          var programBatch = new List<Zashita.Web.Pages.Training.TrainingStatusTreeLine>();
+        }
+        @foreach (var line in Model.TreeLines)
+        {
+          if (line.IsGroup)
+          {
+            if (programBatch.Count > 0)
+            {
+              var flushBatch = programBatch.ToList();
+              programBatch.Clear();
+              @await Html.PartialAsync("_TrainingStatusProgramRows", new Zashita.Web.Pages.Training.TrainingProgramRowsPartialModel
+              {
+                Lines = flushBatch,
+                ProtocolMovementOptions = Model.ProtocolMovementOptions,
+                UpdStatusOptions = Model.UpdStatusOptions,
+                SaveIndex = saveCounter
+              })
+            }
+            @if (line.IsPerson && Model.IsArchive)
+            {
+              var stdFormId = "std-" + line.Id;
+              <tr class="training-tree-row training-tree-folder training-tree-group training-tree-person training-archive-person-header level-@line.Level"
+                  data-id="@line.Id"
+                  data-parent-id="@(line.ParentId ?? "")"
+                  data-is-group="true"
+                  data-depth="@line.Level"
+                  data-programs-lazy="@(Model.IncludeProgramRows ? "0" : "1")">
+                <td colspan="6" class="training-archive-person-card-cell">
+                  <div class="training-archive-person-card">
+                    <button type="button" class="training-tree-toggle" aria-expanded="false" title="Свернуть / развернуть">
+                      <span class="training-tree-caret">▶</span>
+                    </button>
+                    <div class="training-archive-person-card-grid">
+                      <div class="training-archive-person-card-item">
+                        <div class="training-archive-person-caption">Фамилия Имя Отчество</div>
+                        <div class="training-archive-person-value">@line.Label</div>
+                      </div>
+                      <div class="training-archive-person-card-item">
+                        <div class="training-archive-person-caption">Должность</div>
+                        <div class="training-archive-person-value">@(string.IsNullOrWhiteSpace(line.Profession) ? "—" : line.Profession)</div>
+                      </div>
+                      <div class="training-archive-person-card-item training-archive-dismissal">
+                        @if (line.IsTransferSnapshot)
+                        {
+                          <div class="training-archive-person-caption">«Перевод» — дата перевода</div>
+                        }
+                        else
+                        {
+                          <div class="training-archive-person-caption">«Увольнение» — дата увольнения</div>
+                        }
+                        <div class="training-archive-person-value">@(line.DismissalDate?.ToString("dd.MM.yyyy") ?? "—")</div>
+                      </div>
+                    </div>
+                  </div>
+                </td>
+                <td colspan="3">
+                  <form method="post" asp-page-handler="SaveStandard" id="@stdFormId" class="training-standard-pick">
+                    <input type="hidden" name="organization" value="@line.Organization" />
+                    <input type="hidden" name="person" value="@line.Label" />
+                    <input type="hidden" name="profession" value="@line.Profession" />
+                    <input type="hidden" name="reportDate" value="@Model.ReportDate.ToString("yyyy-MM-dd")" />
+                    <input type="hidden" name="department" value="@Model.Department" />
+                    <input type="hidden" name="trainingType" value="@Model.TrainingType" />
+                    <input type="hidden" name="trainingKind" value="@Model.TrainingKind" />
+                    <input type="hidden" name="professionFilter" value="@Model.Profession" />
+                    <input type="hidden" name="selectedOrganization" value="@Model.SelectedOrganization" />
+                    <input type="hidden" name="personQ" value="@Model.PersonQ" />
+                    <input type="hidden" name="protocolMovement" value="@Model.ProtocolMovement" />
+                    <input type="hidden" name="updStatus" value="@Model.UpdStatus" />
+                    @if (Model.ExpandPrograms)
+                    {
+                      <input type="hidden" name="expandPrograms" value="true" />
+                    }
+                  </form>
+                  <div class="training-person-extras training-archive-person-extras">
+                  <label class="training-archive-standard-label">
+                    <span class="training-archive-person-caption">Стандарт обучения</span>
+                      <select form="@stdFormId" name="standardId" class="ppe-input js-standard-select training-person-standard">
+                      <option value="" selected="@(string.IsNullOrWhiteSpace(line.StandardId))">— без стандарта —</option>
+                      @{
+                          var orgStandards = Model.StandardsForOrg(line.Organization);
+                      }
+                      @foreach (var std in orgStandards)
+                      {
+                        var label = string.IsNullOrWhiteSpace(std.Profession) && (std.Professions is null || std.Professions.Count == 0)
+                          ? std.Name
+                          : $"{std.Name} ({string.Join(", ", std.AllProfessions)})";
+                        if (string.Equals(std.Id, line.StandardId, StringComparison.Ordinal))
+                        {
+                          <option value="@std.Id" selected>@label</option>
+                        }
+                        else
+                        {
+                          <option value="@std.Id">@label</option>
+                        }
+                      }
+                    </select>
+                  </label>
+                    <input type="hidden" form="training-status-save" name="personMetaOrg" value="@line.Organization" />
+                    <input type="hidden" form="training-status-save" name="personMetaPerson" value="@line.Label" />
+                    <input type="hidden" form="training-status-save" name="personMetaProfession" value="@line.Profession" />
+                    <input type="text"
+                           form="training-status-save"
+                           name="personObjectNote"
+                           class="ppe-input training-person-object"
+                           placeholder="объект"
+                           value="@line.ObjectNote"
+                           autocomplete="off" />
+                    <label class="training-person-flag">
+                      <input type="hidden" form="training-status-save" name="personJournal" value="@(line.Journal ? "1" : "0")" class="js-person-flag-val" />
+                      <input type="checkbox" class="js-person-flag" @(line.Journal ? "checked" : null) />
+                      <span>Журнал</span>
+                    </label>
+                    <label class="training-person-flag">
+                      <input type="hidden" form="training-status-save" name="personPractice" value="@(line.Practice ? "1" : "0")" class="js-person-flag-val" />
+                      <input type="checkbox" class="js-person-flag" @(line.Practice ? "checked" : null) />
+                      <span>Практика</span>
+                    </label>
+                  </div>
+                </td>
+              </tr>
+            }
+            else
+            {
+            <tr class="training-tree-row training-tree-folder training-tree-group @(line.IsPerson ? "" : "training-tree-open") level-@line.Level @(line.IsPerson && Model.HrStatusByName.TryGetValue(line.Label, out var thr) && EmployeeHrStatus.IsAbsence(thr) ? "emp-absence-row" : "") @(line.IsPerson && Model.IsArchive ? "emp-dismissed-row" : "") @(line.IsPerson ? "training-tree-person" : "")"
+                data-id="@line.Id"
+                data-parent-id="@(line.ParentId ?? "")"
+                data-is-group="true"
+                data-depth="@line.Level"
+                data-programs-lazy="@(line.IsPerson && !Model.IncludeProgramRows ? "1" : "0")">
+              @if (line.IsPerson)
+              {
+              <td class="col-tree">
+                <div class="training-tree-name" style="--tree-depth:@line.Level">
+                  <button type="button" class="training-tree-toggle" aria-expanded="false" title="Свернуть / развернуть">
+                    <span class="training-tree-caret">▶</span>
+                  </button>
+                  <span class="training-tree-label">@line.Label</span>
+                  @{
+                    var hr = Model.HrStatusByName.TryGetValue(line.Label, out var hs) ? hs : "";
+                    if (!string.IsNullOrWhiteSpace(hr))
+                    {
+                      <span class="@EmployeeHrStatus.CssClass(hr)" style="margin-left:0.4rem">@hr</span>
+                    }
+                    else if (Model.IsArchive)
+                    {
+                      <span class="emp-hr-status" style="margin-left:0.4rem">Увольнение</span>
+                    }
+                  }
+                </div>
+              </td>
+              var stdFormId = "std-" + line.Id;
+                <td colspan="8" class="training-status-standard-cell">
+                  <form method="post" asp-page-handler="SaveStandard" id="@stdFormId" class="training-standard-pick">
+                    <input type="hidden" name="organization" value="@line.Organization" />
+                    <input type="hidden" name="person" value="@line.Label" />
+                    <input type="hidden" name="profession" value="@line.Profession" />
+                    <input type="hidden" name="reportDate" value="@Model.ReportDate.ToString("yyyy-MM-dd")" />
+                    <input type="hidden" name="department" value="@Model.Department" />
+                    <input type="hidden" name="trainingType" value="@Model.TrainingType" />
+                    <input type="hidden" name="trainingKind" value="@Model.TrainingKind" />
+                    <input type="hidden" name="professionFilter" value="@Model.Profession" />
+                    <input type="hidden" name="selectedOrganization" value="@Model.SelectedOrganization" />
+                    <input type="hidden" name="personQ" value="@Model.PersonQ" />
+                    <input type="hidden" name="protocolMovement" value="@Model.ProtocolMovement" />
+                    <input type="hidden" name="updStatus" value="@Model.UpdStatus" />
+                    @if (Model.ExpandPrograms)
+                    {
+                      <input type="hidden" name="expandPrograms" value="true" />
+                    }
+                  </form>
+                  <div class="training-person-extras">
+                    <select form="@stdFormId" name="standardId" class="ppe-input js-standard-select training-person-standard">
+                    <option value="" selected="@(string.IsNullOrWhiteSpace(line.StandardId))">— без стандарта —</option>
+                    @{
+                        var orgStandards = Model.StandardsForOrg(line.Organization);
+                    }
+                    @foreach (var std in orgStandards)
+                    {
+                      var label = string.IsNullOrWhiteSpace(std.Profession) && (std.Professions is null || std.Professions.Count == 0)
+                        ? std.Name
+                        : $"{std.Name} ({string.Join(", ", std.AllProfessions)})";
+                      if (string.Equals(std.Id, line.StandardId, StringComparison.Ordinal))
+                      {
+                        <option value="@std.Id" selected>@label</option>
+                      }
+                      else
+                      {
+                        <option value="@std.Id">@label</option>
+                      }
+                    }
+                  </select>
+                    <input type="hidden" form="training-status-save" name="personMetaOrg" value="@line.Organization" />
+                    <input type="hidden" form="training-status-save" name="personMetaPerson" value="@line.Label" />
+                    <input type="hidden" form="training-status-save" name="personMetaProfession" value="@line.Profession" />
+                    <input type="text"
+                           form="training-status-save"
+                           name="personObjectNote"
+                           class="ppe-input training-person-object"
+                           placeholder="объект"
+                           value="@line.ObjectNote"
+                           autocomplete="off" />
+                    <label class="training-person-flag">
+                      <input type="hidden" form="training-status-save" name="personJournal" value="@(line.Journal ? "1" : "0")" class="js-person-flag-val" />
+                      <input type="checkbox" class="js-person-flag" @(line.Journal ? "checked" : null) />
+                      <span>Журнал</span>
+                    </label>
+                    <label class="training-person-flag">
+                      <input type="hidden" form="training-status-save" name="personPractice" value="@(line.Practice ? "1" : "0")" class="js-person-flag-val" />
+                      <input type="checkbox" class="js-person-flag" @(line.Practice ? "checked" : null) />
+                      <span>Практика</span>
+                    </label>
+                  </div>
+                </td>
+              }
+              else
+              {
+              <td class="col-tree" colspan="9">
+                <div class="training-tree-name" style="--tree-depth:@line.Level">
+                  <button type="button" class="training-tree-toggle" aria-expanded="true" title="Свернуть / развернуть">
+                    <span class="training-tree-caret">▼</span>
+                  </button>
+                  <span class="training-tree-label">@line.Label</span>
+                </div>
+              </td>
+              }
+            </tr>
+            }
+          }
+          else if (line.Row is not null && Model.IncludeProgramRows)
+          {
+            programBatch.Add(line);
+          }
+        }
+        @if (programBatch.Count > 0)
+        {
+          @await Html.PartialAsync("_TrainingStatusProgramRows", new Zashita.Web.Pages.Training.TrainingProgramRowsPartialModel
+          {
+            Lines = programBatch,
+            ProtocolMovementOptions = Model.ProtocolMovementOptions,
+            UpdStatusOptions = Model.UpdStatusOptions,
+            SaveIndex = saveCounter
+          })
+        }
+      </tbody>
+    </table>
+    <div id="training-status-save-index" hidden
+         data-next-index="@saveCounter.Value"
+         data-page="@(Model.IsArchive ? "/Training/Archive" : "/Training/Status")"
+         data-org="@(Model.SelectedOrganization ?? "")"
+         data-department="@(Model.Department ?? "")"
+         data-training-type="@(Model.TrainingType ?? "")"
+         data-training-kind="@(Model.TrainingKind ?? "")"
+         data-profession="@(Model.Profession ?? "")"
+         data-person-q="@(Model.PersonQ ?? "")"
+         data-protocol-movement="@(Model.ProtocolMovement ?? "")"
+         data-upd-status="@(Model.UpdStatus ?? "")"
+         data-include-programs="@(Model.IncludeProgramRows ? "1" : "0")"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+  (function () {
+    var scrollKey = 'trainingStatusScroll';
+    var expandPrefKey = 'zashita.training.expandPrograms';
+    var expandPrefArchiveKey = 'zashita.training.archive.expandPrograms';
+    var isArchivePage = @(Model.IsArchive ? "true" : "false");
+    var expandPrefStorageKey = isArchivePage ? expandPrefArchiveKey : expandPrefKey;
+    var serverExpandPrograms = @(Model.ExpandPrograms ? "true" : "false");
+    var pendingRestore = null;
+
+    function readExpandPref() {
+      try { return localStorage.getItem(expandPrefStorageKey) === '1'; }
+      catch (e) { return false; }
+    }
+
+    function writeExpandPref(on) {
+      try {
+        if (on) localStorage.setItem(expandPrefStorageKey, '1');
+        else localStorage.setItem(expandPrefStorageKey, '0');
+      } catch (e) { /* ignore */ }
+    }
+
+    // Вернулись в отчёт / F5 без ?expandPrograms= — восстановить «развёрнуто».
+    if (!serverExpandPrograms && readExpandPref()) {
+      var u = new URL(window.location.href);
+      if (u.searchParams.get('expandPrograms') !== 'true') {
+        u.searchParams.set('expandPrograms', 'true');
+        window.location.replace(u.pathname + u.search + u.hash);
+        return;
+      }
+    }
+    if (serverExpandPrograms) {
+      writeExpandPref(true);
+    }
+
+    var expandLink = document.getElementById('training-expand-programs');
+    if (expandLink) {
+      expandLink.addEventListener('click', function () { writeExpandPref(true); });
+    }
+    var collapseLink = document.getElementById('training-collapse-programs-link');
+    if (collapseLink) {
+      collapseLink.addEventListener('click', function () { writeExpandPref(false); });
+    }
+
+    function getScrollWrap() {
+      return document.querySelector('.training-status-wrap.training-status-scroll')
+        || document.querySelector('.training-status-wrap');
+    }
+
+    function currentScrollState(extra) {
+      var wrap = getScrollWrap();
+      var state = {
+        top: wrap ? wrap.scrollTop : (window.scrollY || window.pageYOffset || 0),
+        left: wrap ? wrap.scrollLeft : 0,
+        winY: window.scrollY || window.pageYOffset || 0,
+        at: Date.now()
+      };
+      if (extra) {
+        Object.keys(extra).forEach(function (k) { state[k] = extra[k]; });
+      }
+      return state;
+    }
+
+    function saveScroll(extra) {
+      try {
+        var wrap = getScrollWrap();
+        var active = document.activeElement;
+        var rowId = '';
+        var personKey = '';
+        if (active && active.closest) {
+          var row = active.closest('tr[data-id]');
+          if (row) rowId = row.getAttribute('data-id') || '';
+          var personRow = active.closest('tr.training-tree-person, tr.training-tree-folder');
+          if (personRow) {
+            personKey = (personRow.getAttribute('data-id') || '')
+              || (personRow.getAttribute('data-person') || '');
+          }
+        }
+        sessionStorage.setItem(scrollKey, JSON.stringify(currentScrollState({
+          rowId: rowId || (extra && extra.rowId) || '',
+          personKey: personKey || (extra && extra.personKey) || '',
+          top: wrap ? wrap.scrollTop : (window.scrollY || 0),
+          left: wrap ? wrap.scrollLeft : 0
+        })));
+      } catch (e) { /* ignore */ }
+    }
+
+    function loadPendingRestore() {
+      try {
+        var raw = sessionStorage.getItem(scrollKey);
+        if (!raw) return;
+        var saved = JSON.parse(raw);
+        sessionStorage.removeItem(scrollKey);
+        if (!saved || typeof saved.top !== 'number') return;
+        if (saved.at && Date.now() - saved.at > 180000) return;
+        pendingRestore = saved;
+      } catch (e) { pendingRestore = null; }
+    }
+
+    function restoreScroll() {
+      var saved = pendingRestore;
+      if (!saved) return;
+      var wrap = getScrollWrap();
+
+      function apply() {
+        if (saved.rowId) {
+          var safeId = String(saved.rowId).replace(/\\/g, '\\\\').replace(/"/g, '\\"');
+          var row = document.querySelector('#training-status-grid tr[data-id="' + safeId + '"]');
+          if (row && wrap) {
+            var y = row.getBoundingClientRect().top - wrap.getBoundingClientRect().top + wrap.scrollTop - 72;
+            wrap.scrollTop = Math.max(0, y);
+            if (typeof saved.left === 'number') wrap.scrollLeft = saved.left;
+            if (typeof saved.winY === 'number') window.scrollTo(0, saved.winY);
+            return;
+          }
+        }
+        if (saved.personKey) {
+          var safePerson = String(saved.personKey).replace(/\\/g, '\\\\').replace(/"/g, '\\"');
+          var personRow = document.querySelector('#training-status-grid tr[data-id="' + safePerson + '"]');
+          if (personRow && wrap) {
+            var py = personRow.getBoundingClientRect().top - wrap.getBoundingClientRect().top + wrap.scrollTop - 72;
+            wrap.scrollTop = Math.max(0, py);
+            if (typeof saved.left === 'number') wrap.scrollLeft = saved.left;
+            if (typeof saved.winY === 'number') window.scrollTo(0, saved.winY);
+            return;
+          }
+        }
+        if (wrap) {
+          wrap.scrollTop = saved.top;
+          if (typeof saved.left === 'number') wrap.scrollLeft = saved.left;
+        }
+        if (typeof saved.winY === 'number') {
+          window.scrollTo(0, saved.winY);
+        } else if (!wrap) {
+          window.scrollTo(0, saved.top);
+        }
+      }
+
+      apply();
+      requestAnimationFrame(function () {
+        apply();
+        setTimeout(apply, 50);
+        setTimeout(apply, 200);
+        setTimeout(apply, 500);
+      });
+    }
+
+    loadPendingRestore();
+
+    var saveForm = document.getElementById('training-status-save');
+    if (saveForm) {
+      saveForm.addEventListener('submit', function () { saveScroll(); });
+    }
+    document.querySelectorAll('button[form="training-status-save"], button[type="submit"][form="training-status-save"]').forEach(function (btn) {
+      btn.addEventListener('click', function () { saveScroll(); });
+    });
+
+    // Периодически запоминаем позицию — на случай POST без submit-handler (стандарт и т.п.).
+    var scrollTimer = null;
+    function rememberScrollSoon() {
+      if (scrollTimer) clearTimeout(scrollTimer);
+      scrollTimer = setTimeout(function () { saveScroll(); }, 120);
+    }
+    var wrapEl = getScrollWrap();
+    if (wrapEl) {
+      wrapEl.addEventListener('scroll', rememberScrollSoon, { passive: true });
+    }
+    window.addEventListener('scroll', rememberScrollSoon, { passive: true });
+
+    restoreScroll();
+
+    var form = document.getElementById('training-status-filters');
+    if (form) {
+      form.querySelectorAll('.js-auto-filter').forEach(function (el) {
+        el.addEventListener('change', function () {
+          saveScroll();
+          form.submit();
+        });
+      });
+    }
+
+    document.querySelectorAll('.js-standard-select').forEach(function (sel) {
+      sel.addEventListener('change', function () {
+        var row = sel.closest('tr[data-id]');
+        saveScroll({
+          rowId: row ? (row.getAttribute('data-id') || '') : '',
+          personKey: row ? (row.getAttribute('data-id') || '') : ''
+        });
+        if (sel.form) sel.form.submit();
+      });
+    });
+
+    document.querySelectorAll('.js-person-flag').forEach(function (cb) {
+      cb.addEventListener('change', function () {
+        var label = cb.closest('.training-person-flag');
+        var hidden = label ? label.querySelector('.js-person-flag-val') : null;
+        if (hidden) hidden.value = cb.checked ? '1' : '0';
+      });
+    });
+
+    var treeBody = document.getElementById('training-status-body');
+    if (!treeBody) return;
+
+    function getRows() {
+      return Array.prototype.slice.call(treeBody.querySelectorAll('.training-tree-row'));
+    }
+
+    function getChildren(folderRow) {
+      var id = folderRow.getAttribute('data-id') || '';
+      return getRows().filter(function (row) {
+        return (row.getAttribute('data-parent-id') || '') === id;
+      });
+    }
+
+    function collapseDescendants(row) {
+      getChildren(row).forEach(function (child) {
+        child.classList.add('training-tree-hidden');
+        if (child.getAttribute('data-is-group') === 'true') {
+          child.classList.remove('training-tree-open');
+          var btn = child.querySelector('.training-tree-toggle');
+          if (btn) {
+            btn.setAttribute('aria-expanded', 'false');
+            var caret = btn.querySelector('.training-tree-caret');
+            if (caret) caret.textContent = '▶';
+          }
+          collapseDescendants(child);
+        }
+      });
+    }
+
+    function expandChildren(row) {
+      getChildren(row).forEach(function (child) {
+        child.classList.remove('training-tree-hidden');
+      });
+    }
+
+    var meta = document.getElementById('training-status-save-index');
+    var nextSaveIndex = meta ? (parseInt(meta.getAttribute('data-next-index') || '0', 10) || 0) : 0;
+    var includePrograms = meta && meta.getAttribute('data-include-programs') === '1';
+
+    function setFolderOpen(row, open) {
+      if (!row || row.getAttribute('data-is-group') !== 'true') return;
+      row.classList.toggle('training-tree-open', open);
+      var btn = row.querySelector('.training-tree-toggle');
+      if (btn) {
+        btn.setAttribute('aria-expanded', open ? 'true' : 'false');
+        var caret = btn.querySelector('.training-tree-caret');
+        if (caret) caret.textContent = open ? '▼' : '▶';
+      }
+    }
+
+    function isPersonRow(row) {
+      return row.classList.contains('training-tree-person')
+        || row.classList.contains('training-archive-person-header')
+        || !!row.querySelector('.training-person-extras, .training-standard-pick');
+    }
+
+    function initTreeFast() {
+      getRows().forEach(function (row) {
+        var isGroup = row.getAttribute('data-is-group') === 'true';
+        var isData = row.classList.contains('training-tree-data');
+        if (isData) {
+          row.classList.add('training-tree-hidden');
+          return;
+        }
+        row.classList.remove('training-tree-hidden');
+        if (!isGroup) return;
+        if (isPersonRow(row)) {
+          setFolderOpen(row, false);
+        } else {
+          setFolderOpen(row, true);
+        }
+      });
+    }
+
+    function expandAllPrograms() {
+      getRows().forEach(function (row) {
+        row.classList.remove('training-tree-hidden');
+        if (row.getAttribute('data-is-group') === 'true') {
+          setFolderOpen(row, true);
+        }
+      });
+    }
+
+    function collapseAllPrograms() {
+      initTreeFast();
+    }
+
+    function bindProgramRowHandlers(root) {
+      if (!root) return;
+      root.querySelectorAll('.js-toggle-not-training').forEach(function (btn) {
+        if (btn.getAttribute('data-bound') === '1') return;
+        btn.setAttribute('data-bound', '1');
+        btn.addEventListener('click', function () {
+          var row = btn.closest('tr');
+          if (!row) return;
+          var hidden = row.querySelector('.js-not-training');
+          var label = row.querySelector('.js-training-status-label');
+          if (!hidden) return;
+          var on = hidden.value !== '1';
+          hidden.value = on ? '1' : '0';
+          btn.classList.toggle('is-active', on);
+          btn.textContent = on ? 'Обучаем' : 'Не обучаем';
+          btn.title = on ? 'Вернуть в обучение' : 'Не обучаем по этой программе';
+          if (label) label.textContent = on ? 'Не обучаем' : '—';
+          row.classList.remove(
+            'traffic-green', 'traffic-yellow', 'traffic-red',
+            'traffic-pink', 'traffic-blue', 'traffic-orange', 'traffic-grey');
+          if (on) row.classList.add('traffic-grey');
+        });
+      });
+    }
+
+    function buildPersonProgramsUrl(personId, startIndex) {
+      if (!meta) return '';
+      var page = meta.getAttribute('data-page') || '/Training/Status';
+      var u = new URL(page, window.location.origin);
+      u.searchParams.set('handler', 'PersonPrograms');
+      u.searchParams.set('personId', personId);
+      u.searchParams.set('startIndex', String(startIndex));
+      function put(key, attr) {
+        var v = meta.getAttribute(attr) || '';
+        if (v) u.searchParams.set(key, v);
+      }
+      put('selectedOrganization', 'data-org');
+      put('department', 'data-department');
+      put('trainingType', 'data-training-type');
+      put('trainingKind', 'data-training-kind');
+      put('profession', 'data-profession');
+      put('personQ', 'data-person-q');
+      put('protocolMovement', 'data-protocol-movement');
+      put('updStatus', 'data-upd-status');
+      return u.pathname + u.search;
+    }
+
+    function loadPersonPrograms(personRow) {
+      if (!personRow || personRow.getAttribute('data-programs-lazy') !== '1') {
+        return Promise.resolve(false);
+      }
+      if (personRow.getAttribute('data-programs-loaded') === '1') {
+        return Promise.resolve(true);
+      }
+      if (personRow.getAttribute('data-programs-loading') === '1') {
+        return Promise.resolve(false);
+      }
+      var personId = personRow.getAttribute('data-id') || '';
+      if (!personId) return Promise.resolve(false);
+
+      personRow.setAttribute('data-programs-loading', '1');
+      var url = buildPersonProgramsUrl(personId, nextSaveIndex);
+      return fetch(url, { credentials: 'same-origin', headers: { 'Accept': 'text/html' } })
+        .then(function (r) { return r.ok ? r.text() : ''; })
+        .then(function (html) {
+          personRow.removeAttribute('data-programs-loading');
+          if (!html || !html.trim()) {
+            personRow.setAttribute('data-programs-loaded', '1');
+            personRow.setAttribute('data-programs-lazy', '0');
+            return true;
+          }
+          var tmp = document.createElement('tbody');
+          tmp.innerHTML = html.trim();
+          var frag = document.createDocumentFragment();
+          var saved = 0;
+          while (tmp.firstChild) {
+            var node = tmp.firstChild;
+            if (node.nodeType === 1 && node.querySelector) {
+              saved += node.querySelectorAll('input[name^="conductId["]').length;
+            }
+            frag.appendChild(node);
+          }
+          personRow.parentNode.insertBefore(frag, personRow.nextSibling);
+          nextSaveIndex += saved;
+          if (meta) meta.setAttribute('data-next-index', String(nextSaveIndex));
+          personRow.setAttribute('data-programs-loaded', '1');
+          personRow.setAttribute('data-programs-lazy', '0');
+          bindProgramRowHandlers(treeBody);
+          return true;
+        })
+        .catch(function () {
+          personRow.removeAttribute('data-programs-loading');
+          return false;
+        });
+    }
+
+    initTreeFast();
+    // Узкий поиск / фильтр — программы уже в HTML, сразу раскрыть.
+    var personQ = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.PersonQ ?? ""));
+    if (includePrograms || (personQ && String(personQ).trim().length >= 2)) {
+      expandAllPrograms();
+    }
+    restoreScroll();
+    bindProgramRowHandlers(treeBody);
+
+    var collapseBtn = document.getElementById('training-collapse-programs');
+    if (collapseBtn) collapseBtn.addEventListener('click', function () { collapseAllPrograms(); });
+
+    treeBody.addEventListener('click', function (event) {
+      var toggle = event.target.closest('.training-tree-toggle');
+      if (!toggle) return;
+      event.preventDefault();
+      event.stopPropagation();
+      var row = toggle.closest('.training-tree-row');
+      if (!row) return;
+      var willOpen = !row.classList.contains('training-tree-open');
+      if (!willOpen) {
+        setFolderOpen(row, false);
+        collapseDescendants(row);
+        return;
+      }
+
+      // Сразу переключаем треугольник — иначе при медленном AJAX кажется, что клик не работает.
+      setFolderOpen(row, true);
+
+      function finishOpen() {
+        setFolderOpen(row, true);
+        expandChildren(row);
+      }
+
+      if (isPersonRow(row) && row.getAttribute('data-programs-lazy') === '1') {
+        loadPersonPrograms(row).then(function (ok) {
+          if (!ok && row.getAttribute('data-programs-loaded') !== '1') {
+            setFolderOpen(row, false);
+            return;
+          }
+          finishOpen();
+        });
+      } else {
+        finishOpen();
+      }
+    });
+
+    function resizeAutoTextarea(el) {
+      if (!el) return;
+      el.style.height = 'auto';
+      el.style.height = Math.max(el.scrollHeight, 36) + 'px';
+    }
+
+    function resizeVisibleAutoTextareas() {
+      var nodes = treeBody.querySelectorAll('textarea.js-auto-textarea');
+      for (var i = 0; i < nodes.length; i++) {
+        var el = nodes[i];
+        // Пустые однострочные не трогаем — быстрее на больших отчётах.
+        if (!el.value || el.value.length < 12) {
+          continue;
+        }
+        resizeAutoTextarea(el);
+      }
+    }
+
+    // Подтянуть высоту под текст сразу при открытии (иначе «Машинист…» обрезается).
+    if (typeof IntersectionObserver === 'function') {
+      var io = new IntersectionObserver(function (entries) {
+        for (var i = 0; i < entries.length; i++) {
+          if (!entries[i].isIntersecting) continue;
+          var el = entries[i].target;
+          if (el && el.classList && el.classList.contains('js-auto-textarea')) {
+            resizeAutoTextarea(el);
+          }
+        }
+      }, { root: null, rootMargin: '80px 0px', threshold: 0.01 });
+      treeBody.querySelectorAll('textarea.js-auto-textarea').forEach(function (el) {
+        if (el.value && el.value.length >= 12) {
+          io.observe(el);
+        }
+      });
+    }
+
+    if (typeof requestAnimationFrame === 'function') {
+      requestAnimationFrame(function () {
+        resizeVisibleAutoTextareas();
+      });
+    } else {
+      setTimeout(resizeVisibleAutoTextareas, 0);
+    }
+
+    treeBody.addEventListener('focusin', function (event) {
+      var el = event.target;
+      if (el && el.classList && el.classList.contains('js-auto-textarea')) {
+        resizeAutoTextarea(el);
+      }
+    });
+    treeBody.addEventListener('input', function (event) {
+      var el = event.target;
+      if (el && el.classList && el.classList.contains('js-auto-textarea')) {
+        resizeAutoTextarea(el);
+      }
+    });
+
+  })();
+</script>
+<script src="~/js/training-status-format.js" asp-append-version="true"></script>

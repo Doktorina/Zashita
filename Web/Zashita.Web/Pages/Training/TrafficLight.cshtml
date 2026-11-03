@@ -1,0 +1,22 @@
+@page "/Training/TrafficLight"
+@{
+    ViewData["Title"] = "Светофор правил";
+    ViewData["Subtitle"] = "Цветовая индикация сроков обучения";
+    ViewData["ActiveModule"] = "обучение";
+    ViewData["IsModulePage"] = true;
+}
+
+<div class="panel ppe-panel">
+  <table class="data-grid">
+    <thead><tr><th>Цвет</th><th>Значение</th></tr></thead>
+    <tbody>
+      <tr class="traffic-green"><td>● Зелёный</td><td>Обучение пройдено, срок не истёк</td></tr>
+      <tr class="traffic-yellow"><td>● Жёлтый</td><td>Скоро истекает срок обучения (менее 30 дней)</td></tr>
+      <tr class="traffic-red"><td>● Красный</td><td>Обучение просрочено</td></tr>
+      <tr class="traffic-pink"><td>● Розовый</td><td>Обучение не пройдено, поля не заполнены</td></tr>
+      <tr class="traffic-orange"><td>● Оранжевый</td><td>Есть заявка/заметка, но дата прохождения не указана</td></tr>
+      <tr class="traffic-blue"><td>● Синий</td><td>Специальные программы (например, СИЗ)</td></tr>
+    </tbody>
+  </table>
+  <p class="hint"><a asp-page="/Training/Status">Открыть отчёт «Состояние по обучению»</a> с применением этих правил.</p>
+</div>

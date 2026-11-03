@@ -1,0 +1,50 @@
+@page "/Med/Reference"
+@model Zashita.Web.Pages.Med.ReferenceModel
+@{
+    ViewData["Title"] = Model.PageTitle;
+    ViewData["Subtitle"] = Model.Organization;
+}
+
+<div class="ppe-split">
+    <div class="panel ppe-panel ppe-split-side">
+        <div class="ppe-toolbar">
+            <a class="btn btn-outline" asp-page="/Med/Reference" asp-route-category="@Model.Category">Новая запись</a>
+        </div>
+        <ul class="ppe-standards-list">
+            @foreach (var row in Model.Rows)
+            {
+                <li class="@(row.Id == Model.EditId ? "active" : "")">
+                    <a asp-page="/Med/Reference" asp-route-category="@Model.Category" asp-route-editId="@row.Id">@row.Name</a>
+                    @if (!string.IsNullOrWhiteSpace(row.Details))
+                    {
+                        <span class="ppe-muted">@row.Details</span>
+                    }
+                </li>
+            }
+        </ul>
+    </div>
+
+    <div class="panel ppe-panel ppe-split-main">
+        <h2 class="ppe-step-title">@Model.PageTitle</h2>
+        <form method="post" asp-page-handler="Save">
+            <input type="hidden" name="category" value="@Model.Category" />
+            <input type="hidden" asp-for="EditId" />
+            <label class="ppe-field">
+                <span>Название</span>
+                <input asp-for="Name" class="ppe-input" required />
+            </label>
+            <label class="ppe-field">
+                <span>Описание</span>
+                <input asp-for="Details" class="ppe-input" />
+            </label>
+            <div class="ppe-actions">
+                <button type="submit" class="btn btn-primary">Сохранить</button>
+                @if (!string.IsNullOrWhiteSpace(Model.EditId))
+                {
+                    <button type="submit" class="btn btn-outline" formaction="?handler=Delete" name="deleteId" value="@Model.EditId">Удалить</button>
+                    <input type="hidden" name="category" value="@Model.Category" />
+                }
+            </div>
+        </form>
+    </div>
+</div>

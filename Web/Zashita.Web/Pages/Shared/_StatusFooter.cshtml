@@ -1,0 +1,42 @@
+@inject Microsoft.AspNetCore.Hosting.IWebHostEnvironment HostEnv
+@{
+    var sectionTitle = ViewData["SectionTitle"] as string ?? ViewData["Title"] as string ?? "Главная";
+    var organization = ViewData["Organization"] as string ?? string.Empty;
+    var user = ViewData["UserName"] as string ?? "Гость";
+    var versionFile = System.IO.Path.Combine(HostEnv.WebRootPath, "deploy-version.txt");
+    var build = System.IO.File.Exists(versionFile)
+        ? System.IO.File.ReadAllText(versionFile).Trim()
+        : (ViewData["BuildStamp"] as string ?? "local");
+    var dataSyncLabel = "—";
+    var manualSyncPath = System.IO.Path.Combine(HostEnv.ContentRootPath, "App_Data", "manual-data-sync.json");
+    if (System.IO.File.Exists(manualSyncPath))
+    {
+        try
+        {
+            using var syncDoc = System.Text.Json.JsonDocument.Parse(System.IO.File.ReadAllText(manualSyncPath));
+            if (syncDoc.RootElement.TryGetProperty("SyncedAtDisplay", out var display)
+                && !string.IsNullOrWhiteSpace(display.GetString()))
+            {
+                dataSyncLabel = display.GetString()!;
+            }
+            else if (syncDoc.RootElement.TryGetProperty("SyncedAt", out var raw)
+                     && DateTimeOffset.TryParse(raw.GetString(), out var dto))
+            {
+                dataSyncLabel = dto.ToLocalTime().ToString("dd.MM.yyyy HH:mm");
+            }
+        }
+        catch { /* ignore */ }
+    }
+}
+
+<footer class="status-footer">
+    <span>Раздел: @sectionTitle</span>
+    <span class="sep">|</span>
+    <span>Организация: @organization</span>
+    <span class="sep">|</span>
+    <span>Пользователь: @user</span>
+    <span class="sep">|</span>
+    <span>Deploy: @build</span>
+    <span class="sep">|</span>
+    <span>Данные: @dataSyncLabel</span>
+</footer>

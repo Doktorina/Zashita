@@ -1,0 +1,121 @@
+@page
+@model Zashita.Web.Pages.LoginModel
+@{
+    ViewData["Title"] = Model.Screen == "forgot" ? "Восстановление пароля" : "Вход";
+    Layout = null;
+    var isForgot = Model.Screen == "forgot";
+}
+<!DOCTYPE html>
+<html lang="ru" data-theme="dark">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="color-scheme" content="dark light" />
+    <title>@ViewData["Title"] — Охрана труда</title>
+    <partial name="_SiteIconLinks" />
+    <style>
+      html { background: #0f1a15; color: #ecf5f1; }
+      body { margin: 0; background: inherit; color: inherit; }
+    </style>
+    <link rel="stylesheet" href="~/css/zashita.css?v=20260701-14" asp-append-version="true" />
+</head>
+<body class="login-page">
+    <main class="login-card">
+        <div class="login-brand">
+            <span class="login-logo" aria-hidden="true">
+                <img src="~/brand/site-icon.svg" asp-append-version="true" alt="" width="48" height="48" />
+            </span>
+            <div class="login-brand-text">
+                @if (isForgot)
+                {
+                    <h1>Восстановление</h1>
+                    <p>Код придёт на вашу почту</p>
+                }
+                else
+                {
+                    <h1>Охрана труда</h1>
+                    <p>Система управления охраной труда</p>
+                }
+            </div>
+        </div>
+
+        @if (!isForgot)
+        {
+            <form method="post" class="login-form" asp-page-handler="">
+                <div class="login-field">
+                    <label for="login-input">Логин</label>
+                    <input id="login-input" asp-for="Input.Login" autocomplete="username" placeholder="email или admin" />
+                </div>
+                <div class="login-field">
+                    <label for="password-input">Пароль</label>
+                    <input id="password-input" asp-for="Input.Password" type="password" autocomplete="current-password" placeholder="••••••" />
+                </div>
+                <div class="login-forgot-row">
+                    <a class="login-forgot-link" id="forgot-link" href="?screen=forgot">Забыли пароль?</a>
+                </div>
+                @if (!string.IsNullOrWhiteSpace(Model.InfoMessage))
+                {
+                    <p class="login-info">@Model.InfoMessage</p>
+                }
+                @if (!string.IsNullOrWhiteSpace(Model.ErrorMessage))
+                {
+                    <p class="login-error">@Model.ErrorMessage</p>
+                }
+                <button type="submit" class="login-submit">Войти</button>
+            </form>
+        }
+        else
+        {
+            <form method="post" class="login-form" asp-page-handler="Forgot">
+                <p class="login-hint" style="margin:0 0 4px;text-align:left">
+                    Письмо от <strong>sec-work@visural.ru</strong>. Проверьте папку «Спам».
+                </p>
+                <div class="login-field">
+                    <label for="forgot-email">Email</label>
+                    <input id="forgot-email" asp-for="Forgot.Email" type="email" autocomplete="username"
+                           autocapitalize="none" placeholder="you@example.com" />
+                </div>
+                @if (Model.ForgotAwaitingCode)
+                {
+                    <input type="hidden" name="Forgot.HasCodeStep" value="true" />
+                    <div class="login-field">
+                        <label for="forgot-code">Код из письма</label>
+                        <input id="forgot-code" asp-for="Forgot.Code" type="text" inputmode="numeric"
+                               autocomplete="one-time-code" maxlength="6" placeholder="000000" />
+                    </div>
+                    <div class="login-field">
+                        <label for="forgot-new-password">Новый пароль (мин. 6 символов)</label>
+                        <input id="forgot-new-password" asp-for="Forgot.NewPassword" type="password"
+                               autocomplete="new-password" placeholder="Новый пароль" />
+                    </div>
+                }
+                @if (!string.IsNullOrWhiteSpace(Model.InfoMessage))
+                {
+                    <p class="login-info">@Model.InfoMessage</p>
+                }
+                @if (!string.IsNullOrWhiteSpace(Model.ErrorMessage))
+                {
+                    <p class="login-error">@Model.ErrorMessage</p>
+                }
+                <button type="submit" class="login-submit">
+                    @(Model.ForgotAwaitingCode ? "Сохранить новый пароль" : "Получить код")
+                </button>
+                <a class="login-back-link" href="?screen=login">← К входу</a>
+            </form>
+        }
+    </main>
+    <script>
+      (function () {
+        var link = document.getElementById('forgot-link');
+        var login = document.getElementById('login-input');
+        if (!link || !login) return;
+        link.addEventListener('click', function (e) {
+          var v = (login.value || '').trim();
+          if (!v) return;
+          e.preventDefault();
+          window.location.href = '?screen=forgot&email=' + encodeURIComponent(v);
+        });
+      })();
+    </script>
+</body>
+</html>

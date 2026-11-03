@@ -1,0 +1,65 @@
+﻿@page "/Risks/Documents/PrintSelection"
+@model Zashita.Web.Pages.Risks.Documents.PrintSelectionModel
+@{
+    Layout = null;
+}
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>@Model.Title</title>
+    <partial name="_SiteIconLinks" />
+<link rel="stylesheet" href="/css/zashita.css" asp-append-version="true" />
+  <link rel="stylesheet" href="/css/ppe-doc-print.css" asp-append-version="true" />
+  <link rel="stylesheet" href="/css/risks-preparation.css" asp-append-version="true" />
+  <style>
+    @@page { size: A4 portrait; margin: 15mm; }
+    @@media print {
+      .ppe-no-print { display: none !important; }
+      body { background: #fff; }
+      .risks-a4-sheet {
+        width: 100% !important;
+        min-height: auto !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        box-shadow: none !important;
+      }
+    }
+  </style>
+</head>
+<body class="sout-preview-page">
+  <div class="sout-preview-shell">
+    <div class="risks-docs-back-row ppe-no-print">
+      <a class="btn btn-outline btn-sm" href="/Risks/Documents">← К документам</a>
+    </div>
+    <div class="sout-preview-toolbar ppe-no-print">
+      <div class="sout-preview-toolbar-left">
+        <button type="button" class="btn btn-primary btn-sm"
+                onclick="zashitaRecordPrint({ category: 'risks', title: document.title, summary: 'Печать выбранного перечня' })">Печать</button>
+        <button type="button" class="btn btn-outline btn-sm" id="risks-doc-word-btn">Сохранить в Word</button>
+      </div>
+      <div class="sout-preview-toolbar-right">
+        <a class="btn btn-outline btn-sm" href="@Model.BackUrl">Назад к выбору</a>
+      </div>
+    </div>
+    <div class="sout-preview-doc-wrap" id="risks-print-selection-area">
+      <div class="risks-a4-sheet">
+        @Html.Raw(Model.PreviewHtml)
+      </div>
+    </div>
+  </div>
+  <script src="~/js/risks-doc-export.js" asp-append-version="true"></script>
+  <script src="/js/print-history.js" asp-append-version="true"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', function () {
+      if (window.zashitaRisksDocExport) {
+        window.zashitaRisksDocExport.bind({
+          sourceSelector: '#risks-print-selection-area .risks-a4-sheet',
+          fileName: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.Title))
+        });
+      }
+    });
+  </script>
+</body>
+</html>

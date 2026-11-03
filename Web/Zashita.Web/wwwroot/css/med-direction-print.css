@@ -1,0 +1,415 @@
+/* Направление на МО — ровно один лист A4 (предпросмотр / печать / PDF / Word) */
+
+.med-dir-preview-doc,
+.sout-eq-doc.med-dir-preview-doc,
+.sout-eq-doc.med-print-sheet.med-dir-preview-doc,
+.sout-eq-doc.med-print-sheet:has(.med-dir-sheet) {
+  width: 210mm !important;
+  max-width: 210mm !important;
+  height: 297mm !important;
+  min-height: 297mm !important;
+  max-height: 297mm !important;
+  padding: 12mm !important;
+  margin: 0 auto;
+  background: #fff !important;
+  color: #000 !important;
+  overflow: hidden;
+  box-sizing: border-box;
+  /* перекрываем общие стили .sout-eq-doc (190mm / 11pt) */
+  font-size: 10pt;
+  line-height: 1.15;
+  box-shadow: 0 2px 14px rgba(0, 0, 0, 0.22);
+}
+
+.med-dir-preview-doc .med-dir-sheet,
+.sout-eq-doc.med-print-sheet .med-dir-sheet {
+  box-sizing: border-box;
+}
+
+.med-dir-sheet {
+  font-family: "Times New Roman", Times, serif;
+  font-size: 10pt;
+  font-weight: 400;
+  line-height: 1.15;
+  color: #000 !important;
+}
+
+/* Не задаём font-weight на contenteditable — иначе съедается <b> у заполненных полей */
+.med-dir-sheet [contenteditable="true"] {
+  font-family: "Times New Roman", Times, serif;
+  font-size: inherit;
+  line-height: inherit;
+  color: #000 !important;
+}
+
+.med-dir-sheet {
+  width: 100%;
+  max-width: 100%;
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  overflow: hidden;
+  background: #fff;
+}
+
+.med-dir-sheet p,
+.med-dir-sheet h1,
+.med-dir-sheet ol,
+.med-dir-sheet li,
+.med-dir-sheet div,
+.med-dir-sheet table,
+.med-dir-sheet td,
+.med-dir-sheet th {
+  margin-top: 0;
+  margin-bottom: 0;
+  padding-top: 0;
+  padding-bottom: 0;
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+.med-dir-header {
+  width: 100%;
+  border-collapse: collapse;
+  border: none;
+  margin-bottom: 3mm;
+  table-layout: fixed;
+}
+
+.med-dir-header td {
+  border: none !important;
+  padding: 0;
+  vertical-align: top;
+}
+
+.med-dir-logo {
+  width: 36mm;
+  text-align: center;
+}
+
+.med-dir-logo-mark {
+  width: 18mm;
+  height: 18mm;
+  display: block;
+  margin: 0 auto 1.5mm;
+  object-fit: contain;
+}
+
+.med-dir-logo-text {
+  font-size: 8pt;
+  font-weight: 700;
+  line-height: 1.15;
+  color: #1a6b4a !important;
+}
+
+.med-dir-mo-card {
+  text-align: right;
+  font-size: 8.5pt;
+  line-height: 1.2;
+  width: auto;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
+.med-dir-mo-name {
+  font-size: 10pt !important;
+  font-weight: 700 !important;
+  text-decoration: underline;
+  text-underline-offset: 1px;
+  margin-bottom: 1px;
+}
+
+.med-dir-mo-license {
+  margin-top: 1px;
+}
+
+.med-dir-title {
+  text-align: center;
+  font-size: 12.5pt;
+  font-weight: 700;
+  margin: 2mm 0 1mm;
+  line-height: 1.15;
+}
+
+.med-dir-title-sub {
+  text-align: center;
+  font-size: 8.5pt;
+  line-height: 1.3;
+  margin: 0 0 2.5mm;
+}
+
+.med-dir-hint {
+  font-size: 8pt;
+  line-height: 1.3;
+}
+
+.med-dir-fields {
+  margin: 0;
+  padding: 0;
+  line-height: 1.2;
+}
+
+.med-dir-item {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 0 0 1.2mm;
+  table-layout: fixed;
+}
+
+.med-dir-item td {
+  border: none !important;
+  padding: 0;
+  vertical-align: top;
+  line-height: 1.2;
+}
+
+.med-dir-n {
+  width: 7mm;
+  font-size: 10pt;
+  white-space: nowrap;
+}
+
+.med-dir-b {
+  font-size: 10pt;
+}
+
+.med-dir-label {
+  font-weight: 400;
+  font-size: 10pt;
+}
+
+.med-dir-value,
+.med-dir-value b,
+.med-dir-u.med-dir-value,
+.med-dir-u.med-dir-value b,
+.med-dir-sheet .med-dir-value[contenteditable="true"],
+.med-dir-sheet .med-dir-value[contenteditable="true"] b {
+  font-family: "Times New Roman", Times, serif;
+  font-size: 10.5pt !important;
+  font-weight: 700 !important;
+  line-height: 1.15;
+}
+
+/* Одна линия под значением — только border-bottom (без text-decoration и без «___»). */
+.med-dir-u {
+  display: inline;
+  border-bottom: 1px solid #000 !important;
+  padding: 0 3px 0;
+  line-height: 1.15;
+  white-space: normal;
+  text-decoration: none !important;
+  box-shadow: none !important;
+}
+
+.med-dir-u u,
+.med-dir-sheet .med-dir-u u,
+.med-dir-sheet .med-dir-value u {
+  text-decoration: none !important;
+  border-bottom: none !important;
+  font-weight: inherit;
+}
+
+.med-dir-u-blank {
+  display: inline-block;
+  min-width: 45mm;
+  vertical-align: baseline;
+}
+
+.med-dir-u-mark,
+u.med-dir-u-mark {
+  display: inline;
+  border-bottom: 1px solid #000 !important;
+  text-decoration: none !important;
+  padding: 0 1px 0;
+  white-space: normal;
+  font-weight: 700 !important;
+  box-shadow: none !important;
+}
+
+.med-dir-u-mark b,
+u.med-dir-u-mark b {
+  font-weight: 700 !important;
+}
+
+.med-dir-u-mark u {
+  text-decoration: none !important;
+  border-bottom: none !important;
+}
+
+.med-dir-u-short {
+  display: inline-block;
+  min-width: 14mm;
+  padding: 0 6px 0;
+  text-align: center;
+  vertical-align: baseline;
+}
+
+.med-dir-u-date {
+  display: inline-block;
+  min-width: 24mm;
+  padding: 0 6px 0;
+  text-align: center;
+  vertical-align: baseline;
+}
+
+.med-dir-sub {
+  margin: 0.4mm 0 0 0.3em;
+  line-height: 1.2;
+}
+
+.med-dir-factors {
+  width: 100% !important;
+  max-width: 100% !important;
+  border-collapse: collapse;
+  table-layout: fixed;
+  margin-top: 1.5mm;
+  font-size: 8pt;
+  line-height: 1.12;
+}
+
+.med-dir-factors col:nth-child(1) { width: 42%; }
+.med-dir-factors col:nth-child(2) { width: 14%; }
+.med-dir-factors col:nth-child(3) { width: 26%; }
+.med-dir-factors col:nth-child(4) { width: 18%; }
+
+.med-dir-factors th,
+.med-dir-factors td {
+  border: 1px solid #000 !important;
+  padding: 2px 2px !important;
+  vertical-align: top;
+  word-wrap: break-word;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+  line-height: 1.12;
+  font-size: 8pt;
+}
+
+.med-dir-factors th {
+  font-weight: 600;
+  text-align: center;
+  font-size: 7.5pt;
+  line-height: 1.1;
+}
+
+.med-dir-factors td,
+.med-dir-factors td.med-dir-value,
+.med-dir-factors .med-dir-value {
+  font-weight: 400 !important;
+}
+
+.med-dir-num {
+  text-align: center;
+}
+
+.med-dir-sign {
+  margin-top: 5mm;
+  font-size: 10pt;
+  line-height: 1.2;
+}
+
+.med-dir-sign-row {
+  width: 100%;
+  max-width: 100%;
+  border-collapse: collapse;
+  border: none;
+  table-layout: fixed;
+  margin-top: 4mm;
+}
+
+.med-dir-sign-row td {
+  border: none !important;
+  padding: 0;
+  vertical-align: bottom;
+}
+
+.med-dir-sign-position {
+  width: 34%;
+  white-space: normal;
+  overflow-wrap: anywhere;
+  font-weight: 700;
+}
+
+.med-dir-sign-row td.med-dir-sign-gap {
+  width: 32%;
+  border-bottom: 1px solid #000 !important;
+  height: 11mm;
+  text-align: center;
+  vertical-align: bottom;
+}
+
+.med-dir-sign-image {
+  display: inline-block;
+  max-height: 10mm;
+  max-width: 100%;
+  object-fit: contain;
+  margin-bottom: 1px;
+}
+
+.med-dir-sign-name {
+  width: 34%;
+  text-align: right;
+  vertical-align: bottom;
+}
+
+/* Полка под ФИО — отдельный span, чтобы border:none у td её не съедал */
+.med-dir-sign-name-shelf {
+  display: inline-block;
+  min-width: 45mm;
+  max-width: 100%;
+  border-bottom: 1px solid #000;
+  padding: 0 4px 2px;
+  text-align: center;
+  font-weight: 700;
+  line-height: 1.25;
+  box-sizing: border-box;
+}
+
+.med-dir-sign-hint {
+  font-size: 8pt;
+  text-align: center;
+  max-width: 100%;
+  margin-top: 1mm;
+  line-height: 1.1;
+}
+
+.med-dir-footnote {
+  margin-top: 3mm;
+  font-size: 8.5pt;
+  line-height: 1.15;
+}
+
+@media print {
+  @page {
+    size: A4 portrait;
+    margin: 12mm;
+  }
+
+  thead {
+    display: table-row-group !important;
+  }
+
+  .med-dir-preview-doc,
+  .sout-eq-doc.med-dir-preview-doc,
+  .sout-eq-doc.med-print-sheet.med-dir-preview-doc,
+  .sout-eq-doc.med-print-sheet:has(.med-dir-sheet) {
+    width: auto !important;
+    max-width: none !important;
+    height: auto !important;
+    min-height: 0 !important;
+    max-height: none !important;
+    padding: 2mm 0 0 !important;
+    margin: 0;
+    box-shadow: none !important;
+    overflow: visible;
+  }
+
+  .med-dir-sheet {
+    width: 100%;
+    max-width: none;
+    padding: 0;
+  }
+
+  .med-dir-sheet [contenteditable="true"] {
+    outline: none;
+  }
+}

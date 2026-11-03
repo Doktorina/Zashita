@@ -1,0 +1,234 @@
+@page "/Ppe/Writeoff"
+@model Zashita.Web.Pages.Ppe.WriteoffModel
+@{
+    ViewData["Title"] = "Списание спецодежды, СИЗ";
+    ViewData["Subtitle"] = Model.ShowAllOrgs ? "Все организации" : Model.Organization;
+}
+
+@if (!string.IsNullOrWhiteSpace(Model.Message))
+{
+  <p class="form-error">@Model.Message</p>
+}
+
+<div class="panel ppe-panel">
+  <div class="ppe-toolbar" style="flex-wrap:wrap; gap:8px; align-items:center">
+    <a class="btn btn-outline btn-sm" asp-page="/Ppe/Writeoff" asp-route-create="true">Создать</a>
+    @if (!string.IsNullOrWhiteSpace(Model.ActivePrintId))
+    {
+      <a class="btn btn-primary btn-sm"
+         href="/Ppe/Writeoff/PreviewAct?id=@Uri.EscapeDataString(Model.ActivePrintId!)">Печать МБ-8</a>
+      @if (Model.SelectedPrintRecord is not null)
+      {
+        <span class="hint ppe-print-selected">Документ: № @Model.SelectedPrintRecord.Number — @Model.SelectedPrintRecord.Employee</span>
+      }
+    }
+    else
+    {
+      <span class="hint">Для печати выберите документ: кликните по номеру в таблице.</span>
+    }
+  </div>
+
+  <form method="get" class="ppe-filter-bar">
+    @if (!string.IsNullOrWhiteSpace(Model.EditId))
+    {
+      <input type="hidden" name="editId" value="@Model.EditId" />
+    }
+    @if (!string.IsNullOrWhiteSpace(Model.PrintId))
+    {
+      <input type="hidden" name="printId" value="@Model.PrintId" />
+    }
+    <label class="ppe-check-row" style="margin:0; align-items:center">
+      <input type="checkbox" name="showAllOrgs" value="true" @(Model.ShowAllOrgs ? "checked" : null)
+             onchange="this.form.submit()" />
+      <span>Все организации</span>
+    </label>
+    <label>
+      Подразделение
+      <select name="filterDepartment" class="ppe-input" onchange="this.form.submit()">
+        <option value="">Все</option>
+        @if (Model.FilterDepartment == "__empty__")
+        {
+          <option value="__empty__" selected>Без подразделения</option>
+        }
+        else
+        {
+          <option value="__empty__">Без подразделения</option>
+        }
+        @foreach (var dep in Model.Departments)
+        {
+          if (dep == Model.FilterDepartment)
+          {
+            <option value="@dep" selected>@dep</option>
+          }
+          else
+          {
+            <option value="@dep">@dep</option>
+          }
+        }
+      </select>
+    </label>
+    <label>
+      Поиск
+      <input type="search" name="search" value="@Model.Search" class="ppe-input" placeholder="№, подразделение, сотрудник..." />
+    </label>
+    <button type="submit" class="btn btn-outline">Найти</button>
+  </form>
+
+  <table class="data-grid">
+    <thead>
+      <tr>
+        @if (Model.ShowAllOrgs)
+        {
+          <th>Организация</th>
+        }
+        <th>Дата</th>
+        <th>Номер</th>
+        <th>Подразделение</th>
+        <th>Сотрудники</th>
+        <th>Действия</th>
+      </tr>
+    </thead>
+    <tbody>
+      @if (Model.Rows.Count == 0)
+      {
+        <tr><td colspan="@(Model.ShowAllOrgs ? 6 : 5)" class="hint">По текущим фильтрам записи не найдены.</td></tr>
+      }
+      else
+      {
+        foreach (var row in Model.Rows)
+        {
+          <tr class="@(row.Id == Model.PrintId || row.Id == Model.EditId ? "row-active grid-row-selected" : "")">
+            @if (Model.ShowAllOrgs)
+            {
+              <td>@row.Organization</td>
+            }
+            <td>@row.Date.ToString("dd.MM.yyyy")</td>
+            <td>
+              <a asp-page="/Ppe/Writeoff"
+                 asp-route-printId="@row.Id"
+                 asp-route-showAllOrgs="@(Model.ShowAllOrgs ? "true" : null)"
+                 title="Выбрать для печати">@row.Number</a>
+            </td>
+            <td>@(string.IsNullOrWhiteSpace(row.Department) ? "—" : row.Department)</td>
+            <td>@row.Employee</td>
+            <td>
+              <div class="suot-action-bar">
+                <a class="suot-action" title="Редактировать"
+                   asp-page="/Ppe/Writeoff"
+                   asp-route-editId="@row.Id"
+                   asp-route-printId="@row.Id"
+                   asp-route-showAllOrgs="@(Model.ShowAllOrgs ? "true" : null)">✏️</a>
+                <a class="suot-action" title="Печать МБ-8"
+                   href="/Ppe/Writeoff/PreviewAct?id=@Uri.EscapeDataString(row.Id)">🖨</a>
+                <form method="post" asp-page-handler="Delete" class="suot-inline-form" onsubmit="return confirm('Удалить документ?');">
+                  <button type="submit" class="suot-action suot-action-danger" name="deleteId" value="@row.Id" title="Удалить">🗑</button>
+                </form>
+              </div>
+            </td>
+          </tr>
+        }
+      }
+    </tbody>
+  </table>
+</div>
+
+@if (!string.IsNullOrWhiteSpace(Model.EditId) || Model.Create)
+{
+  <div class="panel ppe-panel">
+    <h2 class="ppe-step-title">Документ списания СИЗ</h2>
+    <form method="post" asp-page-handler="Save">
+      <input type="hidden" asp-for="EditId" />
+      <input type="hidden" name="ShowAllOrgs" value="@(Model.ShowAllOrgs ? "true" : "false")" />
+      <div class="ppe-actions ppe-actions-top">
+        <button type="submit" class="btn btn-primary">Сохранить</button>
+        @if (!string.IsNullOrWhiteSpace(Model.EditId))
+        {
+          <a class="btn btn-outline"
+             href="/Ppe/Writeoff/PreviewAct?id=@Uri.EscapeDataString(Model.EditId!)">Печать МБ-8</a>
+        }
+        <a class="btn btn-outline" asp-page="/Ppe/Writeoff">Отмена</a>
+      </div>
+      <label class="ppe-field"><span>Номер</span><input asp-for="Number" class="ppe-input" /></label>
+      <label class="ppe-field"><span>Дата</span><input asp-for="Date" type="date" class="ppe-input" /></label>
+      @await Html.PartialAsync("~/Pages/Shared/_DepartmentSelect.cshtml", new Zashita.Web.Pages.Shared.DepartmentSelectModel
+      {
+          Name = "Department",
+          Value = Model.Department,
+          Options = Model.Departments,
+          Optional = true
+      })
+      <label class="ppe-field"><span>Сотрудник (Ф.И.О.)</span><input asp-for="Employee" class="ppe-input" required /></label>
+      <label class="ppe-field"><span>Должность сотрудника</span><input asp-for="Position" class="ppe-input" /></label>
+      <label class="ppe-field"><span>Приказ №</span><input asp-for="OrderNumber" class="ppe-input" /></label>
+      <label class="ppe-field"><span>Заключение по умолчанию</span><input asp-for="SuitabilityDecision" class="ppe-input" /></label>
+
+      <h3 class="ppe-step-subtitle">Утверждающий (МБ-8)</h3>
+      <label class="ppe-field"><span>Должность</span><input asp-for="ApproverPosition" class="ppe-input" placeholder="Генеральный директор" /></label>
+      <label class="ppe-field"><span>Ф.И.О.</span><input asp-for="ApproverName" class="ppe-input" /></label>
+
+      <h3 class="ppe-step-subtitle">Комиссия</h3>
+      <label class="ppe-field"><span>Председатель — должность</span><input asp-for="CommissionHeadPosition" class="ppe-input" /></label>
+      <label class="ppe-field"><span>Председатель — Ф.И.О.</span><input asp-for="CommissionHead" class="ppe-input" /></label>
+      <table class="data-grid">
+        <thead>
+          <tr>
+            <th>Член комиссии — должность</th>
+            <th>Член комиссии — Ф.И.О.</th>
+            <th class="ppe-line-actions"></th>
+          </tr>
+        </thead>
+        <tbody id="ppe-commission-tbody">
+          @for (var i = 0; i < Model.CommissionMemberPosition.Count; i++)
+          {
+            <tr class="ppe-commission-row">
+              <td><input name="CommissionMemberPosition[@i]" value="@Model.CommissionMemberPosition[i]" class="ppe-input" /></td>
+              <td><input name="CommissionMemberName[@i]" value="@Model.CommissionMemberName[i]" class="ppe-input" /></td>
+              <td class="ppe-line-actions">
+                <button type="button" class="suot-action" data-action="remove-commission" title="Удалить">✕</button>
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+      <div class="ppe-actions ppe-actions-inline">
+        <button type="button" class="btn btn-outline btn-sm" id="ppe-add-commission-btn">Добавить члена комиссии</button>
+      </div>
+
+      <h3 class="ppe-step-subtitle">Строки СИЗ</h3>
+      <div class="ppe-actions ppe-actions-top">
+        <button type="button" class="btn btn-outline" id="ppe-add-line-btn">Добавить строку СИЗ</button>
+      </div>
+      <table class="data-grid">
+        <thead>
+          <tr>
+            <th>Наименование СИЗ</th>
+            <th>Кол-во</th>
+            <th>Дата выдачи</th>
+            <th>Износ, %</th>
+            <th>Заключение</th>
+            <th class="ppe-line-actions"></th>
+          </tr>
+        </thead>
+        <tbody id="ppe-lines-tbody">
+          @for (var i = 0; i < Model.LineName.Count; i++)
+          {
+            <tr class="ppe-line-row">
+              <td><input name="LineName[@i]" value="@Model.LineName[i]" class="ppe-input" /></td>
+              <td><input name="LineQuantity[@i]" value="@Model.LineQuantity[i]" class="ppe-input ppe-input-sm" /></td>
+              <td><input name="LineIssueDate[@i]" value="@Model.LineIssueDate[i]" type="date" class="ppe-input" /></td>
+              <td><input name="LineWearPercent[@i]" value="@Model.LineWearPercent[i]" type="number" min="0" max="100" class="ppe-input ppe-input-sm" /></td>
+              <td><input name="LineConclusion[@i]" value="@Model.LineConclusion[i]" class="ppe-input" /></td>
+              <td class="ppe-line-actions">
+                <button type="button" class="suot-action" data-action="remove-line" title="Удалить строку">✕</button>
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </form>
+  </div>
+
+  @section Scripts {
+    <script src="/js/ppe-act-lines.js" asp-append-version="true"></script>
+  }
+}

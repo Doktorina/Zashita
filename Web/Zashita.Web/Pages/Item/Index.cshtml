@@ -1,0 +1,26 @@
+@page "/item/{module}/{item}"
+@model Zashita.Web.Pages.Item.IndexModel
+@{
+    ViewData["Title"] = Model.ItemTitle ?? "Документ";
+    ViewData["Subtitle"] = Model.ModuleDef is not null
+        ? ModuleUiCatalog.GetSubtitle(Model.ModuleDef.ModuleName)
+        : string.Empty;
+    ViewData["SectionTitle"] = Model.ModuleDef?.ModuleName ?? "Документ";
+}
+
+<div class="item-actions">
+    @if (Model.ItemTitle is not null && Model.HasWorkbook && Model.PreviewSheet is not null)
+    {
+        <a class="btn btn-primary" href="/print/preview?title=@Uri.EscapeDataString(Model.ItemTitle)">Печать</a>
+        <a class="btn btn-outline" href="/print/pdf?title=@Uri.EscapeDataString(Model.ItemTitle)">PDF</a>
+    }
+</div>
+
+<div class="panel">
+    <p class="hint">Раздел «@Model.ItemTitle» пока в разработке. Здесь будет отдельная форма — сейчас доступны только реализованные пункты меню.</p>
+    @if (Model.HasWorkbook && Model.PreviewSheet is not null)
+    {
+        <h2 class="panel-title">Связанные данные (@Model.PreviewSheet)</h2>
+        @Html.Raw(Model.PreviewHtml)
+    }
+</div>

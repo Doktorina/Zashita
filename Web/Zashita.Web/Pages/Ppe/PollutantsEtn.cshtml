@@ -1,0 +1,88 @@
+@page "/Ppe/PollutantsEtn"
+@model Zashita.Web.Pages.Ppe.PollutantsEtnModel
+@{
+    ViewData["Title"] = "Производственные загрязнители ЕТН";
+    ViewData["Subtitle"] = "Дерматологические СИЗ и смывающие средства для стандартов ДСИЗ.";
+}
+
+@if (!string.IsNullOrWhiteSpace(Model.Message))
+{
+  <p class="text-success">@Model.Message</p>
+}
+@if (!string.IsNullOrWhiteSpace(Model.ErrorMessage))
+{
+  <p class="form-error">@Model.ErrorMessage</p>
+}
+
+<div class="panel ppe-panel">
+  <div class="ppe-toolbar ppe-etn-toolbar">
+    <form method="post" asp-page-handler="Upload" enctype="multipart/form-data" id="pollutants-upload-form">
+      <input type="file" name="UploadFile" id="pollutants-upload-file" accept=".xlsx"
+             class="ppe-etn-file-hidden" tabindex="-1" aria-hidden="true" />
+      <button type="button" class="btn btn-excel" id="pollutants-upload-btn">Загрузить из Excel</button>
+    </form>
+    <span class="hint">Позиций: @Model.Items.Count@(Model.Items.Count > 0 ? " · сохранено" : "")</span>
+  </div>
+  <script>
+    (function () {
+      var btn = document.getElementById('pollutants-upload-btn');
+      var input = document.getElementById('pollutants-upload-file');
+      var form = document.getElementById('pollutants-upload-form');
+      if (!btn || !input || !form) return;
+      btn.addEventListener('click', function () { input.click(); });
+      input.addEventListener('change', function () {
+        if (!input.files || !input.files.length) return;
+        if (!confirm('Загрузить из Excel? Текущий список будет заменён.')) {
+          input.value = '';
+          return;
+        }
+        form.submit();
+      });
+    })();
+  </script>
+
+  <form method="post" id="pollutants-etn-form">
+    <div class="ppe-actions ppe-actions-top">
+      <button type="submit" formaction="?handler=Save" class="btn btn-primary">Сохранить</button>
+      <button type="submit" formaction="?handler=AddRow" class="btn btn-outline">Добавить строку</button>
+      <button type="submit" formaction="?handler=DeleteSelected" class="btn btn-danger"
+              onclick="return confirm('Удалить отмеченные строки?');">Удалить отмеченные</button>
+    </div>
+    <table class="data-grid ppe-edit-grid grid-selectable">
+      <thead>
+        <tr>
+          <th class="grid-select-col" title="Отметить"></th>
+          <th>Тип средства защиты</th>
+          <th>Наименование дерматологического СИЗ / смывающего средства</th>
+          <th>Норма выдачи на год (период)</th>
+          <th>Основание выдачи (пункт ЕТН)</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (var i = 0; i < Model.Items.Count; i++)
+        {
+          var item = Model.Items[i];
+          <tr>
+            <td class="grid-select-col">
+              <label class="grid-row-check-wrap" title="Отметить строку">
+                <input type="checkbox" name="DeleteRow" value="@i" class="grid-row-check" />
+              </label>
+            </td>
+            <td>
+              <input name="ProtectionType" value="@item.DisplayProtectionType" class="ppe-input" list="pollutants-protection-types" />
+            </td>
+            <td><input name="Name" value="@item.Name" class="ppe-input" /></td>
+            <td><input name="Norm" value="@item.Norm" class="ppe-input" /></td>
+            <td><input name="NormParagraph" value="@item.NormParagraph" class="ppe-input" /></td>
+          </tr>
+        }
+      </tbody>
+    </table>
+    <datalist id="pollutants-protection-types">
+      @foreach (var type in Model.ProtectionTypes)
+      {
+        <option value="@type"></option>
+      }
+    </datalist>
+  </form>
+</div>

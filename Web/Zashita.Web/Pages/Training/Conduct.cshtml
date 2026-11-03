@@ -1,0 +1,83 @@
+@page "/Training/Conduct"
+@model Zashita.Web.Pages.Training.ConductModel
+@{
+    ViewData["Title"] = "Отметить про проведение";
+    ViewData["Subtitle"] = "Данные попадут в отчёт по обучению";
+}
+
+@if (!string.IsNullOrWhiteSpace(Model.Message))
+{
+  <p class="@(Model.IsError ? "form-error" : "text-success")">@Model.Message</p>
+}
+
+<div class="panel ppe-panel">
+  <p class="hint" style="margin-top:0">
+    Заполните даты и результат по каждой строке. После сохранения все данные обновятся в
+    <a asp-page="/Training/Status">отчёте по обучению</a>.
+  </p>
+
+  <form method="post" id="conduct-batch-form">
+    @for (var i = 0; i < Model.Records.Count; i++)
+    {
+      var row = Model.Records[i];
+      var movementValue = string.IsNullOrWhiteSpace(row.ProtocolMovement) ? "—" : row.ProtocolMovement;
+      var updValue = string.IsNullOrWhiteSpace(row.UpdStatus) ? "—" : row.UpdStatus;
+      <div class="panel ppe-panel" style="margin:@(i == 0 ? "12px" : "20px") 0 0;padding:12px;border:1px solid var(--border, #d7dde5)">
+        <h2 class="ppe-step-title" style="margin-top:0">Редактирование записи@(Model.Records.Count > 1 ? $" ({i + 1}/{Model.Records.Count})" : "")</h2>
+        <input type="hidden" name="Records[@i].Id" value="@row.Id" />
+        <input type="hidden" name="Records[@i].CertificateNumber" value="@row.CertificateNumber" />
+        <div class="training-filter-grid">
+          <label class="ppe-field"><span>Организация</span><input name="Records[@i].Organization" value="@row.Organization" class="ppe-input" /></label>
+          <label class="ppe-field"><span>Подразделение</span><input name="Records[@i].Department" value="@row.Department" class="ppe-input" /></label>
+          <label class="ppe-field"><span>Профессия</span><input name="Records[@i].Profession" value="@row.Profession" class="ppe-input" /></label>
+          <label class="ppe-field"><span>Физ. лицо</span><input name="Records[@i].Person" value="@row.Person" class="ppe-input" required /></label>
+          <label class="ppe-field"><span>Программа / вид обучения</span><input name="Records[@i].Program" value="@row.Program" class="ppe-input" required /></label>
+          <label class="ppe-field"><span>Тип обучения</span><input name="Records[@i].TrainingType" value="@row.TrainingType" class="ppe-input" /></label>
+          <label class="ppe-field"><span>Результат</span><input name="Records[@i].Result" value="@row.Result" class="ppe-input" /></label>
+          <label class="ppe-field"><span>Дата обучения</span><input type="date" name="Records[@i].TrainingDate" value="@row.TrainingDate?.ToString("yyyy-MM-dd")" class="ppe-input" /></label>
+          <label class="ppe-field"><span>Дата следующего</span><input type="date" name="Records[@i].NextTrainingDate" value="@row.NextTrainingDate?.ToString("yyyy-MM-dd")" class="ppe-input" /></label>
+          <label class="ppe-field"><span>№ протокола</span><input name="Records[@i].ProtocolNumber" value="@row.ProtocolNumber" class="ppe-input" /></label>
+          <label class="ppe-field">
+            <span>Движение протокола</span>
+            <select name="Records[@i].ProtocolMovement" class="ppe-input">
+              @foreach (var opt in Model.ProtocolMovementOptions)
+              {
+                if (string.Equals(movementValue, opt, StringComparison.OrdinalIgnoreCase))
+                {
+                  <option value="@opt" selected>@opt</option>
+                }
+                else
+                {
+                  <option value="@opt">@opt</option>
+                }
+              }
+            </select>
+          </label>
+          <label class="ppe-field">
+            <span>УПД</span>
+            <select name="Records[@i].UpdStatus" class="ppe-input">
+              @foreach (var opt in Model.UpdStatusOptions)
+              {
+                if (string.Equals(updValue, opt, StringComparison.OrdinalIgnoreCase))
+                {
+                  <option value="@opt" selected>@opt</option>
+                }
+                else
+                {
+                  <option value="@opt">@opt</option>
+                }
+              }
+            </select>
+          </label>
+          <label class="ppe-field training-filter-span-2"><span>Комментарий</span><input name="Records[@i].Comment" value="@row.Comment" class="ppe-input" /></label>
+        </div>
+      </div>
+    }
+
+    <div class="ppe-actions" style="margin-top:16px">
+      <button type="submit" asp-page-handler="Save" class="btn btn-primary">Сохранить</button>
+      <button type="submit" asp-page-handler="Delete" class="btn btn-outline" onclick="return confirm('Удалить все открытые записи проведения?');">Удалить</button>
+      <button type="submit" asp-page-handler="Cancel" class="btn btn-outline" formnovalidate>Отмена</button>
+    </div>
+  </form>
+</div>

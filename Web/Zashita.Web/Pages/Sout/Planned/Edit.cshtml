@@ -1,0 +1,174 @@
+@page "/Sout/Planned/Edit"
+@model Zashita.Web.Pages.Sout.Planned.EditModel
+@{
+    ViewData["Title"] = Model.IsNew ? "Годовой план. Новый" : "Годовой план";
+    ViewData["Subtitle"] = Model.Organization;
+    var doc = Model.Document;
+}
+
+<link rel="stylesheet" href="/css/training-annual-plan.css" asp-append-version="true" />
+
+<div class="panel ppe-panel sout-assignment-doc">
+  <form method="post" asp-page="/Sout/Planned/Edit">
+    <input type="hidden" asp-for="Id" />
+
+    <div class="sout-assignment-toolbar">
+      <div class="sout-assignment-toolbar-left">
+        <a class="btn btn-outline btn-sm" asp-page="/Sout/Planned">←</a>
+        <button type="submit" formaction="?handler=PostAndClose" class="btn btn-primary btn-sm">Провести и закрыть</button>
+        <button type="submit" formaction="?handler=Save" class="btn btn-outline btn-sm">Записать</button>
+        <button type="submit" formaction="?handler=Post" class="btn btn-outline btn-sm">Провести</button>
+        <button type="submit" formaction="?handler=Regenerate" class="btn btn-outline btn-sm" title="Пересобрать расшифровку из отчёта по СОУТ">Заполнить из отчёта</button>
+        @if (!Model.IsNew)
+        {
+          <a class="btn btn-outline btn-sm" asp-page="/Sout/Planned/Preview" asp-route-id="@doc.Id" target="_blank">Предпечать</a>
+        }
+      </div>
+      <div class="sout-assignment-toolbar-right">
+        <span class="hint sout-assignment-status">@(doc.IsPosted ? "Утверждён" : doc.Status)</span>
+      </div>
+    </div>
+
+    <div class="sout-assignment-header">
+      <div class="sout-assignment-header-col">
+        <label class="ppe-field">
+          <span>Период с</span>
+          <input type="date" name="periodStart" value="@doc.PeriodStart.ToString("yyyy-MM-dd")" class="ppe-input" />
+        </label>
+        <label class="ppe-field">
+          <span>по</span>
+          <input type="date" name="periodEnd" value="@doc.PeriodEnd.ToString("yyyy-MM-dd")" class="ppe-input" />
+        </label>
+      </div>
+      <div class="sout-assignment-header-col">
+        <label class="ppe-field">
+          <span>Номер</span>
+          <input name="number" value="@doc.Number" class="ppe-input" />
+        </label>
+        <label class="ppe-field">
+          <span>Дата</span>
+          <input type="datetime-local" name="date" value="@doc.Date.ToString("yyyy-MM-ddTHH:mm:ss")" class="ppe-input" step="1" />
+        </label>
+      </div>
+      <div class="sout-assignment-header-col">
+        <label class="ppe-field">
+          <span>Сценарий</span>
+          <input name="scenario" value="@doc.Scenario" class="ppe-input" />
+        </label>
+        <label class="ppe-field">
+          <span>Организация</span>
+          <input value="@Model.Organization" class="ppe-input" readonly />
+        </label>
+      </div>
+      <div class="sout-assignment-header-col">
+        <label class="ppe-field">
+          <span>Вид плана</span>
+          <input name="planType" value="@doc.PlanType" class="ppe-input" />
+        </label>
+        <label class="ppe-field">
+          <span>Подразделение</span>
+          <input name="department" value="@doc.Department" class="ppe-input" list="sout-planned-edit-departments" />
+        </label>
+        <label class="ppe-field">
+          <span>Статус</span>
+          <input name="status" value="@doc.Status" class="ppe-input" />
+        </label>
+      </div>
+    </div>
+
+    <div class="ppe-actions ppe-actions-inline" style="margin-bottom:12px;">
+      <label class="ppe-field" style="max-width:220px;">
+        <span>Год плана</span>
+        <input type="number" name="planYear" value="@doc.PlanYear" class="ppe-input" min="2000" max="2100" />
+      </label>
+      <label class="ppe-checkbox">
+        <input type="hidden" name="approvedByAuthor" value="false" />
+        <input type="checkbox" name="approvedByAuthor" value="true" @(doc.ApprovedByAuthor ? "checked" : null) />
+        <span>Расшифровку утверждает только автором</span>
+      </label>
+    </div>
+
+    <datalist id="sout-planned-edit-departments">
+      @foreach (var department in Model.Departments)
+      {
+        <option value="@department"></option>
+      }
+    </datalist>
+
+    <div class="training-plan-edit-wrap">
+      <h3 class="ppe-step-subtitle">График</h3>
+      <table class="data-grid training-plan-edit-table">
+        <thead>
+          <tr>
+            <th style="width:50px;">№</th>
+            <th>Вид оценки</th>
+            <th>Контрагент</th>
+          </tr>
+        </thead>
+        <tbody id="sout-planned-general-rows">
+          @for (var i = 0; i < Math.Max(doc.GeneralRows.Count, 1); i++)
+          {
+            var row = i < doc.GeneralRows.Count ? doc.GeneralRows[i] : new Zashita.Core.Risks.SoutAnnualPlanGeneralRow();
+            <tr class="sout-planned-general-row">
+              <td class="training-plan-month-cell">@(i + 1)<input type="hidden" name="generalRowId" value="@row.Id" /></td>
+              <td><input name="assessmentType" value="@row.AssessmentType" class="ppe-input" /></td>
+              <td><input name="generalContractor" value="@row.Contractor" class="ppe-input" /></td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+
+    <div class="training-plan-edit-wrap">
+      <h3 class="ppe-step-subtitle">Расшифровка</h3>
+      <p class="hint">Строки из отчёта по СОУТ. «Заполнить из отчёта» пересобирает расшифровку заново.</p>
+      <table class="data-grid training-plan-edit-table">
+        <thead>
+          <tr>
+            <th>Сотрудник</th>
+            <th>Физ. лицо</th>
+            <th>Должность</th>
+            <th>Дата предыдущая</th>
+            <th>Дата следующая</th>
+            <th>Дата планирования</th>
+            <th>Контрагент</th>
+          </tr>
+        </thead>
+        <tbody>
+          @if (doc.DetailRows.Count == 0)
+          {
+            <tr>
+              <td colspan="7" class="hint">Нажмите «Заполнить из отчёта», чтобы собрать строки из отчёта по СОУТ (просроченные и плановые на год).</td>
+            </tr>
+          }
+          @for (var i = 0; i < doc.DetailRows.Count; i++)
+          {
+            var row = doc.DetailRows[i];
+            <tr>
+              <td>
+                <input type="hidden" name="detailRowId" value="@row.Id" />
+                <input type="hidden" name="workplaceId" value="@row.WorkplaceId" />
+                <input type="hidden" name="workplaceNumber" value="@row.WorkplaceNumber" />
+                <input type="hidden" name="detailDepartment" value="@row.Department" />
+                <input name="employee" value="@row.Employee" class="ppe-input" />
+              </td>
+              <td><input name="personName" value="@row.PersonName" class="ppe-input" /></td>
+              <td><input name="profession" value="@row.Profession" class="ppe-input" /></td>
+              <td><input type="date" name="previousDate" value="@(row.PreviousDate?.ToString("yyyy-MM-dd"))" class="ppe-input" /></td>
+              <td><input type="date" name="nextDate" value="@(row.NextDate?.ToString("yyyy-MM-dd"))" class="ppe-input" /></td>
+              <td><input type="date" name="plannedDate" value="@(row.PlannedDate?.ToString("yyyy-MM-dd"))" class="ppe-input" /></td>
+              <td><input name="detailContractor" value="@row.Contractor" class="ppe-input" /></td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+
+    @if (!Model.IsNew)
+    {
+      <div class="ppe-actions ppe-actions-inline">
+        <button type="submit" formaction="?handler=Delete" class="btn btn-danger btn-sm" onclick="return confirm('Удалить годовой план?');">Удалить</button>
+      </div>
+    }
+  </form>
+</div>

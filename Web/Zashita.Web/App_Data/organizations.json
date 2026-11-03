@@ -1,0 +1,20 @@
+{
+  "CustomOrganizations": [
+    "ООО «Демо Строй»",
+    "ООО «Северные Технологии»",
+    "ИП Пример Иван Иванович"
+  ],
+  "Renames": {},
+  "CustomOnly": true,
+  "HiddenOrganizations": [],
+  "Groups": [
+    {
+      "Id": "demo-group-1",
+      "Name": "Демо-группа",
+      "Organizations": [
+        "ООО «Демо Строй»",
+        "ООО «Северные Технологии»"
+      ]
+    }
+  ]
+}

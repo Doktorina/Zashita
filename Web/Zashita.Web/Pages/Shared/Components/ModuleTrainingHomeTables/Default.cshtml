@@ -1,0 +1,101 @@
+@model Zashita.Web.ViewComponents.ModuleTrainingHomeTablesView
+
+<section class="panel ppe-panel module-training-home" style="margin-top:16px">
+  <div class="panel-head-row" style="margin-bottom:10px;flex-wrap:wrap;gap:10px">
+    <div style="min-width:0;flex:1">
+      <h2 class="panel-title" style="margin:0">Таблицы обучения</h2>
+      <p class="hint" style="margin:4px 0 0">
+        Срез по организации «@Model.Organization». Полный отчёт — @Model.TotalStatusRows строк.
+      </p>
+    </div>
+    <div class="ppe-toolbar" style="flex-wrap:wrap;gap:8px;margin:0">
+      <a class="btn btn-primary" href="/Training/Status">Отчет по обучению</a>
+      <a class="btn btn-outline" href="/Training/Planning">Планирование</a>
+    </div>
+  </div>
+
+  <h3 class="ppe-step-title" style="margin-top:4px">Требуют внимания</h3>
+  @if (Model.AttentionRows.Count == 0)
+  {
+    <p class="hint">Нет просроченных / не обученных строк для этой организации.</p>
+  }
+  else
+  {
+    <div class="table-scroll">
+      <table class="data-grid training-status-grid">
+        <thead>
+          <tr>
+            <th>ФИО</th>
+            <th>Подразделение</th>
+            <th>Профессия</th>
+            <th>Программа</th>
+            <th>Дата обучения</th>
+            <th>Дата следующего</th>
+            <th>Статус</th>
+          </tr>
+        </thead>
+        <tbody>
+          @foreach (var row in Model.AttentionRows)
+          {
+            <tr class="traffic-@row.Traffic">
+              <td>@row.Person</td>
+              <td>@row.Department</td>
+              <td>@row.Profession</td>
+              <td>@row.Program</td>
+              <td>@(row.TrainingDate ?? "—")</td>
+              <td>@(row.NextTrainingDate ?? "—")</td>
+              <td>@row.Status</td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+    <p class="hint" style="margin-top:8px">
+      Показаны первые @Model.AttentionRows.Count строк.
+      <a href="/Training/Status">Открыть полный отчёт с фильтрами и деревом →</a>
+    </p>
+  }
+
+  <h3 class="ppe-step-title" style="margin-top:20px">Что сделано (из отчёта)</h3>
+  @if (Model.ConductRows.Count == 0)
+  {
+    <p class="hint">
+      Записей проведения пока нет. Отметьте сотрудников в
+      <a href="/Training/Planning">Планировании</a>.
+    </p>
+  }
+  else
+  {
+    <div class="table-scroll">
+      <table class="data-grid training-conduct-grid">
+        <thead>
+          <tr>
+            <th>Физ. лицо</th>
+            <th>Программа</th>
+            <th>Результат</th>
+            <th>Дата обучения</th>
+            <th>Дата следующего</th>
+            <th>№ протокола</th>
+          </tr>
+        </thead>
+        <tbody>
+          @foreach (var row in Model.ConductRows)
+          {
+            <tr>
+              <td>@row.Person</td>
+              <td>@row.Program</td>
+              <td>@row.Result</td>
+              <td>@(row.TrainingDate?.ToString("dd.MM.yyyy") ?? "—")</td>
+              <td>@(row.NextTrainingDate?.ToString("dd.MM.yyyy") ?? "—")</td>
+              <td>@(string.IsNullOrWhiteSpace(row.ProtocolNumber) ? "—" : row.ProtocolNumber)</td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+    <p class="hint" style="margin-top:8px">
+      Последние @Model.ConductRows.Count записей.
+      <a href="/Training/Status">Открыть отчёт по обучению →</a>
+    </p>
+  }
+</section>

@@ -1,0 +1,25 @@
+@page "/Training/HomeTables"
+@model Zashita.Web.Pages.Training.HomeTablesModel
+@{
+    ViewData["Title"] = "Таблицы обучения";
+    ViewData["Subtitle"] = Model.Organization;
+}
+
+<div class="panel ppe-panel" style="margin-bottom:12px">
+    <div class="ppe-toolbar" style="flex-wrap:wrap;gap:8px">
+      <a class="btn btn-outline" href="/module/обучение">Все разделы модуля</a>
+      <a class="btn btn-outline" href="/Training/Status">Отчет по обучению</a>
+      <a class="btn btn-outline" href="/Training/Planning">Планирование</a>
+    </div>
+</div>
+
+@if (string.IsNullOrWhiteSpace(Model.Organization))
+{
+  <div class="panel ppe-panel">
+    <p class="hint">Выберите организацию в шапке, затем откройте таблицы снова.</p>
+  </div>
+}
+else
+{
+  @await Component.InvokeAsync("ModuleTrainingHomeTables", new { organization = Model.Organization })
+}

@@ -1,0 +1,141 @@
+@page "/Sout/Commissions"
+@using Zashita.Core.Risks
+@using Zashita.Web.Pages.Training
+@model Zashita.Web.Pages.Sout.CommissionsModel
+@{
+    ViewData["Title"] = "Комиссии (СОУТ)";
+    ViewData["Subtitle"] = Model.Organization;
+}
+
+<link rel="stylesheet" href="/css/sout-catalog.css" asp-append-version="true" />
+<link rel="stylesheet" href="/css/electrical-register.css" asp-append-version="true" />
+
+@if (!string.IsNullOrWhiteSpace(Model.Message))
+{
+  <p class="text-success">@Model.Message</p>
+}
+
+<div class="panel ppe-panel sout-catalog-panel">
+  <div class="ppe-toolbar sout-toolbar">
+    <button type="button" class="btn btn-outline btn-sm" id="sout-commissions-add-row-btn">Создать</button>
+    <button type="button" class="btn btn-outline btn-sm" id="sout-commissions-add-group-btn">Создать группу</button>
+    <button type="button" class="btn btn-outline btn-sm" id="sout-commissions-bulk-edit-btn">Изменить выделенные...</button>
+    <a class="btn btn-primary btn-sm" id="sout-commissions-print-btn" href="/Sout/Commissions/SelectCommission">Печать приказа</a>
+  </div>
+  <p class="hint ppe-no-print">Комиссии для специальной оценки условий труда. Выделите комиссию и нажмите «Печать приказа» или значок 🖨 в строке.</p>
+
+  <form method="get" class="sout-workplaces-filters" id="sout-commissions-filter-form">
+    <label class="sout-workplaces-search">
+      <span class="visually-hidden">Поиск</span>
+      <input type="search" name="q" value="@Model.Q" class="ppe-input" placeholder="Поиск (Ctrl+F)" autocomplete="off" />
+    </label>
+  </form>
+
+  <form method="post" asp-page="/Sout/Commissions" asp-page-handler="Save">
+    <div class="ppe-actions ppe-actions-top">
+      <button type="submit" class="btn btn-primary">Сохранить</button>
+    </div>
+    <div class="eb-table-scroll">
+      <table class="data-grid ppe-edit-grid training-catalog-grid sout-catalog-grid eb-commissions-grid">
+        <thead>
+          <tr>
+            <th class="training-select-col"></th>
+            <th>Наименование</th>
+            <th>Председатель комиссии (ФИО, должность)</th>
+            <th>Члены комиссии (ФИО, должность)</th>
+            <th>Всего человек в комиссии</th>
+            <th>№ и дата приказа о создании комиссии</th>
+            <th>Дата утверждения состава</th>
+            <th>Периодичность проверки состава, мес.</th>
+            <th>Плановая дата проверки</th>
+            <th>Осталось дней</th>
+            <th>Статус по срокам</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody id="sout-commissions-body">
+          @foreach (var item in Model.TreeItems)
+          {
+            var node = item.Node;
+            var (planned, daysLeft, deadlineStatus, deadlineCss) = SoutCommissionListHelpers.ComputeDeadlines(node);
+            var total = SoutCommissionListHelpers.TotalMembers(node);
+            <tr class="training-catalog-row training-tree-row sout-catalog-row @(node.IsGroup ? "training-tree-folder training-tree-open" : "training-tree-file")"
+                data-id="@node.Id"
+                data-parent-id="@(node.ParentId ?? "")"
+                data-is-group="@node.IsGroup.ToString().ToLowerInvariant()"
+                data-depth="@item.Depth">
+              <td class="training-select-col">
+                <input type="checkbox" class="training-row-select" aria-label="Выделить" />
+              </td>
+              <td>
+                <input type="hidden" name="Id" value="@node.Id" />
+                <input type="hidden" name="ParentId" value="@node.ParentId" />
+                <input type="hidden" name="IsGroup" value="@node.IsGroup.ToString().ToLowerInvariant()" />
+                @await Html.PartialAsync("/Pages/Training/_TrainingTreeName.cshtml", new TrainingTreeNameModel
+                {
+                  Depth = item.Depth,
+                  IsGroup = node.IsGroup,
+                  Name = node.Name,
+                  InputClass = node.IsGroup ? "ppe-input training-group-name" : "ppe-input training-item-name"
+                })
+              </td>
+              @if (node.IsGroup)
+              {
+                <td colspan="8" class="hint">—</td>
+              }
+              else
+              {
+                <td>@SoutCommissionListHelpers.ChairmanDisplay(node)</td>
+                <td>@SoutCommissionListHelpers.MembersDisplay(node)</td>
+                <td>@(total > 0 ? total.ToString() : "—")</td>
+                <td>@SoutCommissionListHelpers.OrderNumberAndDate(node)</td>
+                <td>@(node.CompositionApprovalDate?.ToString("dd.MM.yyyy") ?? "—")</td>
+                <td>@(node.CompositionCheckPeriodMonths?.ToString() ?? "—")</td>
+                <td>@(planned?.ToString("dd.MM.yyyy") ?? "—")</td>
+                <td>@(daysLeft?.ToString() ?? "—")</td>
+                <td>
+                  @if (deadlineStatus != "—")
+                  {
+                    <span class="eb-status @deadlineCss">@deadlineStatus</span>
+                  }
+                  else
+                  {
+                    <span>—</span>
+                  }
+                </td>
+              }
+              <td>
+                <div class="sout-catalog-row-actions">
+                  <a class="suot-action" asp-page="/Sout/Commissions/Edit" asp-route-id="@node.Id" title="Открыть">✎</a>
+                  @if (!node.IsGroup)
+                  {
+                    <a class="suot-action" asp-page="/Sout/Commissions/Preview" asp-route-id="@node.Id" target="_blank" rel="noopener" title="Печать приказа">🖨</a>
+                  }
+                  <button type="button" class="suot-action suot-action-danger" data-action="delete" title="Удалить">🗑</button>
+                </div>
+                <input type="hidden" name="Delete" value="false" class="training-delete-flag" />
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  </form>
+</div>
+
+@section Scripts {
+  <script src="~/js/training-catalog.js" asp-append-version="true"></script>
+  <script src="~/js/sout-commissions.js" asp-append-version="true"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', function () {
+      initSoutCommissions({
+        filterFormId: 'sout-commissions-filter-form',
+        addRowBtnId: 'sout-commissions-add-row-btn',
+        addGroupBtnId: 'sout-commissions-add-group-btn',
+        bulkEditBtnId: 'sout-commissions-bulk-edit-btn',
+        printBtnId: 'sout-commissions-print-btn',
+        treeBodyId: 'sout-commissions-body'
+      });
+    });
+  </script>
+}

@@ -1,0 +1,212 @@
+@model Zashita.Web.Pages.Training.ApplicationsModel
+
+<div class="panel ppe-panel" id="application-form-panel">
+  <h2 class="ppe-step-title">@(string.IsNullOrWhiteSpace(Model.EditId) ? "Новая заявка" : "Редактирование заявки")</h2>
+  <form method="post" asp-page-handler="Save" class="application-form">
+    <input type="hidden" name="editId" value="@Model.EditId" />
+    <input type="hidden" name="department" value="@Model.EditRecord.Department" />
+    <input type="hidden" name="content" value="@Model.EditRecord.Content" id="application-content" />
+    <input type="hidden" name="organizationDetails" value="@Model.EditRecord.OrganizationDetails" />
+
+    <div class="application-form-block">
+      <div class="application-form-row application-form-row-org-object">
+        <label class="ppe-field">
+          <span>Организация:</span>
+          <input name="organization" value="@Model.EditRecord.Organization" class="ppe-input" />
+        </label>
+        <label class="ppe-field">
+          <span>Объект</span>
+          <input name="objectNote" value="@Model.EditRecord.ObjectNote" class="ppe-input" placeholder="объект / площадка" />
+        </label>
+      </div>
+      @{
+        var letterhead = (Model.EditRecord.OrganizationDetails ?? string.Empty).Trim();
+        var hasLetterhead = letterhead.Length > 0
+            && !letterhead.Contains("реквизиты организации", StringComparison.OrdinalIgnoreCase);
+      }
+      @if (hasLetterhead)
+      {
+        <p class="hint" style="margin:8px 0 0; white-space:pre-line" title="Реквизиты из карточки организации — подставляются в печать автоматически.">@letterhead</p>
+      }
+      else
+      {
+        <p class="hint" style="margin:8px 0 0">Реквизиты для печати не заполнены — укажите их в разделе «Организации».</p>
+      }
+    </div>
+
+    <div class="application-form-block">
+      <div class="application-form-row application-form-row-date-number">
+        <label class="ppe-field">
+          <span>Дата:</span>
+          <input type="date" name="documentDate" value="@Model.EditRecord.DocumentDate.ToString("yyyy-MM-dd")" class="ppe-input" />
+        </label>
+      <label class="ppe-field">
+          <span>Номер:</span>
+          <input name="number" value="@Model.EditRecord.Number" class="ppe-input" placeholder="авто" />
+      </label>
+      </div>
+    </div>
+
+    <div class="application-form-block">
+      <label class="ppe-field">
+        <span>Вид обучения:</span>
+        <input name="trainingKind"
+                  id="application-training-kind"
+               value="@Model.EditRecord.TrainingKind"
+               class="ppe-input"
+               list="application-kind-datalist"
+               placeholder="Вид обучения, инструктажа, проверки знаний"
+               required
+               autocomplete="off" />
+        <datalist id="application-kind-datalist">
+          @foreach (var item in Model.KindOptions)
+          {
+            <option value="@item"></option>
+          }
+        </datalist>
+      </label>
+    </div>
+
+    <div class="application-form-block">
+      <div class="application-form-label">Контактное лицо:</div>
+      <div class="application-form-row application-form-row-4">
+        <label class="ppe-field">
+          <span>ФИО:</span>
+          <input name="contactPersonName" value="@Model.EditRecord.ContactPersonName" class="ppe-input" />
+        </label>
+        <label class="ppe-field">
+          <span>Должность:</span>
+          <input name="contactPersonPosition" value="@Model.EditRecord.ContactPersonPosition" class="ppe-input" />
+        </label>
+        <label class="ppe-field">
+          <span>Телефон:</span>
+          <input name="contactPersonPhone" value="@Model.EditRecord.ContactPersonPhone" class="ppe-input" />
+        </label>
+        <label class="ppe-field">
+          <span>E-mail:</span>
+          <input name="contactPersonEmail" value="@Model.EditRecord.ContactPersonEmail" class="ppe-input" type="email" autocomplete="email" />
+        </label>
+      </div>
+    </div>
+
+    <div class="application-form-block">
+      <div class="application-form-label">Адресат:</div>
+      <div class="application-form-row application-form-row-2">
+        <label class="ppe-field">
+          <span>Организация:</span>
+          <input name="recipientOrganization" value="@Model.EditRecord.RecipientOrganization" class="ppe-input" />
+        </label>
+        <label class="ppe-field">
+          <span>ФИО:</span>
+          <input name="recipientName" value="@Model.EditRecord.RecipientName" class="ppe-input" />
+        </label>
+      </div>
+    </div>
+
+    <div class="application-form-block">
+      <div class="application-form-label">Согласование</div>
+      <p class="hint" style="margin:0">В печати — блок «СОГЛАСОВАНО».</p>
+      <div class="training-app-agreement-wrap">
+        <table class="data-grid" id="application-agreement-grid">
+          <thead>
+            <tr>
+              <th>Ф.И.О.</th>
+              <th>Должность</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody id="application-agreement-body">
+            @foreach (var person in Model.EditRecord.AgreementPersons.DefaultIfEmpty(new Zashita.Core.Training.TrainingPlanningAgreementPerson()))
+            {
+              <tr class="application-agreement-row">
+                <td><input name="agreementFullName" value="@person.FullName" class="ppe-input" /></td>
+                <td><input name="agreementPosition" value="@person.Position" class="ppe-input" /></td>
+                <td>
+                  <button type="button" class="btn btn-outline btn-sm application-remove-agreement">Удалить</button>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+      <div class="ppe-actions" style="justify-content:flex-start; margin-top:10px">
+        <button type="button" class="btn btn-outline btn-sm" id="application-add-agreement">Добавить участника</button>
+      </div>
+    </div>
+
+    <div class="application-form-block">
+      <div class="application-form-label">Участники обучения:</div>
+    @if (Model.OrganizationEmployees.Count > 0)
+    {
+        <p class="hint" style="margin:0 0 8px" title="Штат 1С выбранной организации (человек×компания).">Людей в организации: @Model.OrganizationEmployees.Count</p>
+        <label class="ppe-field">
+        <span>Выбрать из справочника (поиск по ФИО)</span>
+          <div class="application-employee-pick">
+          <input type="search"
+                 id="application-employee-search"
+                 class="ppe-input"
+                 list="application-employee-datalist"
+                 placeholder="Начните вводить ФИО…"
+                   autocomplete="off" />
+          <button type="button" class="btn btn-outline btn-sm" id="application-employee-add">Добавить</button>
+        </div>
+        <datalist id="application-employee-datalist">
+          @foreach (var employee in Model.OrganizationEmployees)
+          {
+            <option value="@employee.Name"></option>
+          }
+        </datalist>
+        <script type="application/json" id="application-employee-data">
+@Html.Raw(System.Text.Json.JsonSerializer.Serialize(
+    Model.OrganizationEmployees.Select(e => new {
+      name = e.Name,
+      profession = e.Profession,
+      snils = Zashita.Core.Employees.OneCEmployeeListParser.FormatSnils(e.Snils),
+      birth = e.BirthDate?.ToString("yyyy-MM-dd"),
+      employment = e.EmploymentDate?.ToString("yyyy-MM-dd"),
+      department = e.Department
+    })))
+        </script>
+      </label>
+    }
+    <div class="training-app-participants-wrap">
+      <table class="data-grid" id="application-participants-grid">
+        <thead>
+          <tr>
+            <th>Ф.И.О.</th>
+            <th>Должность</th>
+            <th>Дата рождения</th>
+            <th>Дата трудоустройства</th>
+            <th>СНИЛС</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody id="application-participants-body">
+          @foreach (var participant in Model.EditRecord.Participants.DefaultIfEmpty(new Zashita.Core.Training.TrainingPlanningParticipant()))
+          {
+            <tr class="application-participant-row">
+              <td><input name="participantFullName" value="@participant.FullName" class="ppe-input" /></td>
+              <td><input name="participantPosition" value="@participant.Position" class="ppe-input" /></td>
+              <td><input type="date" name="participantBirthDate" value="@participant.BirthDate?.ToString("yyyy-MM-dd")" class="ppe-input" /></td>
+              <td><input type="date" name="participantEmploymentDate" value="@participant.EmploymentDate?.ToString("yyyy-MM-dd")" class="ppe-input" /></td>
+              <td><input name="participantSnils" value="@Zashita.Core.Employees.OneCEmployeeListParser.FormatSnils(participant.Snils)" class="ppe-input" placeholder="000-000-000 00" /></td>
+                <td>
+                  <input type="hidden" name="participantTrainingDirection" value="@(string.IsNullOrWhiteSpace(participant.TrainingDirection) ? Model.EditRecord.TrainingKind : participant.TrainingDirection)" />
+                  <button type="button" class="btn btn-outline btn-sm application-remove-participant">Удалить</button>
+                </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+    <div class="ppe-actions" style="justify-content:flex-start; margin-top:10px">
+      <button type="button" class="btn btn-outline btn-sm" id="application-add-participant">Добавить участника</button>
+      </div>
+    </div>
+
+    <div class="ppe-actions application-form-actions">
+      <button type="submit" class="btn btn-primary">Сохранить</button>
+      <a class="btn btn-outline" asp-page="/Training/Applications" asp-route-create="1">Отмена</a>
+    </div>
+  </form>
+</div>

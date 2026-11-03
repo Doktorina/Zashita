@@ -1,0 +1,70 @@
+@page "/Incidents/Hub"
+@model Zashita.Web.Pages.Incidents.HubModel
+@{
+    ViewData["Title"] = "Несчастные случаи";
+    ViewData["Subtitle"] = Model.Organization;
+}
+
+<div class="kpi-row">
+    <article class="kpi-card">
+        <div class="kpi-value kpi-success">@Model.Stats.DaysWithoutAccident</div>
+        <div class="kpi-label">Дней без НС</div>
+    </article>
+    <article class="kpi-card">
+        <div class="kpi-value">@Model.Stats.WorkplaceCount</div>
+        <div class="kpi-label">НС на производстве</div>
+    </article>
+    <article class="kpi-card">
+        <div class="kpi-value">@Model.Stats.InvestigationCount</div>
+        <div class="kpi-label">Расследования</div>
+    </article>
+    <article class="kpi-card">
+        <div class="kpi-value kpi-warn">@Model.Stats.MicrotraumaCount</div>
+        <div class="kpi-label">Микротравмы</div>
+    </article>
+</div>
+
+<div class="dashboard-panels">
+    <section class="panel">
+        <h2 class="panel-title">Разделы</h2>
+        <div class="module-links">
+            <a asp-page="/Incidents/Workplace">Несчастные случаи на производстве</a>
+            <a asp-page="/Incidents/Investigations">Расследования несчастных случаев</a>
+            <a asp-page="/Incidents/Microtraumas">Учёт микротравм</a>
+            <a asp-page="/Incidents/MicrotraumaInvestigations">Расследования микротравм</a>
+            <a asp-page="/Incidents/Catalog" asp-route-kind="IncidentTypes">Справочники</a>
+        </div>
+        <p class="hint">Данные хранятся локально в App_Data/incidents/. Работает без 1С и без файла Кристины.</p>
+    </section>
+
+    <section class="panel">
+        <h2 class="panel-title">Последние несчастные случаи</h2>
+        @if (Model.RecentAccidents.Count == 0)
+        {
+            <p class="hint">Нет записей для выбранной организации.</p>
+        }
+        else
+        {
+            <ul class="deadline-list">
+                @foreach (var row in Model.RecentAccidents)
+                {
+                    <li>
+                        <div class="deadline-main">
+                            <strong>@row.Number — @row.Victims</strong>
+                            <span>@row.IncidentType · @row.Department</span>
+                        </div>
+                        <span class="badge @(row.Posted ? "badge-warn" : "")">@(row.IncidentDateTime?.ToString("dd.MM.yyyy") ?? row.DocumentDate.ToString("dd.MM.yyyy"))</span>
+                    </li>
+                }
+            </ul>
+        }
+    </section>
+</div>
+
+<section class="panel home-print-history" style="margin-top:10px">
+    <h2 class="panel-title home-print-history-title">История печати</h2>
+    <div class="home-print-history-links">
+        <a asp-page="/History">Все печатные формы в одном списке →</a>
+    </div>
+    <p class="hint">Карточки СИЗ/ДСИЗ и журналы инструктажей.</p>
+</section>

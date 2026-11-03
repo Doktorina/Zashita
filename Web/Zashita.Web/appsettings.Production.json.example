@@ -1,0 +1,23 @@
+{
+  "Logging": {
+    "LogLevel": {
+      "Default": "Information",
+      "Microsoft.AspNetCore": "Warning"
+    }
+  },
+  "AllowedHosts": "*",
+  "Auth": {
+    "Users": [
+      {
+        "Login": "admin",
+        "Password": "ЗАМЕНИТЕ_СЛОЖНЫЙ_ПАРОЛЬ",
+        "DisplayName": "Администратор"
+      },
+      {
+        "Login": "sysadmin",
+        "Password": "ЗАМЕНИТЕ_СЛОЖНЫЙ_ПАРОЛЬ",
+        "DisplayName": "Системный администратор"
+      }
+    ]
+  }
+}

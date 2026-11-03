@@ -1,0 +1,121 @@
+﻿@page "/Risks/UnscheduledOrders/Preview"
+@model Zashita.Web.Pages.Risks.UnscheduledOrders.PreviewModel
+@{
+    ViewData["Title"] = Model.NotFound ? "Не найдено" : Model.Title;
+    var historyTitle = Model.NotFound ? "Не найдено" : Model.Title;
+    Layout = null;
+}
+
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>@ViewData["Title"]</title>
+    <partial name="_SiteIconLinks" />
+<link rel="stylesheet" href="/css/zashita.css" asp-append-version="true" />
+  <link rel="stylesheet" href="/css/ppe-doc-print.css" asp-append-version="true" />
+  <link rel="stylesheet" href="/css/sout-preparation.css" asp-append-version="true" />
+  <link rel="stylesheet" href="/css/risks-preparation.css" asp-append-version="true" />
+  <style>
+    @@page { size: A4 portrait; margin: 15mm; }
+    @@media print {
+      .ppe-no-print { display: none !important; }
+      body { background: #fff !important; margin: 0 !important; }
+      .sout-preview-shell, .sout-preview-doc-wrap {
+        margin: 0 !important; padding: 0 !important; box-shadow: none !important;
+        display: block !important; justify-content: flex-start !important;
+      }
+      .risks-a4-sheet, .risks-order-sheet {
+        width: 100% !important;
+        max-width: none !important;
+        min-height: auto !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        box-shadow: none !important;
+      }
+      .risks-order-letterhead { text-align: center !important; }
+      .risks-order-meta-2 { display: flex !important; justify-content: space-between !important; }
+    }
+  </style>
+</head>
+<body class="sout-preview-page risks-preview-mode-order">
+@if (Model.NotFound)
+{
+  <div class="sout-preview-missing">
+    <p>Документ не найден.</p>
+    <a class="btn btn-outline" href="/Risks/Documents?tab=order">← К документам</a>
+  </div>
+}
+else
+{
+  <div class="sout-preview-shell">
+    <div class="risks-docs-back-row ppe-no-print">
+      <a class="btn btn-outline btn-sm" href="/Risks/Documents?tab=order">← К документам</a>
+    </div>
+    <div class="sout-preview-toolbar ppe-no-print">
+      <div class="sout-preview-toolbar-left">
+        <button type="button" class="btn btn-primary btn-sm" onclick="zashitaRecordPrint({ category: 'risks', title: @Json.Serialize(historyTitle), summary: 'Печать' })">Печать</button>
+        <button type="button" class="btn btn-outline btn-sm" id="risks-doc-word-btn">Word</button>
+        <button type="button" class="btn btn-outline btn-sm" id="risks-orders-preview-save-btn">Записать</button>
+      </div>
+      <div class="sout-preview-toolbar-right">
+        <a class="btn btn-outline btn-sm" href="/Risks/UnscheduledOrders/Edit?id=@Model.Id">К документу</a>
+      </div>
+    </div>
+
+    @if (!string.IsNullOrWhiteSpace(Model.Message))
+    {
+      <p class="sout-preview-message ppe-no-print">@Model.Message</p>
+    }
+
+    <form method="post" asp-page="/Risks/UnscheduledOrders/Preview" asp-page-handler="Save" id="risks-orders-preview-save-form" class="ppe-no-print">
+      <input type="hidden" name="id" value="@Model.Id" />
+      <input type="hidden" name="mode" value="@Model.Mode" />
+      <div id="risks-orders-preview-overrides"></div>
+    </form>
+
+    <div class="sout-preview-doc-wrap" id="risks-orders-preview-print-area">
+      <div class="risks-a4-sheet">
+        @Html.Raw(Model.PreviewHtml)
+      </div>
+    </div>
+  </div>
+
+  <script src="~/js/risks-doc-list.js" asp-append-version="true"></script>
+  <script src="~/js/risks-doc-export.js" asp-append-version="true"></script>
+  <script src="/js/print-history.js"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', function () {
+      var printBtn = document.querySelector('.sout-preview-toolbar-left .btn.btn-primary');
+      if (printBtn) {
+        printBtn.addEventListener('click', function (event) {
+          event.preventDefault();
+          if (typeof window.zashitaRecordPrint === 'function') {
+            window.zashitaRecordPrint({
+              category: 'risks',
+              title: @Json.Serialize(historyTitle),
+              summary: 'Печать'
+            });
+          } else {
+            window.print();
+          }
+        });
+      }
+      initRisksPreparationPreview({
+        saveBtnId: 'risks-orders-preview-save-btn',
+        saveFormId: 'risks-orders-preview-save-form',
+        overridesContainerId: 'risks-orders-preview-overrides',
+        printAreaId: 'risks-orders-preview-print-area'
+      });
+      if (window.zashitaRisksDocExport) {
+        window.zashitaRisksDocExport.bind({
+          sourceSelector: '#risks-orders-preview-print-area .risks-a4-sheet',
+          fileName: @Json.Serialize(historyTitle)
+        });
+      }
+    });
+  </script>
+}
+</body>
+</html>

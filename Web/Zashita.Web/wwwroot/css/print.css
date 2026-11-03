@@ -1,0 +1,37 @@
+body.print-doc {
+  font-family: "Segoe UI", system-ui, sans-serif;
+  margin: 24px;
+  color: #111;
+}
+
+.print-header h1 {
+  margin: 0 0 8px;
+  font-size: 22px;
+}
+
+.print-meta {
+  color: #555;
+  margin: 0 0 16px;
+}
+
+.data-grid {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12px;
+}
+
+.data-grid th,
+.data-grid td {
+  border: 1px solid #ccc;
+  padding: 4px 6px;
+}
+
+.data-grid th {
+  background: #f3f3f3;
+}
+
+.hint { color: #666; }
+
+@media print {
+  body.print-doc { margin: 0; }
+}

@@ -1,0 +1,151 @@
+@page "/Risks/HazardCatalog"
+@model Zashita.Web.Pages.Risks.HazardCatalogModel
+@{
+    ViewData["Title"] = "Реестр опасностей";
+    ViewData["Subtitle"] = "Справочник + меры управления";
+}
+
+<link rel="stylesheet" href="/css/risks-report.css" asp-append-version="true" />
+
+@if (!string.IsNullOrWhiteSpace(Model.Message))
+{
+  <p class="@(Model.IsError ? "form-error" : "text-success")">@Model.Message</p>
+}
+
+@if (Model.IsChangesFlow)
+{
+  <div class="panel ppe-panel" style="margin-bottom:12px">
+    <p class="hint" style="margin:0">
+      <b>Внесение изменений</b> — шаг 1 из 3: отредактируйте реестр опасностей, затем нажмите <b>Далее</b>,
+      чтобы выбрать рабочее место и обновить его карту оценки рисков.
+    </p>
+  </div>
+}
+
+<div class="panel ppe-panel">
+  <p class="hint">
+    Стандартный перечень опасностей и мер управления. Можно добавлять новые по результатам обхода рабочих мест.
+    Меры — многострочный список (с маркерами «-»). Исходный и остаточный риск задаются на <b>карте оценки</b> РМ.
+    Используется в отчёте <a asp-page="/Risks/Reports/Status">Отчет по рискам</a>.
+  </p>
+
+  <form method="post" asp-page-handler="Save">
+    @if (Model.IsChangesFlow)
+    {
+      <input type="hidden" name="flow" value="changes" />
+    }
+    <div class="ppe-toolbar">
+      <button type="submit" class="btn btn-primary btn-sm">Сохранить</button>
+      <button type="button" class="btn btn-outline btn-sm" id="hazard-add-row">+ Добавить опасность</button>
+      @if (Model.IsChangesFlow)
+      {
+        <button type="submit"
+                class="btn btn-primary btn-sm"
+                formaction="?handler=SaveAndNext&amp;flow=changes">
+          Далее →
+        </button>
+        <a class="btn btn-outline btn-sm" href="/module/риски">Отмена</a>
+      }
+      else
+      {
+        <a class="btn btn-outline btn-sm" asp-page="/Risks/Reports/Status">К отчёту</a>
+      }
+    </div>
+
+    <table class="data-grid ppe-edit-grid hazard-catalog-grid" id="hazard-catalog-grid">
+      <thead>
+        <tr>
+          <th style="width:3%"></th>
+          <th style="width:8%">Номер опасности</th>
+          <th style="width:28%">Наименование опасности</th>
+          <th>Меры управления</th>
+          <th style="width:14%">Подсказка профессий</th>
+          <th style="width:6%">Активна</th>
+        </tr>
+      </thead>
+      <tbody id="hazard-catalog-body">
+        @for (var i = 0; i < Model.Items.Count; i++)
+        {
+          var item = Model.Items[i];
+          <tr>
+            <td>
+              <input type="hidden" name="id" value="@item.Id" />
+              <button type="button" class="btn btn-outline btn-sm hazard-remove" title="Удалить">×</button>
+            </td>
+            <td><input name="number" value="@item.Number" class="ppe-input" placeholder="№" /></td>
+            <td><input name="title" value="@item.Title" class="ppe-input" required /></td>
+            <td>
+              <textarea name="measures"
+                        class="ppe-input hazard-measures"
+                        rows="4"
+                        placeholder="- мера 1&#10;- мера 2">@item.DefaultMeasures</textarea>
+            </td>
+            <td><input name="professionHint" value="@item.ProfessionHint" class="ppe-input" placeholder="арматур,сварщ" /></td>
+            <td class="c">
+              <input type="hidden" name="active" value="@(item.IsActive ? "1" : "0")" class="hazard-active-flag" />
+              <input type="checkbox" class="hazard-active-check" @(item.IsActive ? "checked" : null) />
+            </td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  </form>
+</div>
+
+<template id="hazard-row-template">
+  <tr>
+    <td>
+      <input type="hidden" name="id" value="" />
+      <button type="button" class="btn btn-outline btn-sm hazard-remove" title="Удалить">×</button>
+    </td>
+    <td><input name="number" value="" class="ppe-input" placeholder="№" /></td>
+    <td><input name="title" value="" class="ppe-input" required /></td>
+    <td>
+      <textarea name="measures"
+                class="ppe-input hazard-measures"
+                rows="4"
+                placeholder="- мера 1&#10;- мера 2"></textarea>
+    </td>
+    <td><input name="professionHint" value="" class="ppe-input" placeholder="арматур,сварщ" /></td>
+    <td class="c">
+      <input type="hidden" name="active" value="1" class="hazard-active-flag" />
+      <input type="checkbox" class="hazard-active-check" checked />
+    </td>
+  </tr>
+</template>
+
+<script>
+  (function () {
+    var body = document.getElementById('hazard-catalog-body');
+    var tpl = document.getElementById('hazard-row-template');
+    var addBtn = document.getElementById('hazard-add-row');
+    if (!body || !tpl || !addBtn) return;
+
+    function bindActive(row) {
+      var flag = row.querySelector('.hazard-active-flag');
+      var check = row.querySelector('.hazard-active-check');
+      if (!flag || !check) return;
+      check.addEventListener('change', function () {
+        flag.value = check.checked ? '1' : '0';
+      });
+    }
+
+    body.querySelectorAll('tr').forEach(bindActive);
+
+    addBtn.addEventListener('click', function () {
+      var node = tpl.content.cloneNode(true);
+      body.appendChild(node);
+      var row = body.lastElementChild;
+      bindActive(row);
+      var numberInput = row ? row.querySelector('input[name="number"]') : null;
+      if (numberInput) numberInput.focus();
+    });
+
+    body.addEventListener('click', function (e) {
+      var btn = e.target.closest('.hazard-remove');
+      if (!btn) return;
+      var row = btn.closest('tr');
+      if (row) row.remove();
+    });
+  })();
+</script>

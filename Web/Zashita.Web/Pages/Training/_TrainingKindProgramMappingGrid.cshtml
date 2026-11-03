@@ -1,0 +1,79 @@
+@model Zashita.Web.Pages.Training.WorkTypeMappingModel
+
+@if (!string.IsNullOrWhiteSpace(Model.Message))
+{
+  <p class="text-success">@Model.Message</p>
+}
+
+<div class="panel ppe-panel training-mapping-panel">
+  <p class="hint">
+    В таблице перечислены все виды обучения из справочника
+    <a asp-page="/Training/Kinds">«Виды обучения»</a>.
+    Для каждого вида выберите программу из
+    <a asp-page="/Training/Programs">«Программы (курсы)»</a>.
+    При формировании заявки на обучение программа подставится автоматически.
+  </p>
+
+  <form method="post" asp-page-handler="Save">
+    <div class="training-report-toolbar training-status-save-bar training-mapping-save-bar">
+      <button type="submit" class="btn btn-primary">Сохранить</button>
+      <span class="hint">Видов обучения: @Model.Rows.Count</span>
+    </div>
+
+    <div class="training-status-table-hscroll">
+      <table class="data-grid ppe-edit-grid training-mapping-grid training-sticky-head-grid" id="kind-program-mapping-grid">
+        <thead>
+          <tr>
+            <th>Виды обучения</th>
+            <th>Программа</th>
+          </tr>
+        </thead>
+        <tbody>
+          @if (Model.Rows.Count == 0)
+          {
+            <tr>
+              <td colspan="2" class="hint">
+                Нет видов обучения. Добавьте их в
+                <a asp-page="/Training/Kinds">справочнике видов обучения</a>.
+              </td>
+            </tr>
+          }
+          else
+          {
+            foreach (var row in Model.Rows)
+            {
+              <tr class="training-kind-program-row">
+                <td>
+                  <input type="hidden" name="KindId" value="@row.KindId" />
+                  <input type="hidden" name="KindName" value="@row.KindName" />
+                  <span class="training-kind-program-name">@row.KindName</span>
+                </td>
+                <td>
+                  <select name="TargetProgram" class="ppe-input">
+                    <option value="">— не выбрана —</option>
+                    @foreach (var program in Model.ProgramOptions)
+                    {
+                      if (string.Equals(row.ProgramName, program, StringComparison.OrdinalIgnoreCase))
+                      {
+                        <option value="@program" selected>@program</option>
+                      }
+                      else
+                      {
+                        <option value="@program">@program</option>
+                      }
+                    }
+                    @if (!string.IsNullOrWhiteSpace(row.ProgramName)
+                         && !Model.ProgramOptions.Contains(row.ProgramName, StringComparer.OrdinalIgnoreCase))
+                    {
+                      <option value="@row.ProgramName" selected>@row.ProgramName</option>
+                    }
+                  </select>
+                </td>
+              </tr>
+            }
+          }
+        </tbody>
+      </table>
+    </div>
+  </form>
+</div>

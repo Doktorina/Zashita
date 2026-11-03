@@ -1,0 +1,278 @@
+@page
+@model Zashita.Web.Pages.IndexModel
+@using Zashita.Core.Employees
+@{
+    ViewData["Title"] = "Главная";
+    ViewData["Subtitle"] = string.Empty;
+    ViewData["SectionTitle"] = "Главная";
+    ViewData["IsHome"] = true;
+}
+
+<div class="home-page">
+  @{
+    var staffingVersion = Model.StaffingItems.Count == 0
+      ? "empty"
+      : string.Join(",", Model.StaffingItems.Select(i => i.Event.Id).Take(12));
+  }
+  <div class="home-alert home-alert-dismissible"
+       data-dismiss-key="home-staffing"
+       data-dismiss-version="@staffingVersion"
+       style="flex-wrap:wrap;align-items:flex-start;gap:10px">
+    <span class="home-alert-icon" aria-hidden="true">👤</span>
+    <div class="home-alert-text" style="flex:1;min-width:16rem">
+      <strong>Приём и перевод сотрудников</strong>
+      @if (Model.StaffingAlerts.Count == 0)
+      {
+        <p class="hint" style="margin:6px 0 0">Нет незакрытых приёмов/переводов — по выбранной организации всё заполнено или событий нет.</p>
+      }
+      else
+      {
+        <p class="hint" style="margin:6px 0 0">Остаются, пока не заполнены обучение, медосмотры, СОУТ и риски. В разделах список дублируется и пропадает по мере заполнения.</p>
+        <ul class="home-alert-list">
+          @foreach (var item in Model.StaffingItems.Take(8))
+          {
+            var alert = item.Event;
+            var kindLabel = alert.Kind switch
+            {
+              Zashita.Core.Employees.StaffingChangeKind.Hired => "Приём",
+              Zashita.Core.Employees.StaffingChangeKind.Transferred => "Перевод",
+              _ => "Изменение"
+            };
+            var eventDate = StaffingOnboarding.FormatEventDateLabel(alert.Kind, item.DisplayDate);
+            var gap = item.Gap.Label;
+            <li>
+              <b>@kindLabel</b> — @alert.Person
+              @if (!string.IsNullOrWhiteSpace(eventDate))
+              {
+                <b style="margin-left:4px">(@eventDate)</b>
+              }
+              @if (alert.Kind == Zashita.Core.Employees.StaffingChangeKind.Transferred)
+              {
+                @if (!string.IsNullOrWhiteSpace(alert.FromOrganization))
+                {
+                  <span class="hint">, из «@alert.FromOrganization» → в «@alert.Organization»</span>
+                }
+                else if (!string.IsNullOrWhiteSpace(alert.Organization))
+                {
+                  <span class="hint">, в «@alert.Organization»</span>
+                }
+              }
+              @if (!string.IsNullOrWhiteSpace(alert.NewProfession))
+              {
+                <span class="hint">(@alert.NewProfession)</span>
+              }
+              @if (!string.IsNullOrWhiteSpace(gap))
+              {
+                <span class="hint" style="color:#9a3412">— @gap</span>
+              }
+              <span class="hint">
+                <a href="/module/обучение">обучение</a> ·
+                <a href="/module/медосмотры">медосмотры</a> ·
+                <a href="/module/специальная-оценка">СОУТ</a> ·
+                <a href="/module/риски">риски</a>
+              </span>
+            </li>
+          }
+        </ul>
+        @if (Model.StaffingItems.Count > 8)
+        {
+          <p class="hint" style="margin:4px 0 0">и ещё @(Model.StaffingItems.Count - 8)…</p>
+        }
+      }
+    </div>
+    <button type="button" class="home-alert-dismiss" data-dismiss-alert title="Скрыть" aria-label="Скрыть уведомление">×</button>
+  </div>
+
+  <div class="home-alert home-alert-dismissible"
+       data-dismiss-key="home-overdue"
+       data-dismiss-version="@Model.OverdueTasks">
+    <span class="home-alert-icon" aria-hidden="true">⚠</span>
+    <span class="home-alert-text">
+      @Model.OverdueTasks просроченных задач по охране труда
+    </span>
+    <a class="home-alert-link" asp-page="/Tasks">Показать все →</a>
+    <button type="button" class="home-alert-dismiss" data-dismiss-alert title="Скрыть" aria-label="Скрыть уведомление">×</button>
+  </div>
+
+  <div class="kpi-row home-kpi-row">
+    <article class="kpi-card">
+      <div class="kpi-value">@Model.OpenTasks</div>
+      <div class="kpi-label">Открытых задач</div>
+    </article>
+    <article class="kpi-card kpi-card-danger">
+      <div class="kpi-value kpi-danger">@Model.OverdueTasks</div>
+      <div class="kpi-label kpi-label-danger">Просрочено</div>
+    </article>
+    <article class="kpi-card">
+      <div class="kpi-value">@Model.DisplayMedStats.ExpiringSoon</div>
+      <div class="kpi-label">Медосмотры · 30 дней</div>
+    </article>
+    <article class="kpi-card kpi-card-success">
+      <div class="kpi-value kpi-success">@Model.DaysWithoutAccident</div>
+      <div class="kpi-label kpi-label-success">Дней без НС</div>
+    </article>
+  </div>
+
+  <div class="home-grid">
+    <section class="panel home-panel">
+      <div class="panel-head-row">
+        <h2 class="panel-title">Ближайшие сроки и задачи</h2>
+        <a class="panel-head-link" asp-page="/Tasks">Показать все @Model.OpenTasks →</a>
+      </div>
+      <div class="home-deadline-sections">
+        @foreach (var block in Model.DeadlineSections)
+        {
+          <details class="home-deadline-section">
+            <summary class="home-deadline-section-summary">
+              <span class="home-deadline-section-title">@block.Title</span>
+              <span class="home-deadline-section-count">@(block.TotalCount > 0 ? block.TotalCount : block.Items.Count)</span>
+              <a class="home-deadline-section-link" href="@block.SectionUrl" onclick="event.stopPropagation()">Планирование →</a>
+            </summary>
+            <ul class="deadline-list">
+              @foreach (var row in block.Items)
+              {
+                <li>
+                  <a href="@row.Href" class="home-deadline-item-link">
+                    <div class="deadline-main">
+                      <strong>@row.Title</strong>
+                      <span>@row.Subtitle</span>
+                    </div>
+                    <span class="badge badge-@row.BadgeKind">@row.Badge</span>
+                  </a>
+                </li>
+              }
+            </ul>
+          </details>
+        }
+      </div>
+    </section>
+
+    <section class="panel home-panel home-reports-span">
+      <h2 class="panel-title">Сводка данных из отчетов</h2>
+      <p class="hint" style="margin-top:0">По сотрудникам и профессиям / рабочим местам выбранной организации.</p>
+      <div class="home-reports-grid">
+        <article class="home-report-card">
+          <div class="panel-head-row">
+            <h3 class="home-report-title">Медосмотры</h3>
+            <a class="panel-head-link" asp-page="/Med/Status">→</a>
+          </div>
+          <ul class="stat-list home-stat-list">
+            <li><a asp-page="/Med/Schedule" asp-route-needFilter="overdue"><span>истекло</span><strong class="@(Model.MedSummary.Line1 > 0 ? "text-danger" : "")">@Model.MedSummary.Line1</strong></a></li>
+            <li><a asp-page="/Med/Schedule" asp-route-needFilter="expiring"><span>истекает (30 дней)</span><strong class="@(Model.MedSummary.Line2 > 0 ? "text-warn" : "")">@Model.MedSummary.Line2</strong></a></li>
+            <li><a asp-page="/Med/Schedule" asp-route-needFilter="notconducted"><span>не пройдено</span><strong class="@(Model.MedSummary.Line3 > 0 ? "text-danger" : "")">@Model.MedSummary.Line3</strong></a></li>
+            <li><a asp-page="/Med/Schedule" asp-route-needFilter="passed"><span>пройдено</span><strong class="text-success">@Model.MedSummary.Line4</strong></a></li>
+            <li><a asp-page="/Med/Schedule" asp-route-needFilter="planned"><span>запланировано</span><strong>@Model.MedSummary.Line5</strong></a></li>
+          </ul>
+        </article>
+
+        <article class="home-report-card">
+          <div class="panel-head-row">
+            <h3 class="home-report-title">СОУТ</h3>
+            <a class="panel-head-link" asp-page="/Sout/Status">→</a>
+          </div>
+          <ul class="stat-list home-stat-list">
+            <li><a asp-page="/Sout/Status" asp-route-needFilter="notconducted"><span>нет специальной оценки</span><strong class="@(Model.SoutSummary.Line1 > 0 ? "text-danger" : "")">@Model.SoutSummary.Line1</strong></a></li>
+            <li><a asp-page="/Sout/Status" asp-route-needFilter="overdue"><span>просрочена</span><strong class="@(Model.SoutSummary.Line2 > 0 ? "text-danger" : "")">@Model.SoutSummary.Line2</strong></a></li>
+            <li><a asp-page="/Sout/Status" asp-route-needFilter="expiring"><span>истекает</span><strong class="@(Model.SoutSummary.Line3 > 0 ? "text-warn" : "")">@Model.SoutSummary.Line3</strong></a></li>
+            <li><a asp-page="/Sout/Status" asp-route-needFilter="assessed"><span>оценено</span><strong class="text-success">@Model.SoutSummary.Line4</strong></a></li>
+            <li><a asp-page="/Sout/Status" asp-route-needFilter="planned"><span>запланировано</span><strong>@Model.SoutSummary.Line5</strong></a></li>
+          </ul>
+        </article>
+
+        <article class="home-report-card">
+          <div class="panel-head-row">
+            <h3 class="home-report-title">Обучение</h3>
+            <a class="panel-head-link" asp-page="/Training/Planning">→</a>
+          </div>
+          <ul class="stat-list home-stat-list">
+            <li><a asp-page="/Training/Planning" asp-route-needFilter="overdue"><span>просрочено (чел.)</span><strong class="@(Model.TrainingSummary.Line1 > 0 ? "text-danger" : "")">@Model.TrainingSummary.Line1</strong></a></li>
+            <li><a asp-page="/Training/Planning" asp-route-needFilter="expiring"><span>истекает (чел.)</span><strong class="@(Model.TrainingSummary.Line2 > 0 ? "text-warn" : "")">@Model.TrainingSummary.Line2</strong></a></li>
+            <li><a asp-page="/Training/Planning" asp-route-needFilter="notconducted"><span>не обучено (чел.)</span><strong class="@(Model.TrainingSummary.Line3 > 0 ? "text-danger" : "")">@Model.TrainingSummary.Line3</strong></a></li>
+            <li><a asp-page="/Training/Planning" asp-route-needFilter="trained"><span>обучено (чел.)</span><strong class="text-success">@Model.TrainingSummary.Line4</strong></a></li>
+            <li><a asp-page="/Training/Planning" asp-route-needFilter="planned"><span>запланировано</span><strong>@Model.TrainingSummary.Line5</strong></a></li>
+          </ul>
+        </article>
+
+        <article class="home-report-card">
+          <div class="panel-head-row">
+            <h3 class="home-report-title">Риски</h3>
+            <a class="panel-head-link" asp-page="/Risks/Reports/Status">→</a>
+          </div>
+          <ul class="stat-list home-stat-list">
+            <li><a asp-page="/Risks/AssessmentList" asp-route-needFilter="notconducted"><span>нет оценки рисков</span><strong class="@(Model.RisksSummary.Line1 > 0 ? "text-danger" : "")">@Model.RisksSummary.Line1</strong></a></li>
+            <li><a asp-page="/Risks/AssessmentList" asp-route-needFilter="overdue"><span>просрочена</span><strong class="@(Model.RisksSummary.Line2 > 0 ? "text-danger" : "")">@Model.RisksSummary.Line2</strong></a></li>
+            <li><a asp-page="/Risks/AssessmentList" asp-route-needFilter="expiring"><span>истекает</span><strong class="@(Model.RisksSummary.Line3 > 0 ? "text-warn" : "")">@Model.RisksSummary.Line3</strong></a></li>
+            <li><a asp-page="/Risks/AssessmentList" asp-route-needFilter="assessed"><span>оценено</span><strong class="text-success">@Model.RisksSummary.Line4</strong></a></li>
+            <li><a asp-page="/Risks/AssessmentList" asp-route-needFilter="planned"><span>запланировано</span><strong>@Model.RisksSummary.Line5</strong></a></li>
+          </ul>
+        </article>
+      </div>
+    </section>
+
+    <section class="panel home-panel">
+      <h2 class="panel-title">Готовность по направлениям</h2>
+      <p class="hint">Считается по рабочим местам и сотрудникам, а не по «есть/нет» на организацию.</p>
+      <div class="progress-list">
+        @foreach (var item in new (string Title, int Percent, string Detail)[]
+        {
+          ("Специальная оценка", Model.Readiness.SoutPercent, Model.Readiness.SoutDetail),
+          ("Оценка рисков", Model.Readiness.RiskPercent, Model.Readiness.RiskDetail),
+          ("Обучение", Model.Readiness.TrainingPercent, Model.Readiness.TrainingDetail),
+          ("Обеспечение СИЗ", Model.Readiness.PpePercent, Model.Readiness.PpeDetail),
+          ("Медосмотры", Model.Readiness.MedPercent, Model.Readiness.MedDetail)
+        })
+        {
+          var cls = item.Percent >= 85 ? "progress-fill-green" : item.Percent >= 60 ? "progress-fill-warn" : "progress-fill-danger";
+          <div class="progress-item">
+            <div class="progress-head"><span>@item.Title</span><span>@item.Percent%</span></div>
+            <div class="progress-track"><div class="progress-fill @cls" style="width:@item.Percent%"></div></div>
+            <div class="hint" style="margin-top:4px">@item.Detail</div>
+          </div>
+        }
+      </div>
+    </section>
+
+    <section class="panel home-panel">
+      <h2 class="panel-title">Последние действия</h2>
+      <ul class="timeline-list">
+        @foreach (var item in Model.Timeline)
+        {
+          <li>
+            <span class="timeline-dot"></span>
+            <div class="timeline-main">
+              <strong>@item.Title</strong>
+              <span>@item.Subtitle</span>
+            </div>
+            <time>@item.Time</time>
+          </li>
+        }
+      </ul>
+    </section>
+  </div>
+</div>
+
+<style>
+  .home-reports-span {
+    grid-column: 1 / -1;
+  }
+  .home-reports-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    margin-top: 8px;
+  }
+  .home-report-card {
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    padding: 10px 12px;
+    background: #fafafa;
+  }
+  .home-report-title {
+    margin: 0;
+    font-size: 0.95rem;
+    font-weight: 700;
+  }
+  @@media (max-width: 900px) {
+    .home-reports-grid { grid-template-columns: 1fr; }
+  }
+</style>

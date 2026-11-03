@@ -1,0 +1,51 @@
+﻿@page "/Ppe/Changes/PreviewAct"
+@model Zashita.Web.Pages.Ppe.Changes.PreviewActModel
+@{
+    ViewData["Title"] = "Предпросмотр акта";
+    ViewData["Subtitle"] = Model.Record is not null
+        ? $"{Model.ActTitle} · № {Model.Record.Number} от {Model.Record.Date:dd.MM.yyyy}"
+        : "Изменения спецодежды, СИЗ";
+}
+
+<link rel="stylesheet" href="/css/ppe-doc-print.css" asp-append-version="true" />
+<style>
+  @@media print {
+    .sidebar, .page-head, .toolbar-wrap, .ppe-no-print { display: none !important; }
+    .app-main, .window-frame, .window-body, .panel { margin: 0 !important; padding: 0 !important; border: none !important; box-shadow: none !important; }
+    .ppe-act-preview-wrap { max-height: none !important; overflow: visible !important; border: none !important; margin: 0 !important; padding: 0 !important; }
+  }
+</style>
+
+@if (Model.NotFound)
+{
+  <div class="panel ppe-panel">
+    <p class="form-error">Документ не найден. Сохраните документ в списке и повторите печать.</p>
+    <div class="ppe-actions ppe-no-print">
+      <a class="btn btn-outline" asp-page="/Ppe/Changes">К списку</a>
+    </div>
+  </div>
+}
+else
+{
+  <div class="panel ppe-panel">
+    <div class="ppe-preview-head ppe-no-print">
+      <div><strong>Форма:</strong> @Model.ActTitle</div>
+      <div><strong>Номер:</strong> @Model.Record!.Number</div>
+      <div><strong>Сотрудник:</strong> @Model.Record.Employee</div>
+      <div><strong>Подразделение:</strong> @Model.Record.Department</div>
+    </div>
+
+    <p class="hint ppe-no-print">Предпросмотр выбранной формы акта. Нажмите «Печать», чтобы открыть диалог печати.</p>
+
+    <div class="ppe-act-preview-wrap ppe-doc-body" id="ppe-act-print-area">
+      @Html.Raw(Model.PreviewHtml)
+    </div>
+
+    <div class="ppe-actions ppe-no-print">
+      <a class="btn btn-outline" asp-page="/Ppe/Changes" asp-route-editId="@Model.Id">Назад к документу</a>
+      <button type="button" class="btn btn-primary" onclick="zashitaRecordPrint({ category: 'ppe', title: document.title, summary: 'Печать' })">Печать</button>
+    </div>
+  </div>
+}
+
+<script src="/js/print-history.js"></script>

@@ -1,0 +1,24 @@
+@model Zashita.Web.Pages.Suot.SuotPanelActionsModel
+
+<div class="suot-panel-actions">
+    @if (!string.IsNullOrWhiteSpace(Model.EditHref))
+    {
+        <a href="@Model.EditHref" class="suot-panel-btn suot-panel-btn--primary">Изменить</a>
+    }
+    @if (!string.IsNullOrWhiteSpace(Model.DeleteId))
+    {
+        <form method="post" asp-page-handler="Delete" class="suot-inline-form"
+              onsubmit="return confirm('@(Model.DeleteConfirm ?? "Удалить запись?")');">
+            @foreach (var pair in Model.HiddenFields)
+            {
+                <input type="hidden" name="@pair.Key" value="@pair.Value" />
+            }
+            <input type="hidden" name="deleteId" value="@Model.DeleteId" />
+            <button type="submit" class="suot-panel-btn suot-panel-btn--danger">Удалить</button>
+        </form>
+    }
+    @if (!string.IsNullOrWhiteSpace(Model.SecondaryHref) && !string.IsNullOrWhiteSpace(Model.SecondaryLabel))
+    {
+        <a href="@Model.SecondaryHref" class="suot-panel-btn suot-panel-btn--ghost">@Model.SecondaryLabel</a>
+    }
+</div>

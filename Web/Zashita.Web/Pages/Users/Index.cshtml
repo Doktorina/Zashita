@@ -1,0 +1,91 @@
+@page "/Users"
+@model Zashita.Web.Pages.Users.IndexModel
+
+<div class="panel ppe-panel">
+  <p class="hint" style="margin-top:0">
+    Коронка = доступ на сайт. Без коронки войти нельзя.
+  </p>
+
+  @if (!string.IsNullOrWhiteSpace(Model.Message))
+  {
+    <p class="hint" style="color:@(Model.MessageOk ? "#15803d" : "#b45309")">@Model.Message</p>
+  }
+
+  <form method="post" asp-page-handler="Add" class="ppe-filter-bar ppe-saved-filters" style="align-items:flex-end">
+    <label>
+      Email (логин)
+      <input name="NewEmail" class="ppe-input" value="@Model.NewEmail" required placeholder="user@mail.ru" />
+    </label>
+    <label>
+      Имя
+      <input name="NewName" class="ppe-input" value="@Model.NewName" placeholder="ФИО" />
+    </label>
+    <label>
+      Пароль
+      <input name="NewPassword" type="password" class="ppe-input" value="@Model.NewPassword" required placeholder="пароль для входа" />
+    </label>
+    <button type="submit" class="btn btn-primary">Добавить</button>
+  </form>
+
+  <form method="get" class="ppe-filter-bar ppe-saved-filters">
+    <label>
+      Поиск
+      <input name="q" value="@Model.Q" class="ppe-input" placeholder="имя, email…" />
+    </label>
+    <button type="submit" class="btn btn-outline">Найти</button>
+    <a class="btn btn-outline" asp-page="/Users/Index">Сбросить</a>
+  </form>
+
+  <p class="hint">Всего: <strong>@Model.TotalCount</strong></p>
+
+  @if (Model.Rows.Count == 0)
+  {
+    <p class="hint">Пользователей нет.</p>
+  }
+  else
+  {
+    <table class="data-grid">
+      <thead>
+        <tr>
+          <th style="width:3rem">Доступ</th>
+          <th>Имя</th>
+          <th>Email</th>
+          <th>Компания</th>
+          <th>Роль</th>
+          <th style="width:7rem"></th>
+        </tr>
+      </thead>
+      <tbody>
+        @foreach (var row in Model.Rows)
+        {
+          <tr>
+            <td>
+              <form method="post" asp-page-handler="ToggleCrown" style="display:inline">
+                <input type="hidden" name="email" value="@row.Email" />
+                <input type="hidden" name="displayName" value="@row.DisplayName" />
+                <input type="hidden" name="q" value="@Model.Q" />
+                <button type="submit"
+                        class="btn btn-outline"
+                        title="@(row.HasCrown ? "Забрать доступ" : "Разрешить доступ")"
+                        style="min-width:2.5rem;padding:0.25rem 0.4rem;font-size:1.15rem;line-height:1;@(row.HasCrown ? "border-color:#ca8a04;color:#a16207" : "opacity:0.45")">
+                  @(row.HasCrown ? "👑" : "☆")
+                </button>
+              </form>
+            </td>
+            <td>@row.DisplayName</td>
+            <td>@row.Email</td>
+            <td>@(string.IsNullOrWhiteSpace(row.Company) ? "—" : row.Company)</td>
+            <td>@row.RoleLabel</td>
+            <td>
+              <form method="post" asp-page-handler="Delete" style="display:inline"
+                    onsubmit="return confirm('Удалить / закрыть доступ для @row.Email?');">
+                <input type="hidden" name="email" value="@row.Email" />
+                <button type="submit" class="btn btn-outline" style="color:#b91c1c">Удалить</button>
+              </form>
+            </td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  }
+</div>

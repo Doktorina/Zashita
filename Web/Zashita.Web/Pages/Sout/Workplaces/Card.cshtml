@@ -1,0 +1,344 @@
+@page "/Sout/Workplaces/Card"
+@model Zashita.Web.Pages.Sout.Workplaces.CardModel
+@using Zashita.Core.Employees
+@using Zashita.Core.Risks
+@using Zashita.Web.Pages.Sout.Workplaces
+@{
+    ViewData["Title"] = "Карта СОУТ";
+    var card = Model.Workplace.SoutCard ?? new SoutCardDetails();
+    var profession = string.IsNullOrWhiteSpace(Model.Workplace.Profession) ? Model.Workplace.Name : Model.Workplace.Profession;
+}
+
+<link rel="stylesheet" href="/css/risks-report.css" asp-append-version="true" />
+<link rel="stylesheet" href="/css/sout-catalog.css" asp-append-version="true" />
+
+@if (Model.NotFound)
+{
+  <div class="panel">
+    <p>Карта СОУТ не найдена или нет доступа к организации этой записи.</p>
+    <p class="hint">Откройте карту из списка «Карты СОУТ» при выбранной нужной организации, либо из отчёта по СОУТ кнопкой «Открыть карту».</p>
+    <a class="btn btn-outline" asp-page="/Sout/Workplaces" asp-route-view="cards">К списку карт СОУТ</a>
+    <a class="btn btn-outline" asp-page="/Sout/Status">Отчёт по СОУТ</a>
+  </div>
+}
+else
+{
+  @if (!string.IsNullOrWhiteSpace(Model.Message))
+  {
+    <p class="@(Model.IsError ? "form-error" : "text-success")">@Model.Message</p>
+  }
+
+  <div class="panel ppe-panel">
+    <div class="ppe-toolbar" style="flex-wrap:wrap;gap:8px">
+      <a class="btn btn-outline btn-sm" asp-page="/Sout/Workplaces" asp-route-view="cards">← К картам СОУТ</a>
+      <a class="btn btn-outline btn-sm"
+         asp-page="/Sout/Workplaces/CardPreview"
+         asp-route-id="@Model.Id"
+         target="_blank">Предпросмотр</a>
+      <a class="btn btn-outline btn-sm" asp-page="/Sout/ImportCards">Импорт всех карт из Word</a>
+      <a class="btn btn-outline btn-sm" asp-page="/Sout/Workplaces">Рабочие места</a>
+      <a class="btn btn-outline btn-sm" asp-page="/Sout/Status">Отчёт по СОУТ</a>
+    </div>
+
+    <form method="post" asp-page-handler="ImportWord" enctype="multipart/form-data" class="ppe-form" style="margin:12px 0;padding:12px;border:1px solid #ddd;border-radius:6px">
+      <input type="hidden" name="id" value="@Model.Id" />
+      <p class="hint" style="margin-top:0">Подставить поля этой карты из Word (.docx) — по профессии / № карты.</p>
+      <label class="ppe-field">
+        <span>Файлы .docx</span>
+        <input type="file" name="wordFiles" accept=".docx,application/vnd.openxmlformats-officedocument.wordprocessingml.document" class="ppe-input" multiple />
+      </label>
+      <label class="ppe-field" style="display:flex;align-items:center;gap:8px">
+        <input type="hidden" name="overwriteExisting" value="false" />
+        <input type="checkbox" name="overwriteExisting" value="true" />
+        <span>перезаписать уже заполненные поля</span>
+      </label>
+      <button type="submit" class="btn btn-outline btn-sm">Вставить из Word</button>
+    </form>
+
+    <form method="post" asp-page-handler="Save" class="sout-official-card">
+      <input type="hidden" name="id" value="@Model.Id" />
+
+      <div class="ppe-actions ppe-actions-top" style="flex-wrap:wrap;gap:8px;align-items:center">
+        <button type="submit" class="btn btn-primary">Сохранить</button>
+        <button type="submit"
+                class="btn btn-outline"
+                formaction="@Url.Page("/Sout/Workplaces/Card", "MarkNotConducted", new { id = Model.Id })"
+                formmethod="post"
+                onclick="return confirm('Отметить, что специальная оценка не проведена?');">
+          Не проведена специальная оценка
+        </button>
+        <label class="sout-card-flag" title="Декларация соответствия (для классов 1–2 — бессрочно)">
+          <input type="checkbox" name="declaration" value="true" @(Model.Workplace.DeclarationOfConformity ? "checked" : null) />
+          декларация
+        </label>
+        <label class="sout-card-flag" title="Требуется внеплановая специальная оценка условий труда">
+          <input type="checkbox" name="unscheduled" value="true" @(Model.Workplace.RequiresUnscheduledSout ? "checked" : null) />
+          требуется внеплановая спецоценка
+        </label>
+      </div>
+
+      @if (Model.Workplace.SoutAssessmentNotConducted)
+      {
+        <p class="text-danger">Специальная оценка не проведена.</p>
+      }
+      @if (Model.Workplace.DeclarationOfConformity)
+      {
+        <p class="hint">Отмечена декларация соответствия.</p>
+      }
+      @if (Model.Workplace.RequiresUnscheduledSout)
+      {
+        <p class="hint" style="color:#9a3412">Отмечено: требуется внеплановая спецоценка.</p>
+      }
+
+      <p class="hint">Организация: <b>@Model.Workplace.Organization</b> <span class="hint">(фильтр сверху переключён на эту ЮЛ)</span></p>
+
+      <div class="sout-card-title-row">
+        <span>КАРТА №</span>
+        <input name="soutReportNumber" class="ppe-input sout-card-number" value="@Model.Workplace.SoutReportNumber" placeholder="номер" />
+        <span>специальной оценки условий труда</span>
+      </div>
+
+      <label class="ppe-field">
+        <span>Наименование профессии (должности) работника</span>
+        <input name="profession" class="ppe-input" value="@profession" />
+      </label>
+      <label class="ppe-field">
+        <span>Наименование структурного подразделения</span>
+        <input name="department" class="ppe-input" value="@Model.Workplace.Department" />
+      </label>
+      <label class="ppe-field">
+        <span>Количество и номера аналогичных рабочих мест</span>
+        <input name="analogousWorkplaces" class="ppe-input" value="@card.AnalogousWorkplaces" placeholder="отсутствуют" />
+      </label>
+
+      <table class="data-grid sout-card-form-grid">
+        <tbody>
+          <tr>
+            <td class="c" style="width:4rem"><b>011</b></td>
+            <td>Код профессии (должности) по ОК</td>
+            <td>
+              <input name="okCode" class="ppe-input" value="@Model.Workplace.OkCode" placeholder="например, 13247" />
+            </td>
+          </tr>
+          <tr>
+            <td class="c"><b>020</b></td>
+            <td>Численность работающих:</td>
+            <td>
+              <div class="sout-card-counts">
+                <label>на рабочем месте
+                  <input type="number" name="workerCount" min="0" class="ppe-input" value="@Model.Workplace.WorkerCount" />
+                </label>
+                <label>на всех аналогичных рабочих местах
+                  <input type="number" name="analogousWorkerCount" min="0" class="ppe-input" value="@card.AnalogousWorkerCount" />
+                </label>
+                <label>из них женщин
+                  <input type="number" name="workersWomen" min="0" class="ppe-input" value="@card.WorkersWomen" />
+                </label>
+                <label>лиц в возрасте до 18 лет
+                  <input type="number" name="workersUnder18" min="0" class="ppe-input" value="@card.WorkersUnder18" />
+                </label>
+                <label>инвалидов, допущенных к выполнению работ
+                  <input type="number" name="workersDisabled" min="0" class="ppe-input" value="@card.WorkersDisabled" />
+                </label>
+              </div>
+            </td>
+          </tr>
+          <tr>
+            <td class="c"><b>021</b></td>
+            <td>
+              Закрепление работников
+              <div class="hint">Выберите сотрудников из списка организации. Поиск — по ФИО, СНИЛС или должности.</div>
+            </td>
+            <td>
+              <details class="catalog-multiselect catalog-multiselect-wide">
+                <summary class="catalog-multiselect-trigger ppe-input">
+                  @{
+                    var selectedEmployeeLabels = Model.EmployeeOptions
+                      .Where(e => Model.SelectedEmployeeIds.Contains(e.Id))
+                      .Select(e =>
+                      {
+                          var employeeSnils = OneCEmployeeListParser.FormatSnils(e.Snils);
+                          var name = e.Name?.Trim() ?? string.Empty;
+                          return string.IsNullOrWhiteSpace(employeeSnils) ? name : $"{name} {employeeSnils}";
+                      })
+                      .Where(n => !string.IsNullOrWhiteSpace(n))
+                      .ToList();
+                    var employeeSummary = selectedEmployeeLabels.Count == 0
+                      ? "Выберите сотрудников"
+                      : string.Join(",\n", selectedEmployeeLabels);
+                  }
+                  <span class="catalog-multiselect-value" data-placeholder="Выберите сотрудников">@employeeSummary</span>
+                  <span class="catalog-multiselect-chevron" aria-hidden="true">▾</span>
+                </summary>
+                <div class="catalog-multiselect-menu">
+                  <input type="search" class="ppe-input catalog-multiselect-search" placeholder="Поиск по ФИО, СНИЛС или должности..." autocomplete="off" />
+                  <div class="catalog-multiselect-toolbar">
+                    <button type="button" class="btn btn-secondary catalog-multiselect-clear">Снять выделения</button>
+                  </div>
+                  <div class="catalog-multiselect-list">
+                    @if (Model.EmployeeOptions.Count == 0)
+                    {
+                      <span class="hint">Нет сотрудников в справочнике организации.</span>
+                    }
+                    @foreach (var employee in Model.EmployeeOptions)
+                    {
+                      var snils = OneCEmployeeListParser.FormatSnils(employee.Snils);
+                      var professionText = ProfessionMatcher.Normalize(employee.Profession);
+                      var summaryLabel = string.IsNullOrWhiteSpace(snils)
+                        ? employee.Name?.Trim() ?? string.Empty
+                        : $"{employee.Name?.Trim()} {snils}";
+                      var searchLabel = $"{employee.Name} {snils} {employee.Snils} {professionText} {employee.Profession}".ToLowerInvariant();
+                      var selected = Model.SelectedEmployeeIds.Contains(employee.Id);
+                      <label class="catalog-multiselect-option" data-label="@searchLabel" data-summary="@summaryLabel">
+                        <input type="checkbox"
+                               name="employeeIds"
+                               value="@employee.Id"
+                               @(selected ? "checked" : null) />
+                        <span>
+                          @employee.Name
+                          <span class="hint">@(string.IsNullOrWhiteSpace(snils) ? "СНИЛС не указан" : snils)</span>
+                        </span>
+                      </label>
+                    }
+                  </div>
+                </div>
+              </details>
+            </td>
+          </tr>
+          <tr>
+            <td class="c"><b>022</b></td>
+            <td>Используемое оборудование, материалы и сырье</td>
+            <td>
+              <div class="ppe-field" style="margin:0 0 10px">
+                <span>Используемое производственное оборудование</span>
+                <div class="catalog-multiselect-wide">
+                  <partial name="_CatalogMultiSelect" model="@(new CatalogMultiSelectModel
+                  {
+                      FieldName = "equipmentIds",
+                      Placeholder = "не используется",
+                      Items = Model.EquipmentOptions,
+                      SelectedIds = Model.SelectedEquipmentIds
+                  })" />
+                </div>
+                <span class="hint">
+                  <a asp-page="/Sout/Catalog" asp-route-kind="equipment" target="_blank">Справочник «Оборудование»</a>
+                </span>
+              </div>
+              <div class="ppe-field" style="margin:0">
+                <span>Используемые материалы и сырье</span>
+                <div class="catalog-multiselect-wide">
+                  <partial name="_CatalogMultiSelect" model="@(new CatalogMultiSelectModel
+                  {
+                      FieldName = "materialsIds",
+                      Placeholder = "не используется",
+                      Items = Model.MaterialsOptions,
+                      SelectedIds = Model.SelectedMaterialsIds
+                  })" />
+                </div>
+                <span class="hint">
+                  <a asp-page="/Sout/Catalog" asp-route-kind="materials" target="_blank">Справочник «Материалы и сырье»</a>
+                </span>
+              </div>
+            </td>
+          </tr>
+          <tr>
+            <td class="c"><b>030</b></td>
+            <td>Оценка условий труда по вредным (опасным) факторам. Итоговый класс (подкласс)</td>
+            <td>
+              <input name="conditionsClass" class="ppe-input" list="sout-card-classes" value="@Model.Workplace.ConditionsClass" placeholder="2 (допустимые)" />
+              <datalist id="sout-card-classes">
+                @foreach (var opt in Model.ConditionsClassOptions)
+                {
+                  <option value="@opt"></option>
+                }
+              </datalist>
+            </td>
+          </tr>
+          <tr>
+            <td></td>
+            <td>Дата составления</td>
+            <td>
+              <input type="date" name="preparedDate" class="ppe-input" id="sout-prepared-date"
+                     value="@(card.PreparedDate?.ToString("yyyy-MM-dd") ?? Model.Workplace.SoutAssessmentDate?.ToString("yyyy-MM-dd") ?? "")" />
+            </td>
+          </tr>
+        </tbody>
+      </table>
+
+      <div class="ppe-actions" style="margin-top:16px">
+        <button type="submit" class="btn btn-primary">Сохранить</button>
+      </div>
+    </form>
+  </div>
+}
+
+<style>
+  .sout-card-title-row {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px;
+    font-size: 1.15rem;
+    font-weight: 700;
+    margin: 12px 0 16px;
+  }
+  .sout-card-number { max-width: 8rem; font-weight: 700; }
+  .sout-card-form-grid {
+    table-layout: fixed;
+    width: 100%;
+  }
+  .sout-card-form-grid td {
+    vertical-align: top;
+    min-width: 0;
+    overflow-wrap: break-word;
+  }
+  .sout-card-form-grid td:nth-child(1) { width: 3.25rem; }
+  .sout-card-form-grid td:nth-child(2) { width: 30%; }
+  .sout-card-form-grid td:nth-child(3) { width: auto; }
+  .sout-card-form-grid .ppe-field,
+  .sout-card-form-grid .catalog-multiselect-wide,
+  .sout-card-form-grid .catalog-multiselect {
+    min-width: 0;
+    max-width: 100%;
+    width: 100%;
+    box-sizing: border-box;
+  }
+  .sout-card-form-grid .catalog-multiselect-trigger.ppe-input {
+    max-width: 100%;
+    height: auto;
+  }
+  .sout-card-form-grid .catalog-multiselect-value {
+    white-space: pre-wrap !important;
+    overflow-wrap: break-word;
+    word-break: break-word;
+  }
+  .sout-card-counts {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(11rem, 1fr));
+    gap: 8px 12px;
+  }
+  .sout-card-counts label { display: flex; flex-direction: column; gap: 4px; font-size: 13px; }
+  .catalog-multiselect-wide { max-width: 100%; width: 100%; min-width: 0; }
+  .sout-card-flags { display: flex; flex-wrap: wrap; gap: 16px; align-items: center; }
+  .sout-card-flag {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.9rem;
+    cursor: pointer;
+    white-space: nowrap;
+    user-select: none;
+  }
+  .sout-card-flag input { width: 1rem; height: 1rem; }
+</style>
+
+@section Scripts {
+  <script src="~/js/sout-catalog.js" asp-append-version="true"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', function () {
+      if (typeof initCatalogMultiSelects === 'function') {
+        initCatalogMultiSelects();
+      }
+    });
+  </script>
+}

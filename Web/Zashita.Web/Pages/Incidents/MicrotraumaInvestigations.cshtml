@@ -1,0 +1,62 @@
+@page "/Incidents/MicrotraumaInvestigations"
+@model Zashita.Web.Pages.Incidents.MicrotraumaInvestigationsModel
+@{
+    ViewData["Title"] = "Расследования микротравм";
+    ViewData["Subtitle"] = Model.Organization;
+}
+
+<div class="ppe-split">
+    <div class="panel ppe-panel ppe-split-side">
+        <div class="ppe-toolbar">
+            <a class="btn btn-outline" asp-page="/Incidents/MicrotraumaInvestigations" asp-route-create="true">Новое</a>
+        </div>
+        <table class="data-grid">
+            <thead><tr><th>Номер</th><th>Микротравма</th></tr></thead>
+            <tbody>
+                @foreach (var row in Model.Rows)
+                {
+                    <tr>
+                        <td><a asp-page="/Incidents/MicrotraumaInvestigations" asp-route-editId="@row.Id">@row.Number</a></td>
+                        <td>@row.SourceMicrotraumaNumber</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+    <div class="panel ppe-panel ppe-split-main">
+        @if (!string.IsNullOrWhiteSpace(Model.EditId) || Model.Create)
+        {
+            <form method="post" asp-page-handler="Save">
+                <input type="hidden" asp-for="EditId" />
+                <label class="ppe-field"><span>Номер</span><input asp-for="Number" class="ppe-input" /></label>
+                <label class="ppe-field">
+                    <span>Исходная микротравма</span>
+                    <select asp-for="SourceMicrotraumaId" class="ppe-input">
+                        <option value="">—</option>
+                        @foreach (var m in Model.SourceMicrotraumas)
+                        {
+                            <option value="@m.Id" selected="@(m.Id == Model.SourceMicrotraumaId)">@m.Number — @m.Victims</option>
+                        }
+                    </select>
+                </label>
+                <label class="ppe-field"><span>Пострадавший</span><input asp-for="Victims" class="ppe-input" /></label>
+                @await Html.PartialAsync("~/Pages/Shared/_DepartmentSelect.cshtml", new Zashita.Web.Pages.Shared.DepartmentSelectModel
+                {
+                    Name = "Department",
+                    Value = Model.Department,
+                    Options = Model.Departments,
+                    Optional = true
+                })
+                <label class="ppe-field"><span>Обстоятельства</span><textarea asp-for="Circumstances" class="ppe-input" rows="3"></textarea></label>
+                <label class="ppe-field"><span>Выводы</span><textarea asp-for="Conclusion" class="ppe-input" rows="2"></textarea></label>
+                <div class="ppe-actions">
+                    <button type="submit" class="btn btn-primary">Сохранить</button>
+                    @if (!string.IsNullOrWhiteSpace(Model.EditId))
+                    {
+                        <button type="submit" class="btn btn-outline" formaction="?handler=Delete" name="deleteId" value="@Model.EditId">Удалить</button>
+                    }
+                </div>
+            </form>
+        }
+    </div>
+</div>

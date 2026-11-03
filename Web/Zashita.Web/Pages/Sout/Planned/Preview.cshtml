@@ -1,0 +1,129 @@
+﻿@page "/Sout/Planned/Preview"
+@model Zashita.Web.Pages.Sout.Planned.PreviewModel
+@{
+    Layout = null;
+    ViewData["Title"] = Model.NotFound ? "Не найдено" : $"Годовой план {Model.Document.Number}";
+}
+
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>@ViewData["Title"]</title>
+    <partial name="_SiteIconLinks" />
+<style>
+    * { box-sizing: border-box; }
+    html, body {
+      margin: 0;
+      padding: 0;
+      background: #c5c5c5;
+      font-family: "Times New Roman", Times, serif;
+      color: #000;
+    }
+    .sout-preview-toolbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 8px 12px;
+      background: #ece9d8;
+      border-bottom: 1px solid #a0a0a0;
+      font-family: "Segoe UI", Tahoma, sans-serif;
+      position: sticky;
+      top: 0;
+      z-index: 20;
+    }
+    .sout-preview-toolbar-left,
+    .sout-preview-toolbar-right {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+    .btn {
+      display: inline-block;
+      padding: 6px 12px;
+      border: 1px solid #888;
+      background: #fff;
+      cursor: pointer;
+      text-decoration: none;
+      color: #222;
+      font-size: 13px;
+      border-radius: 3px;
+    }
+    .btn-primary { background: #2f6b3a; color: #fff; border-color: #245530; }
+    .hint { font-size: 12px; color: #444; }
+    .sout-preview-stage { padding: 20px; overflow: auto; }
+    .sout-a4-page {
+      background: #fff;
+      margin: 0 auto 24px;
+      box-shadow: 0 2px 14px rgba(0,0,0,.25);
+      width: 297mm;
+      min-height: 210mm;
+      padding: 10mm 12mm;
+      color: #000;
+    }
+    .sout-plan-title {
+      text-align: center;
+      font-size: 16pt;
+      font-weight: bold;
+      margin-bottom: 8px;
+      text-transform: uppercase;
+    }
+    .sout-plan-title-sub { font-size: 12pt; font-weight: normal; text-transform: none; }
+    .sout-plan-meta { margin: 2px 0; font-size: 11pt; }
+    .sout-plan-section { font-size: 12pt; margin: 14px 0 6px; }
+    .sout-plan-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 9.5pt;
+      margin-bottom: 8px;
+    }
+    .sout-plan-table th,
+    .sout-plan-table td {
+      border: 1px solid #000;
+      padding: 3px 4px;
+      vertical-align: top;
+    }
+    .sout-plan-table th { background: #f3f3f3; font-weight: bold; text-align: center; }
+    .sout-plan-table td.c { text-align: center; white-space: nowrap; }
+    .sout-plan-hint { font-size: 10pt; color: #555; margin-top: 10px; }
+    @@media print {
+      html, body { background: #fff; }
+      .sout-preview-toolbar, .ppe-no-print { display: none !important; }
+      .sout-preview-stage { padding: 0; }
+      .sout-a4-page { box-shadow: none; margin: 0; width: auto; min-height: auto; padding: 0; }
+    }
+  </style>
+</head>
+<body>
+@if (Model.NotFound)
+{
+  <div class="sout-preview-toolbar">
+    <div class="sout-preview-toolbar-left">
+      <a class="btn" href="/Sout/Planned">← К списку</a>
+      <span class="hint">Документ не найден</span>
+    </div>
+  </div>
+}
+else
+{
+  <div class="sout-preview-toolbar ppe-no-print">
+    <div class="sout-preview-toolbar-left">
+      <button type="button" class="btn btn-primary" onclick="window.print()">Печать</button>
+      <a class="btn" asp-page="/Sout/Planned/Edit" asp-route-id="@Model.Document.Id">Изменить</a>
+      <a class="btn" asp-page="/Sout/Planned">К списку</a>
+    </div>
+    <div class="sout-preview-toolbar-right">
+      <span class="hint">@Model.Document.Number · @Model.Document.Organization</span>
+    </div>
+  </div>
+  <div class="sout-preview-stage">
+    <div class="sout-a4-page">
+      @Html.Raw(Model.PreviewHtml)
+    </div>
+  </div>
+}
+</body>
+</html>

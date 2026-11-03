@@ -1,0 +1,39 @@
+@page "/Incidents/Catalog"
+@model Zashita.Web.Pages.Incidents.CatalogModel
+@{
+    ViewData["Title"] = Model.PageTitle;
+    ViewData["Subtitle"] = Model.Organization;
+}
+
+<div class="ppe-toolbar" style="margin-bottom:12px">
+    <a class="btn btn-outline @(Model.Kind == "IncidentTypes" ? "active" : "")" asp-page="/Incidents/Catalog" asp-route-kind="IncidentTypes">Виды</a>
+    <a class="btn btn-outline @(Model.Kind == "InjuryTypes" ? "active" : "")" asp-page="/Incidents/Catalog" asp-route-kind="InjuryTypes">Травмы</a>
+    <a class="btn btn-outline @(Model.Kind == "BodyParts" ? "active" : "")" asp-page="/Incidents/Catalog" asp-route-kind="BodyParts">Части тела</a>
+    <a class="btn btn-outline @(Model.Kind == "IncidentCauses" ? "active" : "")" asp-page="/Incidents/Catalog" asp-route-kind="IncidentCauses">Причины</a>
+</div>
+
+<div class="ppe-split">
+    <div class="panel ppe-panel ppe-split-side">
+        <ul class="ppe-standards-list">
+            @foreach (var row in Model.Rows)
+            {
+                <li class="@(row.Id == Model.EditId ? "active" : "")">
+                    <a asp-page="/Incidents/Catalog" asp-route-kind="@Model.Kind" asp-route-editId="@row.Id">@row.Code — @row.Name</a>
+                </li>
+            }
+        </ul>
+    </div>
+    <div class="panel ppe-panel ppe-split-main">
+        <h2 class="ppe-step-title">@Model.PageTitle</h2>
+        <form method="post" asp-page-handler="Save">
+            <input type="hidden" name="kind" value="@Model.Kind" />
+            <input type="hidden" asp-for="EditId" />
+            <label class="ppe-field"><span>Код</span><input asp-for="Code" class="ppe-input" /></label>
+            <label class="ppe-field"><span>Название</span><input asp-for="Name" class="ppe-input" required /></label>
+            <div class="ppe-actions">
+                <button type="submit" class="btn btn-primary">Сохранить</button>
+                <a class="btn btn-outline" asp-page="/Incidents/Catalog" asp-route-kind="@Model.Kind">Новая запись</a>
+            </div>
+        </form>
+    </div>
+</div>

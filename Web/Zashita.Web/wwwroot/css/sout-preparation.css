@@ -1,0 +1,1093 @@
+.sout-preparation-filters {
+  margin: 0;
+  border-bottom: 1px solid #e8d9a0;
+}
+
+.sout-preparation-grid .sout-preparation-row {
+  cursor: pointer;
+}
+
+.sout-preparation-grid .sout-preparation-row:hover td {
+  background: color-mix(in srgb, var(--accent) 4%, transparent);
+}
+
+.sout-preparation-grid .sout-preparation-row.training-row-active td {
+  background: color-mix(in srgb, #4a90e2 16%, #fff);
+}
+
+.sout-preparation-print-links {
+  padding: 12px 16px 0;
+}
+
+.ppe-no-print-block {
+  margin-top: 8px;
+}
+
+.sout-preview-page {
+  margin: 0;
+  background: #c0c0c0;
+  font-family: "Times New Roman", Times, serif;
+}
+
+.sout-preview-shell {
+  min-height: 100vh;
+}
+
+.sout-preview-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 8px 12px;
+  background: #ece9d8;
+  border-bottom: 1px solid #a0a0a0;
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  font-family: "Segoe UI", Tahoma, sans-serif;
+}
+
+.sout-preview-toolbar-left,
+.sout-preview-toolbar-right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.sout-preview-copies {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+}
+
+.sout-preview-copies .ppe-input-sm {
+  width: 56px;
+}
+
+.sout-preview-message {
+  margin: 0;
+  padding: 8px 14px;
+  background: #e8f5e9;
+  border-bottom: 1px solid #a5d6a7;
+  color: #1b5e20;
+  font-size: 13px;
+  font-family: "Segoe UI", Tahoma, sans-serif;
+}
+
+.sout-preview-doc-wrap {
+  padding: 18px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 24px;
+}
+
+.sout-eq-doc {
+  width: 190mm;
+  min-height: 270mm;
+  margin: 0 auto;
+  padding: 14mm 12mm 16mm;
+  background: #fff;
+  box-shadow: 0 2px 14px rgba(0, 0, 0, 0.22);
+  color: #000;
+  font-family: "Times New Roman", Times, serif;
+  font-size: 11pt;
+  line-height: 1.25;
+  box-sizing: border-box;
+}
+
+.sout-eq-org,
+.sout-eq-org-line {
+  text-align: center;
+  font-weight: 700;
+  font-size: 12pt;
+}
+
+.sout-eq-org-line {
+  width: 68%;
+  margin: 0 auto;
+  border-bottom: 1px solid #000;
+  min-height: 1.2em;
+  padding: 0 6px 2px;
+}
+
+.sout-eq-org-hint {
+  text-align: center;
+  font-size: 9pt;
+  margin-top: 2px;
+  margin-bottom: 14px;
+}
+
+.sout-eq-title {
+  text-align: center;
+  font-weight: 700;
+  font-size: 12pt;
+  text-transform: uppercase;
+  margin: 0 0 12px;
+}
+
+.sout-eq-table {
+  width: 100%;
+  border-collapse: collapse;
+  table-layout: fixed;
+  font-size: 10pt;
+}
+
+.sout-eq-table th,
+.sout-eq-table td {
+  border: 1px solid #000;
+  padding: 4px 5px;
+  vertical-align: top;
+  word-wrap: break-word;
+}
+
+.sout-eq-table thead th {
+  font-weight: 400;
+  text-align: center;
+  vertical-align: middle;
+}
+
+.sout-eq-col-numbers th {
+  font-weight: 700;
+  padding: 2px;
+}
+
+.sout-eq-col-num { width: 14%; }
+.sout-eq-col-name { width: 22%; }
+.sout-eq-col-equip { width: 42%; }
+.sout-eq-col-mat { width: 22%; }
+
+.sout-eq-table tbody td:nth-child(1),
+.sout-eq-table tbody td:nth-child(2) {
+  text-align: center;
+}
+
+.sout-eq-sign-section {
+  margin-top: 22px;
+}
+
+.sout-eq-sign-caption {
+  margin: 18px 0 10px;
+  font-size: 11pt;
+}
+
+.sout-eq-sign-row {
+  display: grid;
+  grid-template-columns: 1.1fr 1fr 1.4fr 1fr;
+  gap: 14px;
+  margin-bottom: 18px;
+  align-items: end;
+}
+
+.sout-eq-sign-field {
+  text-align: center;
+}
+
+.sout-eq-sign-value {
+  min-height: 1.35em;
+  border-bottom: 1px solid #000;
+  padding: 0 4px 2px;
+  font-size: 11pt;
+}
+
+.sout-eq-sign-label {
+  font-size: 8pt;
+  margin-top: 2px;
+}
+
+.sout-preview-mode-equipment .sout-a4-page {
+  padding-top: 10mm;
+  padding-bottom: 14mm;
+}
+
+.sout-eq-doc [contenteditable="true"] {
+  outline: none;
+}
+
+.sout-eq-doc [contenteditable="true"]:focus,
+.sout-wp-doc [contenteditable="true"]:focus {
+  background: #fff8dc;
+}
+
+.sout-wp-doc {
+  width: 100%;
+  color: #000;
+  font-family: Arial, Tahoma, sans-serif;
+  font-size: 8.5pt;
+  line-height: 1.2;
+}
+
+.sout-wp-title {
+  text-align: center;
+  font-weight: 700;
+  font-size: 12pt;
+  text-transform: uppercase;
+  margin: 0 0 8px;
+  font-family: "Times New Roman", Times, serif;
+}
+
+.sout-wp-title-sub {
+  display: block;
+  font-size: 11pt;
+  text-transform: none;
+  font-weight: 700;
+  margin-top: 2px;
+}
+
+.sout-wp-meta {
+  margin: 0 0 4px;
+  font-size: 9pt;
+}
+
+.sout-wp-table {
+  width: 100%;
+  border-collapse: collapse;
+  table-layout: fixed;
+  font-size: 7pt;
+  margin-top: 8px;
+}
+
+.sout-wp-table th,
+.sout-wp-table td {
+  border: 1px solid #000;
+  padding: 2px 2px;
+  vertical-align: top;
+  word-wrap: break-word;
+  overflow-wrap: anywhere;
+}
+
+.sout-wp-table thead th {
+  font-weight: 400;
+  text-align: center;
+  vertical-align: middle;
+  background: #f7f7f7;
+}
+
+.sout-wp-col-numbers th {
+  font-weight: 700;
+  padding: 1px;
+  background: #fff;
+}
+
+.sout-wp-c {
+  text-align: center;
+}
+
+.sout-wp-doc [contenteditable="true"] {
+  outline: none;
+}
+
+.sout-wp-edit-hint {
+  margin-top: 10px;
+  font-size: 11px;
+  color: #555;
+  font-family: "Segoe UI", Tahoma, sans-serif;
+}
+
+.sout-info-doc {
+  width: 100%;
+  color: #000;
+  font-family: Arial, Tahoma, sans-serif;
+  font-size: 10pt;
+  line-height: 1.25;
+}
+
+/* Бланк СОУТ-инфо всегда «бумага»: тёмная тема UI не должна красить шапку таблицы. */
+.sout-info-doc,
+.sout-info-doc th,
+.sout-info-doc td,
+.sout-a4-info .sout-info-doc,
+.sout-a4-info .sout-info-doc th,
+.sout-a4-info .sout-info-doc td {
+  color: #000 !important;
+}
+
+.sout-info-table thead th {
+  font-weight: 400;
+  text-align: center;
+  vertical-align: middle;
+  background: #f0f0f0 !important;
+  color: #000 !important;
+}
+
+/* Вертикальные заголовки — поворот текста (1в1 с образцом Word), без растягивания букв */
+.sout-info-v {
+  text-align: center;
+  vertical-align: bottom !important;
+  padding: 1px 0 !important;
+  overflow: visible;
+  color: #000 !important;
+  background: #f0f0f0 !important;
+}
+
+.sout-info-v > span,
+.sout-info-v .sout-info-vert,
+.sout-info-v span.sout-info-vert,
+.sout-info-v p.sout-info-vert {
+  display: inline-block !important;
+  writing-mode: vertical-rl !important;
+  -webkit-writing-mode: vertical-rl !important;
+  transform: rotate(180deg) !important;
+  white-space: nowrap !important;
+  word-break: keep-all !important;
+  overflow-wrap: normal !important;
+  max-height: 100%;
+  overflow: visible;
+  line-height: 1 !important;
+  font-size: 5.5pt !important;
+  margin: 0 auto !important;
+  padding: 0 !important;
+  text-align: center;
+  font-family: Arial, Tahoma, sans-serif;
+  font-weight: 400;
+  color: #000 !important;
+  background: transparent !important;
+}
+
+.sout-info-vert-sp {
+  display: none !important;
+}
+
+.sout-info-table--form thead tr:first-child th.sout-info-v[rowspan] {
+  height: 155px;
+  max-height: 155px;
+  vertical-align: bottom !important;
+}
+
+.sout-info-table--form thead tr:nth-child(2) .sout-info-v {
+  height: 118px;
+  max-height: 118px;
+  vertical-align: bottom !important;
+}
+
+.sout-info-table--form thead tr:nth-child(2) .sout-info-v > span,
+.sout-info-table--form thead tr:nth-child(2) .sout-info-v .sout-info-vert {
+  font-size: 5pt !important;
+  line-height: 1 !important;
+}
+
+/* Информация для СОУТ — лист A3 альбом (420×297 мм) */
+.sout-a4-info.sout-a3-info,
+.sout-info-tail-sheet.sout-a3-info,
+.sout-templates-preview-stage .sout-a4-info.sout-a3-info,
+.sout-templates-preview-stage .sout-info-tail-sheet.sout-a3-info {
+  min-width: 420mm;
+  width: 100%;
+}
+
+/* Бланк всегда «бумага», даже в тёмной теме — иначе вертикальный текст (#000) невидим */
+.sout-a4-info,
+.sout-info-tail-sheet,
+.sout-templates-preview-stage .sout-a4-info,
+.sout-templates-preview-stage .sout-info-tail-sheet {
+  background: #fff !important;
+  color: #000 !important;
+  box-sizing: border-box;
+}
+
+.sout-a4-info .sout-info-doc,
+.sout-a4-info .sout-info-doc *,
+.sout-templates-preview-stage .sout-info-doc,
+.sout-templates-preview-stage .sout-info-doc * {
+  color: #000 !important;
+}
+
+.sout-a4-info .sout-info-table,
+.sout-templates-preview-stage .sout-info-table {
+  width: 100% !important;
+  max-width: none !important;
+  table-layout: fixed !important;
+}
+
+html[data-theme='dark'] .sout-info-doc,
+html[data-theme='dark'] .sout-a4-info,
+html[data-theme='dark'] .sout-info-tail-sheet,
+[data-theme='dark'] .sout-info-doc,
+[data-theme='dark'] .sout-a4-info,
+[data-theme='dark'] .sout-info-tail-sheet {
+  background: #fff !important;
+  color: #000 !important;
+}
+
+html[data-theme='dark'] .sout-info-doc th,
+html[data-theme='dark'] .sout-info-doc td,
+html[data-theme='dark'] .sout-a4-info th,
+html[data-theme='dark'] .sout-a4-info td,
+[data-theme='dark'] .sout-info-doc th,
+[data-theme='dark'] .sout-info-doc td,
+[data-theme='dark'] .sout-a4-info th,
+[data-theme='dark'] .sout-a4-info td {
+  background: #fff !important;
+  color: #000 !important;
+  border-color: #000 !important;
+}
+
+html[data-theme='dark'] .sout-info-table thead th,
+html[data-theme='dark'] .sout-info-v,
+[data-theme='dark'] .sout-info-table thead th,
+[data-theme='dark'] .sout-info-v {
+  background: #f0f0f0 !important;
+  color: #000 !important;
+}
+
+.sout-info-title {
+  text-align: center;
+  font-weight: 700;
+  font-size: 12pt;
+  margin: 0 0 6px;
+  font-family: "Times New Roman", Times, serif;
+}
+
+.sout-info-header {
+  margin-bottom: 6px;
+  font-size: 9.5pt;
+  line-height: 1.3;
+}
+
+.sout-info-meta-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 2px 8px;
+  margin: 0 0 2px;
+}
+
+.sout-info-meta-line {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 4px 8px;
+  margin: 0 0 2px;
+}
+
+.sout-info-meta-label {
+  font-size: 9.5pt;
+  white-space: nowrap;
+}
+
+.sout-info-meta-value {
+  display: inline-block;
+  min-height: 1.15em;
+  min-width: 8em;
+  border-bottom: 1px solid #000 !important;
+  padding: 0 3px 1px;
+  font-size: 9.5pt;
+  vertical-align: baseline;
+  box-sizing: border-box;
+}
+
+.sout-info-meta-value:empty::before {
+  content: "\00a0";
+}
+
+.sout-info-meta-row--split .sout-info-meta-value {
+  flex: 1 1 8em;
+  min-width: 8em;
+}
+
+.sout-info-meta-row--split .sout-info-meta-value--wide {
+  flex: 2 1 14em;
+  min-width: 12em;
+}
+
+.sout-info-table {
+  width: 100% !important;
+  max-width: none !important;
+  border-collapse: collapse;
+  border-spacing: 0;
+  border: none;
+  outline: none;
+  table-layout: fixed;
+  font-size: 9pt;
+  margin-top: 8px;
+}
+
+.sout-a4-info .sout-info-doc,
+.sout-a4-info .sout-info-table {
+  width: 100% !important;
+  max-width: none !important;
+}
+
+.sout-info-table--form thead th {
+  font-weight: 400;
+  text-align: center;
+  vertical-align: middle;
+  background: #f7f7f7;
+  font-size: 8pt;
+  line-height: 1.15;
+  padding: 3px 2px;
+}
+
+/* Высота шапки: rowspan ≈ группа + подписи; 2-я строка — длинные «из них…» / «сокращенная…» */
+.sout-info-table--form thead tr:first-child th[rowspan] {
+  height: 200px;
+  max-height: 200px;
+  overflow: hidden;
+  vertical-align: bottom;
+}
+
+.sout-info-table--form thead tr:first-child th[colspan] {
+  height: auto;
+  vertical-align: middle;
+  font-size: 6.5pt;
+  line-height: 1.1;
+  padding: 2px 1px;
+  background: #f0f0f0 !important;
+  color: #000 !important;
+}
+
+.sout-info-table--form thead tr:nth-child(2) th {
+  height: 155px;
+  min-height: 155px;
+  max-height: 155px;
+  overflow: hidden;
+  background: #f0f0f0 !important;
+  color: #000 !important;
+}
+
+.sout-info-table--form thead th.sout-info-ok {
+  background: #f0f0f0 !important;
+}
+
+.sout-info-ok,
+.sout-info-table td.sout-info-ok,
+.sout-info-table thead th.sout-info-ok,
+.sout-info-hl,
+.sout-info-table mark,
+.sout-info-doc mark {
+  background: transparent !important;
+  background-color: transparent !important;
+  color: inherit !important;
+  font-weight: inherit !important;
+}
+
+/* Никаких жёлтых/цветных заливок в бланке СОУТ-инфо */
+.sout-info-table thead th,
+.sout-info-table tbody td {
+  background-clip: padding-box;
+}
+
+.sout-info-table thead th {
+  background: #f0f0f0 !important;
+  color: #000 !important;
+}
+
+.sout-info-table thead tr.sout-info-col-numbers th,
+.sout-info-col-numbers th {
+  background: #fff !important;
+  color: #000 !important;
+}
+
+.sout-info-table tbody td {
+  background: #fff !important;
+  color: #000 !important;
+}
+
+.sout-info-table--21 {
+  font-size: 9pt;
+}
+
+.sout-info-table--21 thead th {
+  font-size: 7pt;
+  padding: 1px;
+}
+
+.sout-info-table--21 thead th.sout-info-h,
+.sout-info-table--21 thead th.sout-info-equip {
+  height: auto;
+  min-height: 80px;
+  vertical-align: middle;
+  font-size: 7.5pt;
+  writing-mode: horizontal-tb;
+  transform: none;
+  white-space: normal;
+}
+
+.sout-info-table--21 td:nth-child(12),
+.sout-info-table--form td:nth-child(12),
+.sout-info-equip {
+  width: 16.5%;
+}
+
+.sout-info-h {
+  width: 8.5%;
+}
+
+.sout-info-table--21 td:nth-child(5),
+.sout-info-table--form td:nth-child(5) {
+  width: 8.5%;
+}
+
+.sout-info-table--21 td:nth-child(6),
+.sout-info-table--form td:nth-child(6) {
+  width: 6.5%;
+}
+
+.sout-info-table--21 td:nth-child(21),
+.sout-info-table--form td:nth-child(21) {
+  width: 4.4%;
+}
+
+.sout-info-summary-sub {
+  margin: 0 0 6px;
+  font-size: 9.5pt;
+}
+
+.sout-info-table th,
+.sout-info-table td {
+  border: 1px solid #000;
+  padding: 2px 3px;
+  vertical-align: middle;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+  word-break: normal;
+  hyphens: auto;
+  font-size: 8pt;
+  background-clip: padding-box;
+}
+
+/* Строка номеров 1…21 — компактная, без высоты заголовков */
+.sout-info-table--form thead tr.sout-info-col-numbers th,
+.sout-info-table thead tr.sout-info-col-numbers th,
+.sout-info-col-numbers th {
+  font-weight: 700;
+  padding: 1px 2px !important;
+  background: #fff !important;
+  color: #000 !important;
+  height: 1.15em !important;
+  min-height: 0 !important;
+  max-height: 1.4em;
+  font-size: 9pt !important;
+  line-height: 1.1 !important;
+  vertical-align: middle !important;
+  text-align: center;
+}
+
+.sout-info-c {
+  text-align: center;
+}
+
+.sout-info-rules-lead {
+  display: block;
+  font-style: italic;
+  text-decoration: underline;
+  margin-bottom: 4px;
+  font-size: 10pt;
+  line-height: 1.25;
+  font-family: "Times New Roman", Times, serif;
+}
+
+.sout-info-summary thead th,
+.sout-info-commission thead th {
+  background: #e8e8e8 !important;
+  color: #000 !important;
+  font-weight: 400;
+  text-align: center;
+  font-size: 9.5pt;
+}
+
+/* Сноски под таблицей — на альбомном листе */
+.sout-info-footnotes {
+  margin: 6px 0 0;
+  padding: 0;
+  font-family: Arial, Tahoma, sans-serif;
+  font-size: 9pt;
+  line-height: 1.25;
+  color: #000;
+}
+
+.sout-info-footnote-req {
+  margin: 0 0 2px;
+  font-style: italic;
+  font-weight: 700;
+}
+
+.sout-info-footnote-law {
+  margin: 0;
+  font-style: italic;
+  text-decoration: underline;
+}
+
+/* Хвост: компактно 1в1 с образцом — всё на одном книжном A4 */
+.sout-info-tail {
+  page-break-before: always;
+  break-before: page;
+  page-break-inside: auto;
+  break-inside: auto;
+  margin-top: 0;
+  padding-top: 0;
+  font-size: 10pt;
+  line-height: 1.22;
+  font-family: "Times New Roman", Times, serif;
+  color: #000;
+}
+
+.sout-info-note {
+  display: none;
+}
+
+.sout-info-rules {
+  white-space: normal;
+  border: none;
+  padding: 0;
+  margin: 0 0 6px;
+  font-size: 10pt;
+  background: transparent;
+  line-height: 1.22;
+  font-family: "Times New Roman", Times, serif;
+}
+
+.sout-info-summary-lead,
+.sout-info-summary-title {
+  font-weight: 400;
+  margin: 6px 0 3px;
+  font-size: 10pt;
+  font-family: "Times New Roman", Times, serif;
+}
+
+.sout-info-summary-lead {
+  text-decoration: underline;
+}
+
+.sout-info-summary-sub {
+  display: none;
+}
+
+.sout-info-summary,
+.sout-info-commission {
+  width: 100%;
+  max-width: 100%;
+  border-collapse: collapse;
+  border: none;
+  font-size: 10pt;
+  margin: 0 0 8px;
+  table-layout: fixed;
+  page-break-inside: avoid;
+  break-inside: avoid;
+  font-family: Arial, Tahoma, sans-serif;
+}
+
+.sout-info-summary th:first-child,
+.sout-info-summary td:first-child {
+  width: 42%;
+}
+
+.sout-info-summary th,
+.sout-info-summary td,
+.sout-info-commission th,
+.sout-info-commission td {
+  border: 1px solid #000;
+  padding: 3px 5px;
+  vertical-align: middle;
+  font-size: 10pt;
+}
+
+.sout-info-summary td.sout-info-c {
+  font-size: 12pt;
+  font-weight: 700;
+  text-align: center;
+}
+
+.sout-info-commission thead th {
+  background: #e8e8e8;
+  font-weight: 400;
+  text-align: center;
+  font-size: 9.5pt;
+}
+
+.sout-info-commission th:nth-child(1),
+.sout-info-commission td:nth-child(1) {
+  width: 36%;
+}
+
+.sout-info-commission th:nth-child(2),
+.sout-info-commission td:nth-child(2) {
+  width: 28%;
+}
+
+.sout-info-commission td {
+  text-align: center;
+}
+
+.sout-info-signs {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 24px;
+  margin-top: 14px;
+  page-break-inside: avoid;
+  break-inside: avoid;
+}
+
+.sout-info-sign-role {
+  font-weight: 700;
+  margin-bottom: 1px;
+  font-size: 10pt;
+  font-family: Arial, Tahoma, sans-serif;
+}
+
+.sout-info-sign-org {
+  min-height: 1em;
+  margin-bottom: 2px;
+  font-size: 10pt;
+  font-family: Arial, Tahoma, sans-serif;
+}
+
+.sout-info-sign-shelf {
+  width: 70%;
+  min-height: 1.2em;
+  margin: 2px 0 2px;
+  border-bottom: 1px solid #000;
+}
+
+.sout-info-sign-line,
+.sout-info-sign-part,
+.sout-info-sign-slash {
+  display: none;
+}
+
+.sout-info-sign-mp {
+  display: block;
+  font-size: 10pt;
+  margin-top: 2px;
+}
+
+.sout-info-doc [contenteditable="true"] {
+  outline: none;
+}
+
+.sout-info-doc [contenteditable="true"]:focus {
+  background: #fff8dc;
+}
+
+.sout-preview-missing {
+  padding: 24px;
+  font-family: "Segoe UI", Tahoma, sans-serif;
+}
+
+.ppe-print-dropdown .sout-print-link.training-print-disabled,
+.ppe-print-dropdown .sout-print-link[aria-disabled="true"] {
+  opacity: 0.45;
+  pointer-events: none;
+}
+
+.ppe-print-hint {
+  margin: 0 0 6px;
+  padding: 0 10px;
+}
+
+@media print {
+  .ppe-no-print,
+  .sout-preview-toolbar,
+  .sout-preview-message,
+  #sout-preview-save-form,
+  .sout-wp-edit-hint {
+    display: none !important;
+  }
+
+  .sout-preview-page {
+    background: #fff;
+  }
+
+  .sout-preview-doc-wrap {
+    padding: 0 !important;
+    display: block !important;
+    flex-direction: column !important;
+    gap: 0 !important;
+  }
+
+  .sout-eq-doc {
+    box-shadow: none;
+    width: auto;
+    min-height: 0;
+    margin: 0;
+    padding: 0;
+  }
+
+  .sout-eq-doc [contenteditable="true"]:focus {
+    background: transparent;
+  }
+
+  .sout-info-doc {
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  .sout-info-table {
+    border: none !important;
+    outline: none !important;
+    border-collapse: collapse !important;
+    border-spacing: 0 !important;
+  }
+
+  .sout-info-table th,
+  .sout-info-table td {
+    border: 1px solid #000 !important;
+    background-clip: padding-box !important;
+  }
+
+  .sout-info-ok,
+  .sout-info-table td.sout-info-ok,
+  .sout-info-table--form thead th.sout-info-ok,
+  .sout-info-hl,
+  .sout-info-doc mark {
+    background: transparent !important;
+    background-color: transparent !important;
+    font-weight: inherit !important;
+  }
+
+  .sout-info-table {
+    width: 100% !important;
+    max-width: 100% !important;
+    table-layout: fixed !important;
+    page-break-inside: auto !important;
+    break-inside: auto !important;
+  }
+
+  .sout-info-table--form thead tr:first-child th[rowspan] {
+    height: 200px !important;
+    max-height: 200px !important;
+    overflow: visible !important;
+    vertical-align: bottom !important;
+  }
+
+  .sout-info-v {
+    overflow: visible !important;
+    color: #000 !important;
+    background: #f0f0f0 !important;
+  }
+
+  .sout-info-v > span,
+  .sout-info-v .sout-info-vert,
+  .sout-info-v span.sout-info-vert,
+  .sout-info-v p.sout-info-vert {
+    display: block !important;
+    writing-mode: horizontal-tb !important;
+    transform: none !important;
+    white-space: normal !important;
+    color: #000 !important;
+    font-size: 5.5pt !important;
+    line-height: 0.9 !important;
+    max-height: none !important;
+    overflow: visible !important;
+    background: transparent !important;
+  }
+
+  .sout-info-table--form thead tr:nth-child(2) th {
+    height: 155px !important;
+    max-height: 155px !important;
+    background: #f0f0f0 !important;
+    color: #000 !important;
+  }
+
+  .sout-info-table--form thead tr:nth-child(2) .sout-info-v > span,
+  .sout-info-table--form thead tr:nth-child(2) .sout-info-v .sout-info-vert {
+    font-size: 5pt !important;
+    line-height: 0.9 !important;
+  }
+
+  .sout-info-ok,
+  .sout-info-table td.sout-info-ok,
+  .sout-info-table--form thead th.sout-info-ok,
+  .sout-info-hl,
+  .sout-info-doc mark {
+    background: transparent !important;
+    background-color: transparent !important;
+    font-weight: inherit !important;
+  }
+
+  .sout-info-table thead th {
+    background: #f0f0f0 !important;
+    color: #000 !important;
+  }
+
+  .sout-info-col-numbers th {
+    background: #fff !important;
+    color: #000 !important;
+  }
+
+  .sout-info-equip,
+  .sout-info-table--21 td:nth-child(12) {
+    width: 16.5% !important;
+  }
+
+  .sout-info-meta-value {
+    border-bottom: 1px solid #000 !important;
+    min-width: 8em !important;
+    display: inline-block !important;
+  }
+
+  /* Строки целиком — не резать текст ячейки между страницами */
+  .sout-info-table tbody tr {
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
+  }
+
+  .sout-info-footnotes {
+    font-size: 9pt !important;
+    margin-top: 4mm !important;
+  }
+
+  .sout-info-tail {
+    page-break-before: always !important;
+    break-before: page !important;
+    page-break-inside: auto !important;
+    break-inside: auto !important;
+    font-size: 10pt !important;
+    line-height: 1.22 !important;
+  }
+
+  .sout-info-rules,
+  .sout-info-rules-lead {
+    font-size: 10pt !important;
+    line-height: 1.22 !important;
+  }
+
+  .sout-info-summary,
+  .sout-info-commission {
+    font-size: 10pt !important;
+    page-break-inside: avoid !important;
+  }
+
+  .sout-info-summary th,
+  .sout-info-summary td,
+  .sout-info-commission th,
+  .sout-info-commission td {
+    font-size: 10pt !important;
+    padding: 3px 5px !important;
+  }
+
+  .sout-info-summary td.sout-info-c {
+    font-size: 12pt !important;
+  }
+
+  .sout-info-summary-lead,
+  .sout-info-summary-title,
+  .sout-info-sign-role,
+  .sout-info-sign-org {
+    font-size: 10pt !important;
+  }
+
+  .sout-info-signs {
+    page-break-inside: avoid !important;
+  }
+
+  /* Шапка только 1 раз в начале таблицы — без повтора на каждой странице */
+  .sout-info-table thead {
+    display: table-row-group !important;
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
+  }
+
+  .sout-info-table thead tr {
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
+  }
+
+  .sout-info-table tbody tr {
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
+  }
+}

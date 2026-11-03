@@ -1,0 +1,70 @@
+@page "/Ppe/NormsRegister"
+@model Zashita.Web.Pages.Ppe.NormsRegisterModel
+@{
+    ViewData["Title"] = "Установки норм спецодежды, СИЗ";
+    ViewData["Subtitle"] = string.IsNullOrWhiteSpace(Model.FilterOrg) ? Model.Organization : Model.FilterOrg;
+}
+
+@section Styles {
+  <link rel="stylesheet" href="~/css/ppe-norms-register-print.css" asp-append-version="true" />
+}
+
+<div class="panel ppe-panel ppe-norms-register-panel">
+  <form method="get" class="ppe-filter-bar">
+    <label>
+      Организация
+      <select name="filterOrg" class="ppe-input" onchange="this.form.submit()">
+        <option value="">Все</option>
+        @foreach (var org in Model.Organizations)
+        {
+          if (org == Model.FilterOrg)
+          {
+            <option value="@org" selected>@org</option>
+          }
+          else
+          {
+            <option value="@org">@org</option>
+          }
+        }
+      </select>
+    </label>
+    <a class="btn btn-outline" asp-page="/Ppe/NormsRegister/Preview" asp-route-filterOrg="@Model.FilterOrg">Печать</a>
+  </form>
+
+  @if (Model.Rows.Count == 0)
+  {
+    <p class="hint">Нет данных для выбранной организации. Создайте шаблоны в разделе <a asp-page="/Ppe/IssueStandards">Стандарты выдачи</a>.</p>
+  }
+  else
+  {
+    <table class="data-grid ppe-norms-register-table">
+      <thead>
+        <tr>
+          <th>№</th>
+          <th>Организация</th>
+          <th>Подразделение</th>
+          <th>Профессия</th>
+          <th>Тип СИЗ</th>
+          <th>Наименование</th>
+          <th>Нормы выдачи</th>
+          <th>Основание</th>
+        </tr>
+      </thead>
+      <tbody>
+        @foreach (var row in Model.Rows)
+        {
+          <tr>
+            <td>@row.Number</td>
+            <td>@row.Organization</td>
+            <td>@row.Department</td>
+            <td>@row.Profession</td>
+            <td>@row.PpeType</td>
+            <td>@row.PpeName</td>
+            <td>@row.NormText</td>
+            <td>@row.LegalBasis</td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  }
+</div>

@@ -1,0 +1,228 @@
+@using Zashita.Core.Employees
+@using Zashita.Core.Risks
+@using Zashita.Web.Services
+@inject OrganizationStore OrganizationStore
+@inject OrganizationEmployeesService OrganizationEmployees
+@inject RisksWorkspaceContext RisksWorkspace
+@{
+    var selectedOrganization = OrganizationStore.GetSelectedOrganization(Context);
+    var selectedGroupId = OrganizationStore.GetSelectedGroupId(Context);
+    var groups = OrganizationStore.GetGroups();
+    var organizations = OrganizationStore.GetVisibleOrganizations(Context, "Все");
+    var isAllOrganizations = OrganizationStore.IsAllOrganizationsSelected(Context);
+    var isOrganizationUnselected = OrganizationStore.IsOrganizationUnselected(Context);
+    var selectedPeopleCount = !isOrganizationUnselected && !isAllOrganizations && !string.IsNullOrWhiteSpace(selectedOrganization)
+        ? StaffHeadcount.CountPersonOrgCards(
+            OrganizationEmployees.LoadDirectory(selectedOrganization)
+                .Select(e => (selectedOrganization, e)))
+        : (int?)null;
+    var selectedGroupName = string.IsNullOrWhiteSpace(selectedGroupId)
+        ? "Все"
+        : (groups.FirstOrDefault(g => string.Equals(g.Id, selectedGroupId, StringComparison.OrdinalIgnoreCase))?.Name ?? "Все");
+    var organizationLabel = isOrganizationUnselected
+        ? "— выберите —"
+        : isAllOrganizations
+            ? "Все"
+            : organizations.Count == 0
+                ? "нет в группе"
+                : selectedOrganization;
+    var returnUrl = WorkspaceReturnUrl.Sanitize(Context.Request.Path + Context.Request.QueryString);
+
+    var activeModule = ViewData["ActiveModule"] as string;
+    var pathValue = Context.Request.Path.Value ?? string.Empty;
+    var isRisksContext =
+        string.Equals(activeModule, "риски", StringComparison.OrdinalIgnoreCase)
+        || string.Equals(activeModule, "оценка-рисков", StringComparison.OrdinalIgnoreCase)
+        || RisksItemRouter.IsRisksModule(activeModule ?? string.Empty)
+        || pathValue.StartsWith("/Risks", StringComparison.OrdinalIgnoreCase)
+        || pathValue.StartsWith("/module/риски", StringComparison.OrdinalIgnoreCase);
+    var showRisksObject = isRisksContext
+                          && !isAllOrganizations
+                          && !isOrganizationUnselected
+                          && !string.IsNullOrWhiteSpace(selectedOrganization);
+    var riskObjects = showRisksObject
+        ? RisksWorkspace.LoadObjects(selectedOrganization)
+        : Array.Empty<RiskAssessmentObject>();
+    var selectedRiskObjectId = showRisksObject
+        ? RisksWorkspace.GetSelectedObjectId(Context, selectedOrganization)
+        : RiskAssessmentObjectIds.OrganizationWide;
+    var selectedRiskObjectLabel = showRisksObject
+        ? RisksWorkspace.DisplayName(selectedOrganization, selectedRiskObjectId)
+        : string.Empty;
+    var selectedRiskObject = showRisksObject
+        ? riskObjects.FirstOrDefault(o =>
+            string.Equals(o.Id, selectedRiskObjectId, StringComparison.OrdinalIgnoreCase))
+        : null;
+    // Переименовать можно и «по организации»; удалить — только пользовательские объекты.
+    var canRenameRiskObject = showRisksObject
+                              && selectedRiskObject is not null
+                              && !RisksWorkspaceContext.IsAllObjects(selectedRiskObjectId);
+    var canDeleteRiskObject = canRenameRiskObject
+                              && !selectedRiskObject!.IsOrganizationWide;
+    var selectedRiskObjectOfficialName = selectedRiskObject?.OfficialName ?? string.Empty;
+    var deleteObjectConfirm =
+        $"Удалить объект «{selectedRiskObjectLabel}» из списка? Данные карт по объекту останутся в файле.";
+}
+
+<div class="module-toolbar@(showRisksObject ? " module-toolbar-with-object" : "")">
+    <form method="post" asp-page="/Workspace/Set" class="toolbar-form" id="workspace-form">
+        <input type="hidden" name="returnUrl" value="@returnUrl" />
+        <input type="hidden" name="organization" id="workspace-organization" value="@(isOrganizationUnselected ? OrganizationStore.UnselectedOrganizationToken : isAllOrganizations ? "" : selectedOrganization)" />
+        <input type="hidden" name="organizationType" id="workspace-type" value="Все" />
+        <input type="hidden" name="organizationGroup" id="workspace-group" value="@selectedGroupId" />
+
+        <div class="toolbar-field">
+            <span class="toolbar-label">Группа:</span>
+            <div class="ui-select" data-target="workspace-group" data-submit="true">
+                <button type="button" class="ui-select-trigger" aria-haspopup="listbox">
+                    <span class="ui-select-value">@selectedGroupName</span>
+                    <svg class="ui-select-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+                </button>
+                <div class="ui-select-menu" role="listbox">
+                    <button type="button"
+                            class="ui-select-option @(string.IsNullOrWhiteSpace(selectedGroupId) ? "active" : "")"
+                            data-value=""
+                            role="option">Все</button>
+                    @foreach (var group in groups)
+                    {
+                        <button type="button"
+                                class="ui-select-option @(string.Equals(group.Id, selectedGroupId, StringComparison.OrdinalIgnoreCase) ? "active" : "")"
+                                data-value="@group.Id"
+                                role="option">@group.Name</button>
+                    }
+                </div>
+            </div>
+        </div>
+
+        <div class="toolbar-field">
+            <span class="toolbar-label">Организация:</span>
+            <div class="ui-select ui-select-wide" data-target="workspace-organization" data-submit="true">
+                <button type="button" class="ui-select-trigger" aria-haspopup="listbox">
+                    <span class="ui-select-value">@organizationLabel</span>
+                    <svg class="ui-select-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+                </button>
+                <div class="ui-select-menu" role="listbox">
+                    <button type="button"
+                            class="ui-select-option @(isOrganizationUnselected ? "active" : "")"
+                            data-value="@OrganizationStore.UnselectedOrganizationToken"
+                            role="option">— выберите —</button>
+                    <button type="button"
+                            class="ui-select-option @(isAllOrganizations ? "active" : "")"
+                            data-value=""
+                            role="option">Все</button>
+                    @if (organizations.Count == 0)
+                    {
+                        <span class="hint" style="display:block;padding:8px 12px">В группе нет компаний</span>
+                    }
+                    @foreach (var org in organizations)
+                    {
+                        <button type="button"
+                                class="ui-select-option @(!isOrganizationUnselected && !isAllOrganizations && string.Equals(org, selectedOrganization, StringComparison.OrdinalIgnoreCase) ? "active" : "")"
+                                data-value="@org"
+                                role="option">@org</button>
+                    }
+                </div>
+            </div>
+        </div>
+    </form>
+    <a class="btn btn-outline" asp-page="/Organizations/Index">Организации</a>
+
+    @if (isOrganizationUnselected)
+    {
+        <span class="hint module-toolbar-org-hint">Сначала выберите организацию в списке.</span>
+    }
+    else if (selectedPeopleCount is int peopleCount)
+    {
+        <span class="hint module-toolbar-org-hint"
+              title="Штат 1С: человек×компания для выбранной организации.">Людей: @peopleCount</span>
+    }
+
+    @if (showRisksObject)
+    {
+        <form method="post" asp-page="/Workspace/SetRiskObject" class="toolbar-form toolbar-risks-object-form" id="workspace-risks-object-form">
+            <input type="hidden" name="returnUrl" value="@returnUrl" />
+            <input type="hidden" name="objectId" id="workspace-risk-object" value="@selectedRiskObjectId" />
+
+            <div class="toolbar-field toolbar-field-object">
+                <span class="toolbar-label">Объект:</span>
+                <div class="ui-select ui-select-wide" data-target="workspace-risk-object" data-submit="true">
+                    <button type="button" class="ui-select-trigger" aria-haspopup="listbox">
+                        <span class="ui-select-value">@selectedRiskObjectLabel</span>
+                        <svg class="ui-select-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+                    </button>
+                    <div class="ui-select-menu" role="listbox">
+                        <button type="button"
+                                class="ui-select-option @(RisksWorkspaceContext.IsAllObjects(selectedRiskObjectId) ? "active" : "")"
+                                data-value="@RisksWorkspaceContext.AllObjectsId"
+                                role="option">@RisksWorkspaceContext.AllObjectsName</button>
+                        @foreach (var obj in riskObjects)
+                        {
+                            <button type="button"
+                                    class="ui-select-option @(string.Equals(obj.Id, selectedRiskObjectId, StringComparison.OrdinalIgnoreCase) ? "active" : "")"
+                                    data-value="@obj.Id"
+                                    role="option">@obj.Name</button>
+                        }
+                    </div>
+                </div>
+            </div>
+
+            <div class="toolbar-field toolbar-field-create-object">
+                <input type="text"
+                       name="newObjectName"
+                       class="ppe-input toolbar-object-name"
+                       placeholder="Новый объект"
+                       maxlength="200"
+                       autocomplete="off" />
+                <input type="text"
+                       name="newObjectOfficialName"
+                       class="ppe-input toolbar-object-official"
+                       placeholder="Официальное название"
+                       maxlength="500"
+                       autocomplete="off"
+                       title="Полное название объекта, как в договоре" />
+                <button type="submit" class="btn btn-outline btn-sm">Создать</button>
+            </div>
+        </form>
+
+        @if (canRenameRiskObject)
+        {
+            <form method="post"
+                  asp-page="/Workspace/SetRiskObject"
+                  class="toolbar-form toolbar-risks-rename-form"
+                  id="workspace-risks-rename-form">
+                <input type="hidden" name="returnUrl" value="@returnUrl" />
+                <input type="hidden" name="objectId" value="@selectedRiskObjectId" />
+                <div class="toolbar-field toolbar-field-rename-object">
+                    <input type="text"
+                           name="renameObjectName"
+                           class="ppe-input toolbar-object-name"
+                           value="@selectedRiskObjectLabel"
+                           placeholder="Название объекта"
+                           maxlength="200"
+                           required
+                           autocomplete="off"
+                           title="Новое название выбранного объекта" />
+                    <input type="text"
+                           name="renameObjectOfficialName"
+                           class="ppe-input toolbar-object-official"
+                           value="@selectedRiskObjectOfficialName"
+                           placeholder="Официальное название"
+                           maxlength="500"
+                           autocomplete="off"
+                           title="Полное название объекта, как в договоре" />
+                    <button type="submit" class="btn btn-outline btn-sm">Переименовать</button>
+                    @if (canDeleteRiskObject)
+                    {
+                        <button type="submit"
+                                name="deleteObject"
+                                value="1"
+                                class="btn btn-outline btn-sm"
+                                formnovalidate
+                                title="Убрать объект из списка"
+                                onclick="return confirm(@Json.Serialize(deleteObjectConfirm));">Удалить объект</button>
+                    }
+                </div>
+            </form>
+        }
+    }
+</div>

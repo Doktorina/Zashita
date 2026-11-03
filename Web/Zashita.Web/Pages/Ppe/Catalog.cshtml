@@ -1,0 +1,59 @@
+@page "/Ppe/Catalog"
+@model Zashita.Web.Pages.Ppe.CatalogModel
+@using Zashita.Core.Ppe
+@{
+    ViewData["Title"] = Model.PageTitle;
+    ViewData["Subtitle"] = Model.Organization;
+}
+
+<div class="ppe-toolbar" style="margin-bottom:12px">
+  <a class="btn btn-outline @(Model.Kind == "ProtectiveProperties" ? "active" : "")" asp-page="/Ppe/Catalog" asp-route-kind="ProtectiveProperties">Защитные свойства</a>
+  <a class="btn btn-outline @(Model.Kind == "PropertySets" ? "active" : "")" asp-page="/Ppe/Catalog" asp-route-kind="PropertySets">Наборы свойств</a>
+  <a class="btn btn-outline @(Model.Kind == "Warehouses" ? "active" : "")" asp-page="/Ppe/Catalog" asp-route-kind="Warehouses">Склады</a>
+  <a class="btn btn-outline @(Model.Kind == "EtnProfessions" ? "active" : "")" asp-page="/Ppe/Catalog" asp-route-kind="EtnProfessions">Профессии ЕТН</a>
+  <a class="btn btn-outline @(Model.Kind == "EtnWorkTypes" ? "active" : "")" asp-page="/Ppe/Catalog" asp-route-kind="EtnWorkTypes">Виды работ ЕТН</a>
+  <a class="btn btn-outline @(Model.Kind == "ClimateZones" ? "active" : "")" asp-page="/Ppe/Catalog" asp-route-kind="ClimateZones">Климат. пояса</a>
+  <a class="btn btn-outline @(Model.Kind == "EtnHazards" ? "active" : "")" asp-page="/Ppe/Catalog" asp-route-kind="EtnHazards">Опасности ЕТН</a>
+  <a class="btn btn-outline @(Model.Kind == "TestPeriodicity" ? "active" : "")" asp-page="/Ppe/Catalog" asp-route-kind="TestPeriodicity">Периодичность</a>
+  <a class="btn btn-outline @(Model.Kind == "TestPlan" ? "active" : "")" asp-page="/Ppe/Catalog" asp-route-kind="TestPlan">План испытаний</a>
+  <a class="btn btn-outline @(Model.Kind == "TestExecution" ? "active" : "")" asp-page="/Ppe/Catalog" asp-route-kind="TestExecution">Испытания</a>
+</div>
+
+<div class="ppe-split">
+  <div class="panel ppe-panel ppe-split-side">
+    <ul class="ppe-standards-list">
+      @foreach (var row in Model.Rows)
+      {
+        <li class="@(row.Id == Model.EditId ? "active" : "")">
+          <a asp-page="/Ppe/Catalog" asp-route-kind="@Model.Kind" asp-route-editId="@row.Id">@row.Code — @row.Name</a>
+        </li>
+      }
+    </ul>
+  </div>
+  <div class="panel ppe-panel ppe-split-main">
+    <h2 class="ppe-step-title">@Model.PageTitle</h2>
+    <form method="post" asp-page-handler="Save">
+      <input type="hidden" name="kind" value="@Model.Kind" />
+      <input type="hidden" asp-for="EditId" />
+      <label class="ppe-field"><span>Код</span><input asp-for="Code" class="ppe-input" /></label>
+      <label class="ppe-field"><span>Название</span><input asp-for="Name" class="ppe-input" required /></label>
+      <label class="ppe-field"><span>Примечание</span><input asp-for="Note" class="ppe-input" /></label>
+      <div class="ppe-actions">
+        <button type="submit" class="btn btn-primary">Сохранить</button>
+        <a class="btn btn-outline" asp-page="/Ppe/Catalog" asp-route-kind="@Model.Kind">Новая запись</a>
+        @if (!string.IsNullOrWhiteSpace(Model.EditId))
+        {
+          <button type="submit"
+                  class="btn btn-outline"
+                  formaction="?handler=Delete"
+                  formmethod="post"
+                  name="deleteId"
+                  value="@Model.EditId"
+                  onclick="return confirm('Удалить запись?');">
+            Удалить
+          </button>
+        }
+      </div>
+    </form>
+  </div>
+</div>

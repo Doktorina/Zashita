@@ -1,0 +1,311 @@
+@page "/Med/PersonList/Edit"
+@using Zashita.Core.Med
+@model Zashita.Web.Pages.Med.PersonList.EditModel
+@{
+    ViewData["Title"] = Model.IsNew ? "Формирование поименного списка лиц. Новый" : "Формирование поименного списка лиц";
+    ViewData["Subtitle"] = Model.Organization;
+    var doc = Model.Document;
+    var employeesJson = System.Text.Json.JsonSerializer.Serialize(
+        Model.EmployeeLookup.Select(e => new
+        {
+            name = e.Name,
+            birth = e.BirthDate?.ToString("yyyy-MM-dd"),
+            profession = e.Profession,
+            department = e.Department
+        }));
+    var standardsJson = System.Text.Json.JsonSerializer.Serialize(
+        Model.StandardLookup.Select(s => new
+        {
+            id = s.Id,
+            name = s.Name,
+            profession = s.Profession,
+            department = s.Department,
+            rules = s.Rules.Select(r => new
+            {
+                item = r.ItemNumber,
+                name = r.FactorName,
+                period = r.Periodicity,
+                kind = r.ExamKind
+            })
+        }));
+}
+
+@section Styles {
+  <link rel="stylesheet" href="~/css/med-person-list.css" asp-append-version="true" />
+}
+
+@if (!string.IsNullOrWhiteSpace(Model.Message))
+{
+  <p class="@(Model.IsError ? "form-error" : "text-success")">@Model.Message</p>
+}
+
+<div class="panel ppe-panel sout-assignment-doc">
+  <form method="post" asp-page="/Med/PersonList/Edit">
+    <input type="hidden" asp-for="Id" />
+
+    <div class="sout-assignment-toolbar">
+      <div class="sout-assignment-toolbar-left">
+        <a class="btn btn-outline btn-sm" asp-page="/Med/ContingentLists" asp-route-tab="named">←</a>
+        <button type="submit" formaction="?handler=PostAndClose" class="btn btn-primary btn-sm">Провести и закрыть</button>
+        <button type="submit" formaction="?handler=Save" class="btn btn-outline btn-sm">Записать</button>
+        <button type="submit" formaction="?handler=Post" class="btn btn-outline btn-sm">Провести</button>
+        @if (!Model.IsNew)
+        {
+          <details class="ppe-print-menu med-print-menu-open" id="med-person-edit-print-menu">
+            <summary class="btn btn-outline btn-sm">Печать ▾</summary>
+            <div class="ppe-print-dropdown">
+              @foreach (var mode in new[]
+              {
+                MedPersonListPrintModes.Standard,
+                MedPersonListPrintModes.ByDepartment,
+                MedPersonListPrintModes.Moscow,
+                MedPersonListPrintModes.FullFactors,
+                MedPersonListPrintModes.WorkplacesByDepartment,
+                MedPersonListPrintModes.Dispensary,
+                MedPersonListPrintModes.Psychiatric,
+                MedPersonListPrintModes.DirectionSverdlovsk
+              })
+              {
+                <a
+                   asp-page="/Med/PersonList/Preview"
+                   asp-route-id="@doc.Id"
+                   asp-route-mode="@mode">@MedPersonListPrintModes.Title(mode)</a>
+              }
+            </div>
+          </details>
+        }
+      </div>
+      <div class="sout-assignment-toolbar-right">
+        <span class="hint sout-assignment-status">@(doc.IsPosted ? "Проведён" : "Новый *")</span>
+      </div>
+    </div>
+
+    <div class="sout-assignment-header">
+      <div class="sout-assignment-header-col">
+        <label class="ppe-field">
+          <span>Номер</span>
+          <input name="number" value="@(string.IsNullOrWhiteSpace(doc.Number) ? "<Авто>" : doc.Number)" class="ppe-input" />
+        </label>
+        <label class="ppe-field">
+          <span>от</span>
+          <input type="date" name="date" value="@doc.Date.ToString("yyyy-MM-dd")" class="ppe-input" />
+        </label>
+        <label class="ppe-field">
+          <span>Вид медосмотра</span>
+          <select name="examType" id="med-person-exam-type" class="ppe-input">
+            @foreach (var opt in Model.ExamTypeOptions)
+            {
+              if (string.Equals(doc.ExamType, opt, StringComparison.OrdinalIgnoreCase))
+              {
+                <option value="@opt" selected>@opt</option>
+              }
+              else
+              {
+                <option value="@opt">@opt</option>
+              }
+            }
+          </select>
+        </label>
+      </div>
+      <div class="sout-assignment-header-col">
+        <label class="ppe-field med-person-dept-field">
+          <span>Подразделение <span class="hint">(необязательно)</span></span>
+          <div class="med-person-dept-row">
+            <select name="department" class="ppe-input">
+              <option value="">— не указано —</option>
+              @foreach (var department in Model.Departments)
+              {
+                if (string.Equals(department, doc.Department, StringComparison.OrdinalIgnoreCase))
+                {
+                  <option value="@department" selected>@department</option>
+                }
+                else
+                {
+                  <option value="@department">@department</option>
+                }
+              }
+              @if (!string.IsNullOrWhiteSpace(doc.Department) &&
+                   !Model.Departments.Any(d => string.Equals(d, doc.Department, StringComparison.OrdinalIgnoreCase)))
+              {
+                <option value="@doc.Department" selected>@doc.Department</option>
+              }
+            </select>
+            <button type="submit" formaction="?handler=FillFromEmployees" class="btn btn-primary btn-sm"
+                    title="Заполнить список сотрудниками выбранного подразделения">Применить и показать</button>
+          </div>
+        </label>
+        <label class="ppe-field">
+          <span>Факторы медосмотра</span>
+          <input name="factors" value="@doc.Factors" class="ppe-input" list="med-person-list-factors" />
+        </label>
+      </div>
+    </div>
+
+    <datalist id="med-person-list-factors">
+      <option value="Приказ 29н"></option>
+      <option value="Без вредностей"></option>
+      <option value="Физические факторы"></option>
+    </datalist>
+
+    <h3 class="ppe-subtitle">Список лиц</h3>
+    <p class="hint">Выберите подразделение и нажмите «Применить и показать», чтобы заполнить список из штата. Затем выберите ФИО — должность и отдел подставятся сами. При возрасте &lt; 21 лет периодичность всегда «1 раз в год».</p>
+    <div class="ppe-actions ppe-actions-top">
+      <button type="submit" formaction="?handler=FillFromEmployees" class="btn btn-outline btn-sm"
+              onclick="return confirm('Заменить список сотрудниками из справочника? Текущие строки будут перезаписаны.');">Обновить из справочника</button>
+      <button type="button" class="btn btn-primary btn-sm" id="med-add-line-btn">Добавить сотрудника</button>
+    </div>
+    <datalist id="med-person-employee-names">
+      @foreach (var name in Model.EmployeeNames)
+      {
+        <option value="@name"></option>
+      }
+    </datalist>
+    <table class="data-grid ppe-edit-grid med-person-edit-grid">
+      <thead>
+        <tr>
+          <th>ФИО</th>
+          <th>Дата рождения</th>
+          <th>Возраст</th>
+          <th>Должность</th>
+          <th>Рабочее место</th>
+          <th>Стандарт</th>
+          <th>Пункт</th>
+          <th>Периодичность</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody id="med-person-lines-body">
+        @for (var i = 0; i < Math.Max(doc.Lines.Count, 1); i++)
+        {
+          var line = i < doc.Lines.Count ? doc.Lines[i] : new MedPersonListLine();
+          var age = MedPeriodicity.CalculateAge(line.BirthDate);
+          <tr class="med-person-line-row">
+            <td>
+              <input type="hidden" name="lineId" value="@line.Id" />
+              <input name="employeeName" value="@line.EmployeeName" class="ppe-input med-line-name" placeholder="ФИО" list="med-person-employee-names" autocomplete="off" />
+            </td>
+            <td>
+              <input type="date" name="birthDate" value="@(line.BirthDate?.ToString("yyyy-MM-dd"))" class="ppe-input med-line-birth" />
+            </td>
+            <td class="med-line-age" data-age="@(age?.ToString() ?? "")">@(age?.ToString() ?? "—")</td>
+            <td><input name="profession" value="@line.Profession" class="ppe-input med-line-profession" placeholder="Должность" autocomplete="off" /></td>
+            <td><input name="workplace" value="@line.Workplace" class="ppe-input med-line-workplace" /></td>
+            <td>
+              <select class="ppe-input med-line-standard">
+                <option value="">— выбрать стандарт —</option>
+                @foreach (var std in Model.StandardLookup)
+                {
+                  <option value="@std.Id">@std.Name</option>
+                }
+              </select>
+            </td>
+            <td>
+              <select name="itemNumber" class="ppe-input med-line-item">
+                <option value="">—</option>
+                @{
+                  var lineItem = MedItemNumber.Normalize(line.ItemNumber);
+                  var matchedFactor = false;
+                }
+                @foreach (var item in Model.FactorItems)
+                {
+                  if (MedItemNumber.EqualsNormalized(lineItem, item.ItemNumber))
+                  {
+                    matchedFactor = true;
+                    <option value="@item.ItemNumber" data-periodicity="@item.Periodicity" selected>@item.Display</option>
+                  }
+                  else
+                  {
+                    <option value="@item.ItemNumber" data-periodicity="@item.Periodicity">@item.Display</option>
+                  }
+                }
+                @if (!string.IsNullOrWhiteSpace(lineItem) && !matchedFactor)
+                {
+                  <option value="@lineItem" selected>@MedItemNumber.Display(lineItem) (из отчёта)</option>
+                }
+              </select>
+            </td>
+            <td>
+              <select name="periodicity" class="ppe-input med-line-periodicity">
+                @foreach (var option in Model.PeriodicityOptions)
+                {
+                  if (string.Equals(MedPeriodicity.Normalize(line.Periodicity), option, StringComparison.OrdinalIgnoreCase))
+                  {
+                    <option value="@option" selected>@option</option>
+                  }
+                  else
+                  {
+                    <option value="@option">@option</option>
+                  }
+                }
+              </select>
+            </td>
+            <td><button type="button" class="btn btn-outline btn-sm med-remove-line-btn" title="Убрать из списка">×</button></td>
+          </tr>
+        }
+      </tbody>
+    </table>
+
+    <label class="ppe-field">
+      <span>Комментарий</span>
+      <input name="comment" value="@doc.Comment" class="ppe-input" />
+    </label>
+
+    <div class="ppe-actions">
+      @if (!Model.IsNew)
+      {
+        <button type="submit" formaction="?handler=Delete" class="btn btn-outline" onclick="return confirm('Удалить документ?');">Удалить</button>
+      }
+      <a class="btn btn-outline" asp-page="/Med/ContingentLists" asp-route-tab="named">К списку</a>
+    </div>
+  </form>
+</div>
+
+<template id="med-person-line-template">
+  <tr class="med-person-line-row">
+    <td>
+      <input type="hidden" name="lineId" value="" />
+      <input name="employeeName" value="" class="ppe-input med-line-name" placeholder="ФИО" list="med-person-employee-names" autocomplete="off" />
+    </td>
+    <td><input type="date" name="birthDate" value="" class="ppe-input med-line-birth" /></td>
+    <td class="med-line-age" data-age="">—</td>
+    <td><input name="profession" value="" class="ppe-input med-line-profession" placeholder="Должность" autocomplete="off" /></td>
+    <td><input name="workplace" value="" class="ppe-input med-line-workplace" /></td>
+    <td>
+      <select class="ppe-input med-line-standard">
+        <option value="">— выбрать стандарт —</option>
+        @foreach (var std in Model.StandardLookup)
+        {
+          <option value="@std.Id">@std.Name</option>
+        }
+      </select>
+    </td>
+    <td>
+      <select name="itemNumber" class="ppe-input med-line-item">
+        <option value="">—</option>
+        @foreach (var item in Model.FactorItems)
+        {
+          <option value="@item.ItemNumber" data-periodicity="@item.Periodicity">@item.Display</option>
+        }
+      </select>
+    </td>
+    <td>
+      <select name="periodicity" class="ppe-input med-line-periodicity">
+        @foreach (var option in Model.PeriodicityOptions)
+        {
+          <option value="@option">@option</option>
+        }
+      </select>
+    </td>
+    <td><button type="button" class="btn btn-outline btn-sm med-remove-line-btn" title="Убрать из списка">×</button></td>
+  </tr>
+</template>
+
+@section Scripts {
+  <script>
+    window.medPersonEmployees = @Html.Raw(employeesJson);
+    window.medPersonStandards = @Html.Raw(standardsJson);
+    window.medPersonOnceAYear = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(MedPeriodicity.OnceAYear));
+  </script>
+  <script src="~/js/med-person-list-edit.js" asp-append-version="true"></script>
+}
+

@@ -1,0 +1,266 @@
+@page "/Risks/Commissions/Edit"
+@using System.Text.Json
+@model Zashita.Web.Pages.Risks.Commissions.EditModel
+@{
+    var r = Model.Record;
+    var isGroup = r.IsGroup || Model.IsGroup;
+    ViewData["Title"] = Model.IsNew ? "Комиссия (создание)" : r.Name;
+    ViewData["Subtitle"] = Model.Organization;
+    var members = r.Members ?? [];
+    if (!isGroup && members.Count == 0)
+    {
+        members =
+        [
+            new Zashita.Core.Risks.SoutCommissionMember
+            {
+                Status = Zashita.Core.Risks.SoutCommissionMemberHelpers.RiskChairmanStatus
+            }
+        ];
+    }
+
+    var employeesJson = JsonSerializer.Serialize(
+        Model.EmployeeOptions.Select(e => new { name = e.Name, position = e.Profession ?? string.Empty }));
+}
+
+<link rel="stylesheet" href="/css/sout-catalog.css" asp-append-version="true" />
+
+@if (!string.IsNullOrWhiteSpace(Model.Message))
+{
+  <p class="@(Model.IsError ? "form-error" : "text-success")">@Model.Message</p>
+}
+
+<div class="panel ppe-panel sout-catalog-edit">
+  <form method="post" asp-page="/Risks/Commissions/Edit" id="risks-commission-edit-form">
+    <input type="hidden" name="recordId" value="@r.Id" />
+    <input type="hidden" asp-for="Id" />
+    <input type="hidden" name="isGroup" value="@isGroup.ToString().ToLowerInvariant()" />
+    <input type="hidden" name="ReturnUrl" value="@Model.ReturnUrl" />
+
+    <div class="sout-assignment-toolbar sout-catalog-edit-toolbar">
+      <div class="sout-assignment-toolbar-left">
+        @if (!string.IsNullOrWhiteSpace(Model.ReturnUrl))
+        {
+          <a class="btn btn-outline btn-sm" href="@Model.ReturnUrl">←</a>
+        }
+        else
+        {
+          <a class="btn btn-outline btn-sm" asp-page="/Risks/Commissions">←</a>
+        }
+        <button type="submit" formaction="?handler=SaveAndClose" class="btn btn-primary btn-sm">@(string.IsNullOrWhiteSpace(Model.ReturnUrl) ? "Записать и закрыть" : "Сохранить")</button>
+        @if (string.IsNullOrWhiteSpace(Model.ReturnUrl))
+        {
+          <button type="submit" formaction="?handler=Save" class="btn btn-outline btn-sm">Записать</button>
+        }
+      </div>
+    </div>
+
+    <div class="sout-catalog-edit-body">
+      <label class="ppe-field">
+        <span>Наименование</span>
+        <input name="name" value="@r.Name" class="ppe-input" required autofocus />
+      </label>
+
+      <label class="ppe-field">
+        <span>Входит в группу</span>
+        <select name="parentId" class="ppe-input">
+          <option value="">—</option>
+          @foreach (var group in Model.GroupOptions.Where(g => g.Id != r.Id))
+          {
+            if (string.Equals(r.ParentId, group.Id, StringComparison.Ordinal))
+            {
+              <option value="@group.Id" selected>@group.Name</option>
+            }
+            else
+            {
+              <option value="@group.Id">@group.Name</option>
+            }
+          }
+        </select>
+      </label>
+
+      @if (!isGroup)
+      {
+        <div class="ppe-field">
+          <span>Состав</span>
+          <p class="hint" style="margin:4px 0 8px">Статус роли, ФИО из штата организации — должность подставится автоматически (можно поправить).</p>
+          <table class="data-grid ppe-edit-grid" id="risks-commission-members-grid">
+            <thead>
+              <tr>
+                <th style="min-width:14rem">Статус</th>
+                <th style="min-width:14rem">ФИО</th>
+                <th style="min-width:12rem">Должность (полностью)</th>
+                <th class="ppe-line-actions"></th>
+              </tr>
+            </thead>
+            <tbody id="risks-commission-members-body">
+              @foreach (var member in members)
+              {
+                <tr class="sout-commission-member-row">
+                  <td>
+                    <select name="memberStatus" class="ppe-input">
+                      @foreach (var status in Model.StatusOptions)
+                      {
+                        if (string.Equals(status, member.Status, StringComparison.OrdinalIgnoreCase))
+                        {
+                          <option value="@status" selected>@status</option>
+                        }
+                        else
+                        {
+                          <option value="@status">@status</option>
+                        }
+                      }
+                    </select>
+                  </td>
+                  <td>
+                    <input name="memberName" value="@member.Name" class="ppe-input sout-commission-name" list="risks-commission-employees" autocomplete="off" placeholder="Выберите из штата…" />
+                  </td>
+                  <td>
+                    <input name="memberPosition" value="@member.Position" class="ppe-input sout-commission-position" autocomplete="off" />
+                  </td>
+                  <td class="ppe-line-actions">
+                    <button type="button" class="suot-action suot-action-danger" data-action="remove-member" title="Удалить">✕</button>
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+          <datalist id="risks-commission-employees">
+            @foreach (var emp in Model.EmployeeOptions)
+            {
+              <option value="@emp.Name"></option>
+            }
+          </datalist>
+          <div class="ppe-actions ppe-actions-inline" style="margin-top:8px">
+            <button type="button" class="btn btn-outline btn-sm" id="risks-commission-add-member">Добавить участника</button>
+          </div>
+        </div>
+
+        <div class="sout-catalog-edit-grid">
+          <label class="ppe-field">
+            <span>№ приказа о создании комиссии</span>
+            <input name="orderNumber" value="@r.OrderNumber" class="ppe-input" />
+          </label>
+          <label class="ppe-field">
+            <span>Дата приказа о создании комиссии</span>
+            <input type="date" name="orderDate" value="@r.OrderDate?.ToString("yyyy-MM-dd")" class="ppe-input" />
+          </label>
+          <label class="ppe-field">
+            <span>Дата утверждения состава</span>
+            <input type="date" name="compositionApprovalDate" value="@r.CompositionApprovalDate?.ToString("yyyy-MM-dd")" class="ppe-input" />
+          </label>
+          <label class="ppe-field">
+            <span>Периодичность проверки состава, мес.</span>
+            <input type="number" min="1" name="compositionCheckPeriodMonths" value="@r.CompositionCheckPeriodMonths" class="ppe-input" />
+          </label>
+        </div>
+        <label class="ppe-field" style="display:flex;align-items:center;gap:8px;margin-top:8px">
+          <input type="checkbox" name="isInactive" value="true" @(r.IsInactive ? "checked" : "") />
+          <span>Не действует</span>
+        </label>
+      }
+    </div>
+  </form>
+</div>
+
+<template id="risks-commission-member-template">
+  <tr class="sout-commission-member-row">
+    <td>
+      <select name="memberStatus" class="ppe-input">
+        @foreach (var status in Model.StatusOptions)
+        {
+          <option value="@status">@status</option>
+        }
+      </select>
+    </td>
+    <td>
+      <input name="memberName" value="" class="ppe-input sout-commission-name" list="risks-commission-employees" autocomplete="off" placeholder="Выберите из штата…" />
+    </td>
+    <td>
+      <input name="memberPosition" value="" class="ppe-input sout-commission-position" autocomplete="off" />
+    </td>
+    <td class="ppe-line-actions">
+      <button type="button" class="suot-action suot-action-danger" data-action="remove-member" title="Удалить">✕</button>
+    </td>
+  </tr>
+</template>
+
+@section Scripts {
+  <script>
+    (function () {
+      var employees = @Html.Raw(employeesJson);
+      var byName = {};
+      employees.forEach(function (e) {
+        if (e && e.name) {
+          byName[String(e.name).trim().toLowerCase()] = e.position || '';
+        }
+      });
+
+      var body = document.getElementById('risks-commission-members-body');
+      var addBtn = document.getElementById('risks-commission-add-member');
+      var template = document.getElementById('risks-commission-member-template');
+      if (!body || !template) return;
+
+      function memberCount() {
+        return body.querySelectorAll('.sout-commission-member-row').length;
+      }
+
+      function defaultStatusForNewRow() {
+        var hasChairman = false;
+        var maxMember = 0;
+        body.querySelectorAll('select[name="memberStatus"]').forEach(function (sel) {
+          var v = (sel.value || '').trim();
+          if (/председатель/i.test(v)) hasChairman = true;
+          var m = /^Член комиссии\s+(\d+)/i.exec(v);
+          if (m) {
+            var n = parseInt(m[1], 10);
+            if (n > maxMember) maxMember = n;
+          }
+        });
+        if (!hasChairman) return 'Председатель комиссии';
+        return 'Член комиссии ' + (maxMember + 1);
+      }
+
+      function fillPositionFromName(row) {
+        var nameInput = row.querySelector('.sout-commission-name');
+        var posInput = row.querySelector('.sout-commission-position');
+        if (!nameInput || !posInput) return;
+        var key = (nameInput.value || '').trim().toLowerCase();
+        if (!key || !Object.prototype.hasOwnProperty.call(byName, key)) return;
+        posInput.value = byName[key];
+      }
+
+      function bindRow(row) {
+        var nameInput = row.querySelector('.sout-commission-name');
+        if (!nameInput) return;
+        nameInput.addEventListener('change', function () { fillPositionFromName(row); });
+        nameInput.addEventListener('blur', function () { fillPositionFromName(row); });
+        nameInput.addEventListener('input', function () { fillPositionFromName(row); });
+      }
+
+      body.querySelectorAll('.sout-commission-member-row').forEach(bindRow);
+
+      body.addEventListener('click', function (e) {
+        var btn = e.target.closest('[data-action="remove-member"]');
+        if (!btn) return;
+        var row = btn.closest('.sout-commission-member-row');
+        if (!row) return;
+        if (memberCount() <= 1) {
+          row.querySelectorAll('input').forEach(function (el) { el.value = ''; });
+          return;
+        }
+        row.remove();
+      });
+
+      if (addBtn) {
+        addBtn.addEventListener('click', function () {
+          var node = template.content.cloneNode(true);
+          var row = node.querySelector('.sout-commission-member-row');
+          var sel = row.querySelector('select[name="memberStatus"]');
+          if (sel) sel.value = defaultStatusForNewRow();
+          body.appendChild(node);
+          bindRow(body.lastElementChild);
+        });
+      }
+    })();
+  </script>
+}

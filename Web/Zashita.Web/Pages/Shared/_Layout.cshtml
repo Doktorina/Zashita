@@ -1,0 +1,149 @@
+@using Zashita.Web.Services
+@inject OrganizationStore OrganizationStore
+@{
+    var activeModule = ViewData["ActiveModule"] as string;
+    var isHome = ViewData["IsHome"] as bool? == true;
+    var isLogin = ViewData["IsLogin"] as bool? == true;
+    var isModulePage = ViewData["IsModulePage"] as bool? == true;
+    ViewData["Organization"] = OrganizationStore.GetSelectedOrganization(Context);
+    var userName = Context.Session.GetString(AuthConstants.UserNameKey) ?? "Администратор";
+    var userInitials = string.Concat(userName.Split(' ', StringSplitOptions.RemoveEmptyEntries).Select(p => p[0])).ToUpperInvariant();
+    if (userInitials.Length > 2) { userInitials = userInitials[..2]; }
+    var bodyClass = isModulePage ? "window-body-module" : isHome ? "window-body-dashboard" : "";
+}
+<!DOCTYPE html>
+<html lang="ru" data-theme="light">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="color-scheme" content="light dark" />
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+    <meta http-equiv="Pragma" content="no-cache" />
+    <title>@ViewData["Title"] — Охрана труда</title>
+    <style>
+      html { background: #f5f7f8; color: #0f1a15; }
+      html[data-theme='dark'] { background: #0f1a15; color: #ecf5f1; }
+      body { margin: 0; background: inherit; color: inherit; }
+    </style>
+    <script>
+      (function () {
+        try {
+          var theme = localStorage.getItem('zashita-theme') || 'light';
+          document.documentElement.setAttribute('data-theme', theme);
+          document.documentElement.style.colorScheme = theme;
+        } catch (_) {}
+      })();
+    </script>
+    <partial name="_SiteIconLinks" />
+    <link rel="stylesheet" href="~/css/zashita.css" asp-append-version="true" />
+    @await RenderSectionAsync("Styles", required: false)
+</head>
+<body class="@(isLogin ? "login-shell" : "app-shell")">
+@if (!isLogin)
+{
+    <aside class="sidebar">
+        <div class="sidebar-title">Охрана труда</div>
+        <nav class="sidebar-nav">
+            @foreach (var item in ModuleUiCatalog.Sidebar)
+            {
+                var isActive = item.IsHome ? isHome : activeModule == item.Slug;
+                if (!item.IsHome &&
+                    string.Equals(item.Slug, "обучение", StringComparison.OrdinalIgnoreCase) &&
+                    Context.Request.Path.StartsWithSegments("/Electrical"))
+                {
+                    isActive = true;
+                }
+
+                if (item.IsHome)
+                {
+                    <a class="nav-link @(isActive ? "active" : "")" asp-page="/Index">@item.ShortTitle</a>
+                }
+                else
+                {
+                    <a class="nav-link @(isActive ? "active" : "")"
+                       asp-page="/Module/Index"
+                       asp-route-slug="@item.Slug">@item.ShortTitle</a>
+                }
+            }
+            @{
+                var historyNavActive =
+                    string.Equals(activeModule as string, "history", StringComparison.OrdinalIgnoreCase)
+                    || Context.Request.Path.StartsWithSegments("/History")
+                    || Context.Request.Path.StartsWithSegments("/Training/PrintHistory")
+                    || Context.Request.Path.StartsWithSegments("/Ppe/SavedCards");
+            }
+            <a class="nav-link @(historyNavActive ? "active" : "")" asp-page="/History">История печати</a>
+            @if (AuthHelper.IsHeadAdmin(Context))
+            {
+                var usersNavActive =
+                    string.Equals(activeModule as string, "users", StringComparison.OrdinalIgnoreCase)
+                    || Context.Request.Path.StartsWithSegments("/Users");
+                <a class="nav-link @(usersNavActive ? "active" : "")" asp-page="/Users/Index">Пользователи</a>
+            }
+        </nav>
+
+        <div class="sidebar-footer">
+            <div class="theme-toggle" role="group" aria-label="Тема">
+                <button type="button" class="theme-toggle-btn" data-theme-set="dark" title="Тёмная тема" aria-label="Тёмная тема">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+                </button>
+                <button type="button" class="theme-toggle-btn" data-theme-set="light" title="Светлая тема" aria-label="Светлая тема">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>
+                </button>
+            </div>
+            <div class="sidebar-user">
+                <div class="sidebar-user-avatar" aria-hidden="true">@userInitials</div>
+                <div class="sidebar-user-meta">
+                    <div class="sidebar-user-name">@userName</div>
+                    <div class="sidebar-user-role">@(AuthHelper.IsHeadAdmin(Context) ? "Главный администратор" : "Администратор")</div>
+                </div>
+                <a class="btn-logout-sidebar" asp-page="/Logout" title="Выйти" aria-label="Выйти">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+                </a>
+            </div>
+        </div>
+    </aside>
+
+    <div class="app-main">
+        <div class="window-frame">
+            <header class="page-head">
+                <div class="page-head-text">
+                    <h1 class="page-title">@ViewData["Title"]</h1>
+                    @if (ViewData["Subtitle"] is string subtitle && !string.IsNullOrWhiteSpace(subtitle))
+                    {
+                        <p class="page-subtitle">@subtitle</p>
+                    }
+                </div>
+                <div class="page-head-actions">
+                    <div class="global-search-wrap">
+                        <form class="global-search" method="get" asp-page="/Search/Index" autocomplete="off">
+                            <input type="search" name="q" id="global-search-input" placeholder="Поиск по разделам и данным..." aria-label="Поиск" />
+                        </form>
+                        <div id="global-search-results" class="search-dropdown" hidden></div>
+                    </div>
+                </div>
+            </header>
+
+            @if (ViewData["ShowToolbar"] as bool? != false)
+            {
+                <div class="toolbar-wrap">
+                    <partial name="_ModuleToolbar" />
+                </div>
+            }
+
+            <div class="window-body @bodyClass">
+                @RenderBody()
+            </div>
+        </div>
+        <button type="button" class="report-scroll-top-btn" id="report-scroll-top" hidden title="Наверх" aria-label="Прокрутить к началу">↑ Наверх</button>
+    </div>
+}
+else
+{
+    @RenderBody()
+}
+
+<script src="~/js/site.js" asp-append-version="true"></script>
+@await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>

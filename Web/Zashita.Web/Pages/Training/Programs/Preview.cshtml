@@ -1,0 +1,33 @@
+@page "/Training/Programs/Preview"
+@model Zashita.Web.Pages.Training.Programs.PreviewModel
+@{
+    ViewData["Title"] = Model.Title;
+    Layout = null;
+}
+
+@if (Model.NotFound)
+{
+  <!DOCTYPE html>
+  <html lang="ru">
+  <head>
+    <meta charset="utf-8" />
+    <title>Не найдено</title>
+    <partial name="_SiteIconLinks" />
+  </head>
+  <body><p>Программа не найдена. Выберите программу в списке и повторите печать.</p></body>
+  </html>
+}
+else
+{
+  @Html.Raw(Model.PreviewHtml)
+  <div class="ppe-no-print" style="margin:16px;font-family:Segoe UI,sans-serif;">
+    <button type="button" class="btn btn-primary" onclick="zashitaRecordPrint({ category: 'training', title: document.title, summary: 'Печать' })">Печать</button>
+    <a class="btn btn-outline" href="/Training/Programs">К списку программ</a>
+  </div>
+  <style>
+    @@media print {
+      .ppe-no-print { display: none !important; }
+    }
+  </style>
+  <script src="/js/print-history.js"></script>
+}

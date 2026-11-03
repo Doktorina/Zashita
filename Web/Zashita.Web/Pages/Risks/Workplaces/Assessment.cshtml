@@ -1,0 +1,602 @@
+@page "/Risks/Workplaces/Assessment"
+@model Zashita.Web.Pages.Risks.Workplaces.AssessmentModel
+@using Zashita.Core.Risks
+@{
+    ViewData["Title"] = "Карта идентификации опасностей и оценки рисков";
+}
+
+<link rel="stylesheet" href="/css/risks-report.css" asp-append-version="true" />
+<link rel="stylesheet" href="/css/risks-preparation.css" asp-append-version="true" />
+
+@if (Model.NotFound)
+{
+  <div class="panel ppe-panel">
+    <p><b>Сначала откройте рабочее место</b> — вставка из Word находится внутри карты, а не на пустой странице.</p>
+    <ol class="hint" style="margin:10px 0 14px;padding-left:1.2rem;line-height:1.6">
+      <li>Риски → <b>Карта оценки рисков</b> (список РМ)</li>
+      <li>Выберите организацию сверху (сейчас: смотрите фильтр)</li>
+      <li>Клик по профессии / РМ → откроется карта</li>
+      <li>Там блок <b>«Вставка из Word»</b> над таблицей опасностей</li>
+    </ol>
+    <div class="ppe-actions" style="flex-wrap:wrap;gap:8px">
+      <a class="btn btn-primary" asp-page="/Risks/Workplaces" asp-route-view="assessment" asp-route-objectId="@Model.SelectedObjectId">К списку рабочих мест</a>
+      <a class="btn btn-outline" asp-page="/Risks/ImportCards">Загрузить сразу все карты из файла</a>
+    </div>
+  </div>
+}
+else
+{
+  @if (!string.IsNullOrWhiteSpace(Model.Message))
+  {
+    <p class="@(Model.IsError ? "form-error" : "text-success")">@Model.Message</p>
+  }
+
+  <div class="panel ppe-panel">
+    <div class="ppe-toolbar" style="flex-wrap:wrap;gap:8px">
+      @if (Model.IsChangesFlow)
+      {
+        <a class="btn btn-outline btn-sm" asp-page="/Risks/Changes/Workplaces">← К выбору РМ</a>
+        <a class="btn btn-outline btn-sm" asp-page="/Risks/HazardCatalog" asp-route-flow="changes">Реестр (шаг 1)</a>
+        <span class="hint">Шаг 3 из 3: правки карты + сохранение в реестр и карту</span>
+      }
+      else
+      {
+        <a class="btn btn-outline btn-sm" asp-page="/Risks/Workplaces" asp-route-view="assessment" asp-route-objectId="@Model.SelectedObjectId">← К карте оценки рисков</a>
+        <a class="btn btn-outline btn-sm" asp-page="/Risks/HazardCatalog">Реестр опасностей</a>
+        <a class="btn btn-outline btn-sm" asp-page="/Risks/Reports/WithoutAssessment">Перечень без оценки</a>
+      }
+      <span class="risks-export-group" title="Идентификация">
+        <span class="hint risks-export-group-label">Идент.:</span>
+        <a class="btn btn-outline btn-sm"
+           asp-page="/Risks/Workplaces/Preview"
+           asp-route-id="@Model.Id"
+           asp-route-mode="identification"
+           asp-route-objectId="@Model.SelectedObjectId"
+           target="_blank">Печать</a>
+        <button type="button" class="btn btn-outline btn-sm"
+                data-risks-export="word"
+                data-risks-export-url="/Risks/Workplaces/Preview?id=@Uri.EscapeDataString(Model.Id)&amp;mode=identification&amp;objectId=@Uri.EscapeDataString(Model.SelectedObjectId)">Word</button>
+      </span>
+      <span class="risks-export-group" title="Оценка рисков">
+        <span class="hint risks-export-group-label">Оценка:</span>
+        <a class="btn btn-outline btn-sm"
+           asp-page="/Risks/Workplaces/Preview"
+           asp-route-id="@Model.Id"
+           asp-route-mode="assessment"
+           asp-route-objectId="@Model.SelectedObjectId"
+           target="_blank">Печать</a>
+        <button type="button" class="btn btn-outline btn-sm"
+                data-risks-export="word"
+                data-risks-export-url="/Risks/Workplaces/Preview?id=@Uri.EscapeDataString(Model.Id)&amp;mode=assessment&amp;objectId=@Uri.EscapeDataString(Model.SelectedObjectId)">Word</button>
+      </span>
+    </div>
+
+    <h2 class="ppe-subtitle" style="margin-top:8px">@Model.Workplace.Name</h2>
+    <p class="hint">
+      Объект: <b>@Model.SelectedObjectName</b>
+      · № РМ: @(string.IsNullOrWhiteSpace(Model.Workplace.WorkplaceNumber) ? "—" : Model.Workplace.WorkplaceNumber)
+      · Профессия: @(string.IsNullOrWhiteSpace(Model.Workplace.Profession) ? Model.Workplace.Name : Model.Workplace.Profession)
+      · Подразделение: @(string.IsNullOrWhiteSpace(Model.Workplace.Department) ? "—" : Model.Workplace.Department)
+      @if (Model.Workplace.RiskAssessmentNotConducted)
+      {
+        <span class="text-danger"> · Не проведена оценка рисков</span>
+      }
+    </p>
+
+    <div class="panel" style="margin:12px 0;padding:12px 14px;border:1px solid var(--border,#d8dde6);border-radius:8px;background:#f8fafc">
+      <form method="post"
+            asp-page-handler="ImportWord"
+            enctype="multipart/form-data"
+            class="ppe-form"
+            style="display:flex;flex-wrap:wrap;gap:10px;align-items:flex-end">
+        <input type="hidden" name="id" value="@Model.Id" />
+        <input type="hidden" name="objectId" value="@Model.SelectedObjectId" />
+        @if (Model.IsChangesFlow)
+        {
+          <input type="hidden" name="flow" value="changes" />
+        }
+        <label class="ppe-field" style="margin:0;min-width:220px;flex:1">
+          <span>Вставка из Word (можно несколько файлов)</span>
+          <input type="file"
+                 name="wordFiles"
+                 accept=".docx,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+                 class="ppe-input"
+                 multiple
+                 required />
+        </label>
+        <label class="ppe-field" style="margin:0;display:flex;align-items:center;gap:6px;padding-bottom:6px">
+          <input type="checkbox" name="overwriteExisting" value="true" />
+          <span>перезаписать таблицу</span>
+        </label>
+        <button type="submit" class="btn btn-primary">Вставить в карту</button>
+        <a class="btn btn-outline btn-sm" asp-page="/Risks/ImportCards" title="Все файлы → все компании и профессии сразу">Все карты из файлов…</a>
+      </form>
+      <p class="hint" style="margin:8px 0 0">
+        Система сама найдёт в файлах карту этой <b>организации</b> и <b>профессии</b>.
+        Чтобы разложить сразу все файлы по всем РМ — ссылка «Все карты из файлов…».
+      </p>
+    </div>
+
+    <p class="hint">
+      Выберите опасность из <b>реестра</b> — подставятся номер, наименование и меры управления.
+      Значение показателя риска считается автоматически по матрице (тяжесть × вероятность).
+      Периодичность и данные строк после сохранения попадают в <a asp-page="/Risks/Reports/Status">Отчёт по ОПР</a>.
+    </p>
+
+    <form method="post" asp-page-handler="Save">
+      <input type="hidden" name="id" value="@Model.Id" />
+      <input type="hidden" name="objectId" value="@Model.SelectedObjectId" />
+      @if (Model.IsChangesFlow)
+      {
+        <input type="hidden" name="flow" value="changes" />
+      }
+      <div class="risk-map-header-fields">
+        <label class="ppe-field">
+          <span>Номер карты</span>
+          <input type="text"
+                 name="riskCardNumber"
+                 class="ppe-input"
+                 value="@Model.Workplace.RiskCardNumber"
+                 placeholder="№ карты" />
+        </label>
+        <label class="ppe-field">
+          <span>Дата проведения оценки рисков</span>
+          <input type="date"
+                 name="riskAssessmentDate"
+                 class="ppe-input"
+                 value="@(Model.Workplace.RiskAssessmentDate?.ToString("yyyy-MM-dd") ?? "")" />
+        </label>
+        <label class="ppe-field">
+          <span>Общий риск</span>
+          <input type="text"
+                 name="overallRisk"
+                 class="ppe-input"
+                 value="@Model.Workplace.OverallRisk"
+                 placeholder="общий риск по карте" />
+        </label>
+        <label class="ppe-field">
+          <span>Периодичность</span>
+          <input type="text"
+                 name="riskPeriodicity"
+                 class="ppe-input"
+                 list="risk-periodicity-options"
+                 value="@Model.Workplace.RiskPeriodicity"
+                 placeholder="напр. 1 раз в год или -"
+                 title="«-» означает, что периодичности нет" />
+          <datalist id="risk-periodicity-options">
+            <option value="-"></option>
+            <option value="1 раз в год"></option>
+            <option value="1 раз в 3 года"></option>
+            <option value="1 раз в 5 лет"></option>
+          </datalist>
+          <span class="hint">«-» — нет периодичности, срок пересмотра не считается.</span>
+        </label>
+      </div>
+      <div class="ppe-actions ppe-actions-top" style="flex-wrap:wrap;gap:8px;align-items:center">
+        @if (Model.IsChangesFlow)
+        {
+          <button type="submit"
+                  class="btn btn-primary"
+                  formaction="@Url.Page("/Risks/Workplaces/Assessment", "SaveChanges", new { id = Model.Id, flow = "changes", objectId = Model.SelectedObjectId })">
+            Сохранить внесенные изменения
+          </button>
+          <button type="button" class="btn btn-outline" id="risk-map-add-row">+ Добавить опасность</button>
+        }
+        else
+        {
+          <button type="submit" class="btn btn-primary">Сохранить</button>
+          <button type="button" class="btn btn-outline" id="risk-map-add-row">+ Добавить опасность</button>
+          <button type="submit"
+                  class="btn btn-outline"
+                  formaction="@Url.Page("/Risks/Workplaces/Assessment", "MarkNotConducted", new { id = Model.Id, objectId = Model.SelectedObjectId })"
+                  formmethod="post"
+                  onclick="return confirm('Проставить прочерки во все поля и перенести объект в «Перечень объектов без оценки рисков»?');">
+            Не проведена оценка рисков
+          </button>
+        }
+      </div>
+
+      <div class="risk-profession-template-bar" style="margin:10px 0 12px;display:flex;flex-wrap:wrap;gap:10px;align-items:center">
+        @if (Model.HasProfessionTemplate)
+        {
+          <button type="submit"
+                  class="btn btn-primary"
+                  formaction="@Url.Page("/Risks/Workplaces/Assessment", "InsertProfessionTemplate", new { id = Model.Id, flow = Model.Flow, objectId = Model.SelectedObjectId })"
+                  formmethod="post"
+                  title="Объединит заполненные риски по этой профессии из: @Model.ProfessionTemplateSources"
+                  onclick="return confirm('Вставить шаблонные риски по профессии (@Model.ProfessionTemplateLineCount поз.) из: @Model.ProfessionTemplateSources? Уже заполненные строки карты сохранятся, дубли не добавятся.');">
+            Вставить шаблонные риски по профессии
+          </button>
+          <span class="hint">Есть в: @Model.ProfessionTemplateSources · @Model.ProfessionTemplateLineCount поз. без дублей</span>
+        }
+        else
+        {
+          <button type="button"
+                  class="btn btn-outline"
+                  disabled
+                  style="opacity:0.45;cursor:not-allowed"
+                  title="Нет заполненных рисков по этой профессии на других объектах или в других юрлицах">
+            Вставить шаблонные риски по профессии
+          </button>
+          <span class="hint">Нет шаблона: заполните карту «по организации» / другой объект или в другом юрлице</span>
+        }
+      </div>
+
+      <div class="table-scroll">
+        <table class="data-grid ppe-edit-grid risk-map-grid" id="risk-map-grid">
+          <thead>
+            <tr>
+              <th style="width:2%"></th>
+              <th style="min-width:12rem">Из реестра</th>
+              <th style="min-width:5rem">Номер опасности по перечню</th>
+              <th style="min-width:12rem">Наименование опасности (опасного действия, ситуации)</th>
+              <th style="min-width:11rem">Наименование оборудования – потенциального источника причинения травмы</th>
+              <th style="min-width:12rem">Тяжесть ущерба</th>
+              <th style="min-width:11rem">Вероятность возникновения</th>
+              <th style="min-width:6rem">Значение показателя риска опасности</th>
+              <th style="min-width:12rem">Меры управления</th>
+              <th style="min-width:9rem">Остаточный риск</th>
+            </tr>
+          </thead>
+          <tbody id="risk-map-body">
+            @foreach (var line in Model.Lines)
+            {
+              var score = WorkplaceRiskScale.ComputeScore(line.Severity, line.Probability)
+                          ?? (int.TryParse(line.InitialRisk, out var parsed) ? parsed : (int?)null);
+              var zoneClass = score is { } sc ? WorkplaceRiskScale.ZoneCssClass(sc) : "";
+              <tr class="risk-map-row">
+                <td>
+                  <input type="hidden" name="lineId" value="@line.Id" />
+                  <input type="hidden" name="hazardCatalogId" value="@line.HazardCatalogId" class="risk-map-catalog-id" />
+                  <input type="hidden" name="deleteLine" value="false" class="risk-map-delete-flag" />
+                  <button type="button" class="btn btn-outline btn-sm risk-map-remove" title="Удалить">×</button>
+                </td>
+                <td>
+                  @{
+                    var currentCatalog = Model.Catalog.FirstOrDefault(item =>
+                        string.Equals(item.Id, line.HazardCatalogId, StringComparison.OrdinalIgnoreCase) ||
+                        (!string.IsNullOrWhiteSpace(line.HazardNumber) &&
+                         string.Equals(item.Number, line.HazardNumber, StringComparison.OrdinalIgnoreCase)) ||
+                        string.Equals(item.Title, line.HazardTitle, StringComparison.OrdinalIgnoreCase));
+                    string currentLabel;
+                    if (currentCatalog is not null)
+                    {
+                      currentLabel = string.IsNullOrWhiteSpace(currentCatalog.Number)
+                          ? currentCatalog.Title
+                          : $"{currentCatalog.Number} — {currentCatalog.Title}";
+                    }
+                    else if (!string.IsNullOrWhiteSpace(line.HazardNumber) || !string.IsNullOrWhiteSpace(line.HazardTitle))
+                    {
+                      currentLabel = string.IsNullOrWhiteSpace(line.HazardNumber)
+                          ? line.HazardTitle
+                          : (string.IsNullOrWhiteSpace(line.HazardTitle)
+                              ? line.HazardNumber
+                              : $"{line.HazardNumber} — {line.HazardTitle}");
+                    }
+                    else
+                    {
+                      currentLabel = string.Empty;
+                    }
+                  }
+                  <div class="risk-map-combo">
+                    <input type="search"
+                           class="ppe-input risk-map-catalog-search"
+                           value="@currentLabel"
+                           placeholder="Начните вводить из списка..."
+                           autocomplete="off" />
+                    <div class="risk-map-combo-menu" hidden></div>
+                  </div>
+                </td>
+                <td><input name="number" value="@line.HazardNumber" class="ppe-input risk-map-number" /></td>
+                <td><input name="hazardTitle" value="@line.HazardTitle" class="ppe-input risk-map-title" autocomplete="off" /></td>
+                <td><input name="source" value="@line.Source" class="ppe-input" placeholder="оборудование / источник" /></td>
+                <td>
+                  <select name="severity" class="ppe-input risk-map-severity">
+                    <option value="">—</option>
+                    @foreach (var opt in Model.SeverityOptions)
+                    {
+                      if (string.Equals(opt, line.Severity, StringComparison.OrdinalIgnoreCase))
+                      {
+                        <option value="@opt" selected>@opt</option>
+                      }
+                      else
+                      {
+                        <option value="@opt">@opt</option>
+                      }
+                    }
+                  </select>
+                </td>
+                <td>
+                  <select name="probability" class="ppe-input risk-map-probability">
+                    <option value="">—</option>
+                    @foreach (var opt in Model.ProbabilityOptions)
+                    {
+                      if (string.Equals(opt, line.Probability, StringComparison.OrdinalIgnoreCase))
+                      {
+                        <option value="@opt" selected>@opt</option>
+                      }
+                      else
+                      {
+                        <option value="@opt">@opt</option>
+                      }
+                    }
+                  </select>
+                </td>
+                <td>
+                  <input type="text"
+                         class="ppe-input risk-map-score @zoneClass"
+                         value="@(score?.ToString() ?? line.InitialRisk)"
+                         readonly
+                         tabindex="-1"
+                         title="Тяжесть × вероятность" />
+                </td>
+                <td>
+                  <textarea name="measures" class="ppe-input risk-map-measures" rows="3" placeholder="- мера 1&#10;- мера 2">@line.ControlMeasures</textarea>
+                </td>
+                <td>
+                  <select name="residualRisk" class="ppe-input">
+                    <option value="">—</option>
+                    @foreach (var opt in Model.ResidualRiskOptions)
+                    {
+                      if (string.Equals(opt, line.ResidualRisk, StringComparison.OrdinalIgnoreCase))
+                      {
+                        <option value="@opt" selected>@opt</option>
+                      }
+                      else
+                      {
+                        <option value="@opt">@opt</option>
+                      }
+                    }
+                  </select>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+
+      <div class="ppe-actions" style="margin-top:12px">
+        <button type="submit" class="btn btn-primary">Сохранить</button>
+      </div>
+    </form>
+
+    <section class="risk-matrix-section" aria-label="Матрица оценки рисков">
+      <h3 class="ppe-subtitle">Матрица оценки рисков</h3>
+      <div class="table-scroll">
+        @Html.Raw(RiskAssessmentMatrixHtml.Build())
+      </div>
+
+      <h3 class="ppe-subtitle" style="margin-top:16px">Классификация рисков по значимости</h3>
+      <table class="data-grid risk-classify-table">
+        <thead>
+          <tr>
+            <th style="width:8rem">Уровень риска</th>
+            <th>Действия, связанные с данным уровнем риска</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td class="risk-zone-low"><b>1–4</b></td>
+            <td>
+              Несчастные случаи, инциденты, травмы и профессиональные заболевания маловероятны.
+              Риск допустим и не требует дополнительных мер управления. Необходимо поддерживать его на существующем уровне.
+            </td>
+          </tr>
+          <tr>
+            <td class="risk-zone-mid"><b>5–10</b></td>
+            <td>
+              Вероятность несчастных случаев, инцидентов, травм и профессиональных заболеваний не исключена.
+              Снизить риск в ходе текущей работы до возможного уровня. Учитывать при разработке целей и планировании мероприятий на перспективу.
+            </td>
+          </tr>
+          <tr>
+            <td class="risk-zone-high"><b>11–25</b></td>
+            <td>
+              Высокая вероятность несчастных случаев, инцидентов, травм и профессиональных заболеваний.
+              Риск недопустим, требуется приостановка деятельности для принятия мер по снижению риска.
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </section>
+  </div>
+
+  <template id="risk-map-row-template">
+    <tr class="risk-map-row">
+      <td>
+        <input type="hidden" name="lineId" value="" />
+        <input type="hidden" name="hazardCatalogId" value="" class="risk-map-catalog-id" />
+        <input type="hidden" name="deleteLine" value="false" class="risk-map-delete-flag" />
+        <button type="button" class="btn btn-outline btn-sm risk-map-remove" title="Удалить">×</button>
+      </td>
+      <td>
+        <div class="risk-map-combo">
+          <input type="search"
+                 class="ppe-input risk-map-catalog-search"
+                 value=""
+                 placeholder="Начните вводить из списка..."
+                 autocomplete="off" />
+          <div class="risk-map-combo-menu" hidden></div>
+        </div>
+      </td>
+      <td><input name="number" value="" class="ppe-input risk-map-number" /></td>
+      <td><input name="hazardTitle" value="" class="ppe-input risk-map-title" autocomplete="off" /></td>
+      <td><input name="source" value="" class="ppe-input" placeholder="оборудование / источник" /></td>
+      <td>
+        <select name="severity" class="ppe-input risk-map-severity">
+          <option value="">—</option>
+          @foreach (var opt in Model.SeverityOptions)
+          {
+            <option value="@opt">@opt</option>
+          }
+        </select>
+      </td>
+      <td>
+        <select name="probability" class="ppe-input risk-map-probability">
+          <option value="">—</option>
+          @foreach (var opt in Model.ProbabilityOptions)
+          {
+            <option value="@opt">@opt</option>
+          }
+        </select>
+      </td>
+      <td>
+        <input type="text" class="ppe-input risk-map-score" value="" readonly tabindex="-1" title="Тяжесть × вероятность" />
+      </td>
+      <td>
+        <textarea name="measures" class="ppe-input risk-map-measures" rows="3" placeholder="- мера 1&#10;- мера 2"></textarea>
+      </td>
+      <td>
+        <select name="residualRisk" class="ppe-input">
+          <option value="">—</option>
+          @foreach (var opt in Model.ResidualRiskOptions)
+          {
+            <option value="@opt">@opt</option>
+          }
+        </select>
+      </td>
+    </tr>
+  </template>
+
+  <script src="~/js/risks-doc-export.js" asp-append-version="true"></script>
+  <script>
+    (function () {
+      var catalog = @Html.Raw(Model.CatalogJson);
+      var byId = {};
+      catalog.forEach(function (c) { byId[c.id] = c; });
+
+      var severityWeights = {};
+      @for (var i = 0; i < Model.SeverityOptions.Count; i++)
+      {
+        <text>severityWeights[@Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.SeverityOptions[i]))] = @(i + 1);</text>
+      }
+      var probabilityWeights = {};
+      @for (var i = 0; i < Model.ProbabilityOptions.Count; i++)
+      {
+        <text>probabilityWeights[@Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.ProbabilityOptions[i]))] = @(i + 1);</text>
+      }
+
+      var body = document.getElementById('risk-map-body');
+      var tpl = document.getElementById('risk-map-row-template');
+      var addBtn = document.getElementById('risk-map-add-row');
+      if (!body || !tpl) return;
+
+      function zoneClass(score) {
+        if (!score || score <= 0) return '';
+        if (score <= 4) return 'risk-zone-low';
+        if (score <= 10) return 'risk-zone-mid';
+        return 'risk-zone-high';
+      }
+
+      function recalcRow(row) {
+        var sev = row.querySelector('.risk-map-severity');
+        var prob = row.querySelector('.risk-map-probability');
+        var scoreInput = row.querySelector('.risk-map-score');
+        if (!scoreInput) return;
+        var sw = sev ? severityWeights[sev.value] : 0;
+        var pw = prob ? probabilityWeights[prob.value] : 0;
+        var score = (sw && pw) ? (sw * pw) : '';
+        scoreInput.value = score === '' ? '' : String(score);
+        scoreInput.classList.remove('risk-zone-low', 'risk-zone-mid', 'risk-zone-high');
+        var z = zoneClass(score);
+        if (z) scoreInput.classList.add(z);
+      }
+
+      function applyCatalog(row, item) {
+        if (!row || !item) return;
+        var idInput = row.querySelector('.risk-map-catalog-id');
+        var numberInput = row.querySelector('.risk-map-number');
+        var titleInput = row.querySelector('.risk-map-title');
+        var measuresInput = row.querySelector('.risk-map-measures');
+        if (idInput) idInput.value = item.id || '';
+        if (numberInput) numberInput.value = item.number || '';
+        if (titleInput) titleInput.value = item.title || '';
+        if (measuresInput) measuresInput.value = item.measures || '';
+      }
+
+      function catalogLabel(item) {
+        if (!item) return '';
+        return item.number ? (item.number + ' — ' + item.title) : (item.title || '');
+      }
+
+      function filterCatalog(query) {
+        var q = (query || '').trim().toLowerCase();
+        if (!q) return catalog.slice(0, 80);
+        return catalog.filter(function (item) {
+          return catalogLabel(item).toLowerCase().indexOf(q) !== -1;
+        }).slice(0, 80);
+      }
+
+      function renderMenu(row, items) {
+        var menu = row.querySelector('.risk-map-combo-menu');
+        if (!menu) return;
+        if (!items.length) {
+          menu.innerHTML = '<div class="risk-map-combo-empty">Нет совпадений</div>';
+          menu.hidden = false;
+          return;
+        }
+        menu.innerHTML = items.map(function (item) {
+          return '<button type="button" class="risk-map-combo-item" data-id="' + item.id + '">' + catalogLabel(item) + '</button>';
+        }).join('');
+        menu.hidden = false;
+      }
+
+      function bindRow(row) {
+        if (!row || row.dataset.bound === '1') return;
+        row.dataset.bound = '1';
+        var search = row.querySelector('.risk-map-catalog-search');
+        var menu = row.querySelector('.risk-map-combo-menu');
+        if (search && menu) {
+          search.addEventListener('focus', function () {
+            renderMenu(row, filterCatalog(search.value));
+          });
+          search.addEventListener('input', function () {
+            renderMenu(row, filterCatalog(search.value));
+          });
+          menu.addEventListener('mousedown', function (event) {
+            var itemBtn = event.target.closest('.risk-map-combo-item');
+            if (!itemBtn) return;
+            event.preventDefault();
+            var item = byId[itemBtn.getAttribute('data-id')];
+            if (item) {
+              applyCatalog(row, item);
+              search.value = catalogLabel(item);
+            }
+            menu.hidden = true;
+          });
+          search.addEventListener('blur', function () {
+            setTimeout(function () { menu.hidden = true; }, 150);
+          });
+        }
+        row.querySelectorAll('.risk-map-severity, .risk-map-probability').forEach(function (el) {
+          el.addEventListener('change', function () { recalcRow(row); });
+        });
+        recalcRow(row);
+      }
+
+      body.querySelectorAll('.risk-map-row').forEach(bindRow);
+
+      if (addBtn) {
+        addBtn.addEventListener('click', function () {
+          var node = tpl.content.cloneNode(true);
+          body.appendChild(node);
+          bindRow(body.lastElementChild);
+        });
+      }
+
+      body.addEventListener('click', function (e) {
+        var btn = e.target.closest('.risk-map-remove');
+        if (!btn) return;
+        var row = btn.closest('tr');
+        if (!row) return;
+        var flag = row.querySelector('.risk-map-delete-flag');
+        if (flag) flag.value = 'true';
+        row.style.display = 'none';
+      });
+
+      if (!body.querySelector('.risk-map-row:not([style*="display: none"])')) {
+        addBtn && addBtn.click();
+      }
+    })();
+  </script>
+}

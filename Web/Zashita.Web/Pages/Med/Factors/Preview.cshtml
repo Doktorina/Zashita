@@ -1,0 +1,73 @@
+﻿@page "/Med/Factors/Preview"
+@using Zashita.Core.Med
+@model Zashita.Web.Pages.Med.Factors.PreviewModel
+@{
+    Layout = null;
+    var groupNames = Model.Nodes
+        .Where(n => n.IsGroup)
+        .ToDictionary(n => n.Id, n => n.Name, StringComparer.Ordinal);
+}
+
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Перечень факторов и видов работ</title>
+    <partial name="_SiteIconLinks" />
+<link rel="stylesheet" href="/css/zashita.css" asp-append-version="true" />
+  <link rel="stylesheet" href="/css/med-factors.css" asp-append-version="true" />
+</head>
+<body class="sout-preview-page">
+  <div class="sout-preview-shell">
+    <div class="sout-preview-toolbar ppe-no-print">
+      <button type="button" class="btn btn-primary btn-sm" onclick="window.print()">Печать</button>
+      <a class="btn btn-outline btn-sm" href="/Med/Factors">К справочнику</a>
+    </div>
+
+    <div class="sout-preview-doc-wrap">
+      <div class="sout-eq-doc med-factors-print-sheet">
+        <h2>Перечень факторов и видов работ</h2>
+        <p class="hint">@Model.Organization</p>
+        <table class="med-print-table med-factors-print-table">
+          <thead>
+            <tr>
+              <th>Наименование группы</th>
+              <th>№ п/п</th>
+              <th>Наименование вредного и (или) опасного производственных факторов, согласно Приказу № 29н</th>
+              <th>Периодичность</th>
+            </tr>
+          </thead>
+          <tbody>
+            @foreach (var item in Model.TreeItems)
+            {
+              var node = item.Node;
+              if (node.IsGroup)
+              {
+                <tr class="med-factors-print-group">
+                  <td><strong>@node.Name</strong></td>
+                  <td>@(string.IsNullOrWhiteSpace(node.ItemNumber) ? "—" : node.ItemNumber)</td>
+                  <td>—</td>
+                  <td>—</td>
+                </tr>
+              }
+              else
+              {
+                var groupName = !string.IsNullOrWhiteSpace(node.ParentId) && groupNames.TryGetValue(node.ParentId, out var gn)
+                    ? gn
+                    : "—";
+                <tr>
+                  <td>@groupName</td>
+                  <td>@(string.IsNullOrWhiteSpace(node.ItemNumber) ? "—" : node.ItemNumber)</td>
+                  <td>@node.Name</td>
+                  <td>@(string.IsNullOrWhiteSpace(node.Periodicity) ? "—" : node.Periodicity)</td>
+                </tr>
+              }
+            }
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

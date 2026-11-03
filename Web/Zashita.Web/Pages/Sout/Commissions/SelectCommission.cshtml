@@ -1,0 +1,67 @@
+@page "/Sout/Commissions/SelectCommission"
+@model Zashita.Web.Pages.Sout.Commissions.SelectCommissionModel
+@{
+    ViewData["Title"] = "Приказ о создании комиссии СОУТ — выбор комиссии";
+    ViewData["Subtitle"] = Model.Organization;
+}
+
+@section Styles {
+  <link rel="stylesheet" href="~/css/risks-preparation.css" asp-append-version="true" />
+}
+
+<div class="panel ppe-panel sout-assignment-doc">
+  <div class="ppe-toolbar sout-toolbar">
+    <a class="btn btn-outline btn-sm" asp-page="/Sout/Preparation/Templates">← К шаблонам</a>
+    <a class="btn btn-outline btn-sm" asp-page="/Sout/Commissions/Edit">Добавить новую комиссию</a>
+    <a class="btn btn-outline btn-sm" asp-page="/Sout/Commissions">Открыть страницу «Комиссия»</a>
+  </div>
+
+  <h2 class="ppe-subtitle" style="margin-top:12px">Выберите комиссию для приказа</h2>
+  <p class="hint">
+    Председатель, состав, <b>номер и дата приказа</b> подставляются из карточки комиссии.
+    После выбора откроется предпросмотр для печати.
+  </p>
+
+  @if (Model.CommissionRows.Count == 0)
+  {
+    <p class="hint" style="margin-top:12px">
+      Комиссии не найдены. Создайте комиссию на странице «Комиссия» и вернитесь сюда.
+    </p>
+  }
+  else
+  {
+    <form method="post" asp-page-handler="Open" style="margin-top:12px">
+      <table class="data-grid sout-preparation-grid">
+        <thead>
+          <tr>
+            <th style="width:3rem"></th>
+            <th>Наименование</th>
+            <th>Председатель</th>
+            <th>Члены</th>
+            <th>Приказ о комиссии</th>
+          </tr>
+        </thead>
+        <tbody>
+          @foreach (var row in Model.CommissionRows)
+          {
+            <tr>
+              <td>
+                <input type="radio" name="commissionId" value="@row.Id" @(row.IsRecommended ? "checked" : null) required />
+              </td>
+              <td>
+                <a asp-page="/Sout/Commissions/Edit" asp-route-id="@row.Id" target="_blank" rel="noopener">@row.Name</a>
+              </td>
+              <td>@row.Chairman</td>
+              <td>@row.Members</td>
+              <td>@row.OrderInfo</td>
+            </tr>
+          }
+        </tbody>
+      </table>
+
+      <div class="ppe-actions" style="margin-top:16px">
+        <button type="submit" class="btn btn-primary">Открыть приказ на печать</button>
+      </div>
+    </form>
+  }
+</div>

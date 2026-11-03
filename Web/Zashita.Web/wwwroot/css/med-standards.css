@@ -1,0 +1,159 @@
+.med-std-rules {
+  margin: 14px 0 18px;
+  display: grid;
+  gap: 12px;
+}
+
+.med-std-rules-head {
+  display: grid;
+  gap: 4px;
+}
+
+.med-std-rules-head .ppe-subtitle {
+  margin: 0;
+}
+
+.med-std-picker-field {
+  margin: 0;
+}
+
+.med-std-combo {
+  position: relative;
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 0;
+}
+
+.med-std-combo #med-std-combo-input {
+  border-top-right-radius: 0;
+  border-bottom-right-radius: 0;
+}
+
+.med-std-combo-toggle {
+  border-top-left-radius: 0;
+  border-bottom-left-radius: 0;
+  min-width: 2.4em;
+}
+
+.med-std-combo-list {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: calc(100% + 2px);
+  z-index: 40;
+  margin: 0;
+  padding: 4px 0;
+  max-height: 280px;
+  overflow: auto;
+  list-style: none;
+  background: #fff;
+  border: 1px solid #c5cedb;
+  border-radius: 8px;
+  box-shadow: 0 8px 24px rgba(20, 30, 50, 0.14);
+}
+
+.med-std-combo-list[hidden] {
+  display: none !important;
+}
+
+.med-std-combo-item {
+  padding: 8px 12px;
+  cursor: pointer;
+  line-height: 1.25;
+}
+
+.med-std-combo-item:hover,
+.med-std-combo-item.is-active {
+  background: color-mix(in srgb, #4a90e2 14%, #fff);
+}
+
+.med-std-combo-item.is-disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+
+.med-std-combo-item-main {
+  font-size: 13px;
+}
+
+.med-std-combo-item-meta {
+  margin-top: 2px;
+  font-size: 11px;
+  color: #667085;
+}
+
+.med-std-combo-empty {
+  padding: 10px 12px;
+  color: #667085;
+  font-size: 13px;
+}
+
+.med-std-selected-wrap {
+  border: 1px solid #d8dee8;
+  border-radius: 8px;
+  background: #fff;
+  padding: 10px;
+}
+
+.med-std-selected-table {
+  width: 100%;
+  font-size: 13px;
+}
+
+.med-std-selected-table th,
+.med-std-selected-table td {
+  vertical-align: middle;
+}
+
+.med-std-selected-table select.ppe-input {
+  min-width: 9em;
+}
+
+/* Список стандартов: длинный перечень профессий — 2 строки + «ещё N». */
+.med-std-prof-collapse {
+  display: block;
+  line-height: 1.35;
+  word-break: break-word;
+}
+
+.med-std-prof-toggle {
+  display: inline;
+  margin-left: 4px;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: #2f6fed;
+  font: inherit;
+  font-size: 12px;
+  cursor: pointer;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.med-std-prof-toggle:hover {
+  color: #1d4ed8;
+}
+
+/* Форма: много чипов профессий — показываем пару, остальные по кнопке. */
+#med-std-prof-box.is-collapsed .qual-chip:nth-child(n + 3) {
+  display: none;
+}
+
+.med-std-chips-toggle {
+  display: inline-flex;
+  align-items: center;
+  margin: 4px 0 0;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: #2f6fed;
+  font: inherit;
+  font-size: 13px;
+  cursor: pointer;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.med-std-chips-toggle[hidden] {
+  display: none !important;
+}

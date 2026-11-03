@@ -1,0 +1,685 @@
+@page "/Organizations"
+@using Zashita.Core.Employees
+@using Zashita.Web.Services
+@using Zashita.Web.Pages.Organizations
+@model Zashita.Web.Pages.Organizations.IndexModel
+@{
+    ViewData["Title"] = "Организации";
+    ViewData["Subtitle"] = "Справочник организаций: добавление, переименование и удаление.";
+    ViewData["SectionTitle"] = "Организации";
+    var hasCompany = !string.IsNullOrWhiteSpace(Model.Company);
+}
+
+<div class="org-page">
+  <div class="org-add-card">
+    <h2 class="org-add-title">Новая организация</h2>
+    <form method="post" asp-page-handler="Add" class="org-add-form">
+      <div class="org-add-row org-add-row-type">
+        <span class="org-toolbar-label">Тип</span>
+        <div class="ui-segmented org-add-type" data-target="org-add-type-value" role="group" aria-label="Тип организации">
+          @foreach (var type in OrganizationStore.CreatableOrganizationTypes)
+          {
+            <button type="button"
+                    class="ui-segmented-btn @(type == "ИП" ? "active" : "")"
+                    data-value="@type"
+                    data-placeholder="@(type == "ИП" ? "Фамилия И.О." : type == "ООО" ? "Название компании" : "Полное название организации")">@type</button>
+          }
+        </div>
+        <input type="hidden" name="orgType" id="org-add-type-value" value="ИП" />
+      </div>
+
+      <div class="org-add-row org-add-row-name">
+        <label class="org-toolbar-label" for="org-add-name">Название</label>
+        <div class="org-add-name-line">
+          <input type="text"
+                 name="name"
+                 id="org-add-name"
+                 placeholder="Фамилия И.О."
+                 class="org-input"
+                 required />
+          <button type="submit" class="org-add-btn">Добавить</button>
+        </div>
+      </div>
+    </form>
+  </div>
+
+  @if (!string.IsNullOrWhiteSpace(Model.Message))
+  {
+    <p class="@(Model.IsError ? "form-error" : "text-success")">@Model.Message</p>
+  }
+
+  @if (Model.CanManageVisibility)
+  {
+    <div class="org-admin-tools">
+      <form method="post" asp-page-handler="HideOutsideVictoria" class="org-inline-form">
+        <input type="hidden" name="company" value="@Model.Company" />
+        <button type="submit" class="btn btn-outline btn-sm">Скрыть все вне контура «Виктория»</button>
+      </form>
+    </div>
+  }
+
+  <div class="org-table-card org-groups-card">
+    <div class="org-groups-head">
+      <div>
+        <h2 class="org-employees-title">Группы компаний</h2>
+        <p class="org-employees-subtitle">Разверните группу, чтобы увидеть состав. Можно сразу изменить название, список компаний или удалить шаблон.</p>
+      </div>
+      <a class="btn btn-outline btn-sm"
+         asp-page="/Organizations/Index"
+         asp-route-company="@Model.Company"
+         asp-route-createGroup="true">Новая группа</a>
+    </div>
+
+    <div class="org-groups-list">
+      @if (Model.CreateGroup || Model.Groups.Count == 0)
+      {
+        <details class="org-group-card org-group-card-create" open>
+          <summary class="org-group-summary">
+            <span class="org-group-summary-main">
+              <span class="org-group-name">Новая группа</span>
+              <span class="org-group-count">Выберите компании и сохраните шаблон</span>
+            </span>
+          </summary>
+          <div class="org-group-body">
+            <partial name="_OrganizationGroupForm" model="@(new OrganizationGroupFormModel { Company = Model.Company, Organizations = Model.Organizations })" />
+          </div>
+        </details>
+      }
+
+      @foreach (var group in Model.Groups)
+      {
+        var isEditing = string.Equals(group.Id, Model.EditGroupId, StringComparison.OrdinalIgnoreCase);
+        <details id="org-group-@group.Id"
+                 class="org-group-card @(isEditing ? "is-editing" : "")"
+                 @(isEditing ? "open" : null)>
+          <summary class="org-group-summary">
+            <span class="org-group-summary-main">
+              <span class="org-group-name">@group.Name</span>
+              <span class="org-group-count">Компаний: @group.Organizations.Count</span>
+            </span>
+            <span class="org-group-summary-actions" onclick="event.stopPropagation();">
+              @if (!isEditing)
+              {
+                <a class="btn btn-outline btn-sm"
+                   asp-page="/Organizations/Index"
+                   asp-route-company="@Model.Company"
+                   asp-route-editGroupId="@group.Id"
+                   asp-fragment="@($"org-group-{group.Id}")"
+                   onclick="event.stopPropagation();">Изменить</a>
+              }
+              else
+              {
+                <a class="btn btn-outline btn-sm"
+                   asp-page="/Organizations/Index"
+                   asp-route-company="@Model.Company"
+                   asp-fragment="@($"org-group-{group.Id}")"
+                   onclick="event.stopPropagation();">Свернуть</a>
+              }
+              <form method="post" asp-page-handler="DeleteGroup" class="org-inline-form" onsubmit="return confirm('Удалить группу «@group.Name»?');">
+                <input type="hidden" name="company" value="@Model.Company" />
+                <input type="hidden" name="groupId" value="@group.Id" />
+                <button type="submit" class="org-del-btn">Удалить</button>
+              </form>
+            </span>
+          </summary>
+          <div class="org-group-body">
+            @if (isEditing)
+            {
+              <partial name="_OrganizationGroupForm" model="@(new OrganizationGroupFormModel { Company = Model.Company, Group = group, Organizations = Model.Organizations })" />
+            }
+            else
+            {
+              <ul class="org-group-members">
+                @foreach (var member in group.Organizations)
+                {
+                  <li>@member</li>
+                }
+              </ul>
+            }
+          </div>
+        </details>
+      }
+    </div>
+  </div>
+
+  <div class="org-layout @(hasCompany ? "org-layout-with-employees" : "")">
+    <div class="org-table-card org-layout-orgs">
+      <table class="org-table">
+        <thead>
+          <tr>
+            <th>Организация</th>
+            <th class="org-th-type">Тип</th>
+            <th class="org-th-requisites">Реквизиты</th>
+            <th class="org-th-actions">Действия</th>
+          </tr>
+        </thead>
+        <tbody>
+          @foreach (var org in Model.Organizations)
+          {
+            var orgType = OrganizationStore.GetDisplayType(org);
+            var isEditing = string.Equals(Model.RenameFrom, org, StringComparison.OrdinalIgnoreCase);
+            var isSelected = string.Equals(Model.Company, org, StringComparison.OrdinalIgnoreCase);
+            var isHidden = Model.IsOrganizationHidden(org);
+            var requisitesSummary = Model.RequisiteSummaries.TryGetValue(org, out var summary) ? summary : "—";
+            <tr class="org-row @(isSelected ? "row-active" : "") @(org == Model.SelectedOrganization ? "row-workspace" : "") @(isHidden ? "org-row-hidden" : "") @(isEditing ? "is-renaming" : "")"
+                data-org-row
+                data-org-name="@org">
+              <td class="org-td-view" @(isEditing ? "hidden" : null)>
+                <a class="org-name-link @(isSelected ? "active" : "")"
+                   asp-page="/Organizations/Index"
+                   asp-route-company="@org">
+                  <span class="org-name-cell">
+                    <span class="org-row-ico" aria-hidden="true">
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 21h18"/><path d="M5 21V7l7-4 7 4v14"/><path d="M9 21v-6h6v6"/></svg>
+                    </span>
+                    <span class="org-name">@org</span>
+                    @if (isHidden)
+                    {
+                      <span class="org-hidden-badge">скрыта</span>
+                    }
+                  </span>
+                </a>
+              </td>
+              <td class="org-td-type org-td-view" @(isEditing ? "hidden" : null)><span class="org-type-pill">@orgType</span></td>
+              <td class="org-td-requisites org-td-view" @(isEditing ? "hidden" : null)>
+                <a class="org-requisites-preview @(requisitesSummary == "—" ? "is-empty" : "")"
+                   asp-page="/Organizations/Index"
+                   asp-route-company="@org"
+                   title="@requisitesSummary">@requisitesSummary</a>
+              </td>
+              <td class="org-td-view" @(isEditing ? "hidden" : null)>
+                <div class="org-actions-inline">
+                  @if (Model.CanManageVisibility)
+                  {
+                    <form method="post" asp-page-handler="ToggleHidden" class="org-inline-form">
+                      <input type="hidden" name="company" value="@Model.Company" />
+                      <input type="hidden" name="name" value="@org" />
+                      <input type="hidden" name="hidden" value="@(isHidden ? "false" : "true")" />
+                      <button type="submit" class="btn btn-outline btn-sm">@(isHidden ? "Показать" : "Скрыть")</button>
+                    </form>
+                  }
+                  <button type="button" class="btn btn-outline btn-sm js-org-rename-start">Переименовать</button>
+                  <form method="post" class="org-inline-form" onsubmit="return confirm('Удалить организацию?');">
+                    <input type="hidden" name="company" value="@Model.Company" />
+                    <button type="submit"
+                            class="org-del-btn"
+                            formaction="?handler=Remove"
+                            name="name"
+                            value="@org">Удалить</button>
+                  </form>
+                </div>
+              </td>
+              <td class="org-td-rename" colspan="4" @(!isEditing ? "hidden" : null)>
+                <form method="post" asp-page="/Organizations/Index" asp-page-handler="Rename" class="org-rename-form">
+                  <input type="hidden" name="company" value="@Model.Company" />
+                  <input type="hidden" name="oldName" value="@org" />
+                  <input type="text" name="newName" value="@org" class="org-input org-rename-input" required />
+                  <button type="submit" class="btn btn-primary btn-sm">Сохранить</button>
+                  <button type="button" class="btn btn-outline btn-sm js-org-rename-cancel">Отмена</button>
+                </form>
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+
+      <div class="org-actions">
+        <form method="post" asp-page-handler="Save">
+          <input type="hidden" name="company" value="@Model.Company" />
+          <button type="submit" class="btn btn-primary">Сохранить список</button>
+        </form>
+        <a class="btn btn-outline" asp-page="/Index">Закрыть</a>
+      </div>
+    </div>
+
+    @if (hasCompany)
+    {
+      <div class="org-side-panels">
+      <div class="org-table-card org-requisites-panel">
+        <div class="org-employees-head">
+          <div>
+            <h2 class="org-employees-title">Реквизиты</h2>
+            <p class="org-employees-subtitle">@Model.Company</p>
+          </div>
+        </div>
+
+        <form method="post" asp-page-handler="SaveRequisites" class="org-requisites-form">
+          <input type="hidden" name="company" value="@Model.Company" />
+          <div class="org-requisites-grid">
+            <label class="org-requisites-field">
+              <span>ИНН</span>
+              <input type="text" name="inn" value="@Model.SelectedRequisites.Inn" class="org-input" autocomplete="off" />
+            </label>
+            <label class="org-requisites-field">
+              <span>КПП</span>
+              <input type="text" name="kpp" value="@Model.SelectedRequisites.Kpp" class="org-input" autocomplete="off" />
+            </label>
+            <label class="org-requisites-field">
+              <span>ОГРН / ОГРНИП</span>
+              <input type="text" name="ogrn" value="@Model.SelectedRequisites.Ogrn" class="org-input" autocomplete="off" />
+            </label>
+            <label class="org-requisites-field org-requisites-field-wide">
+              <span>Юридический адрес</span>
+              <input type="text" name="address" value="@Model.SelectedRequisites.Address" class="org-input" autocomplete="off" />
+            </label>
+            <label class="org-requisites-field org-requisites-field-wide">
+              <span>Контакты работодателя</span>
+              <input type="text" name="employerContacts" value="@Model.SelectedRequisites.EmployerContacts" class="org-input" placeholder="e-mail, телефон" autocomplete="off" />
+            </label>
+            <label class="org-requisites-field org-requisites-field-wide">
+              <span>Собственность / ОКВЭД</span>
+              <input type="text" name="ownershipOkved" value="@Model.SelectedRequisites.OwnershipOkved" class="org-input" autocomplete="off" />
+            </label>
+          </div>
+
+          <div class="org-banks-block">
+            <div class="org-banks-head">
+              <strong>Банки</strong>
+              <span class="hint">можно несколько — отметьте основной для печати</span>
+            </div>
+            <div id="org-banks-list" class="org-banks-list">
+              @{
+                var banks = Model.SelectedRequisites.Banks;
+                if (banks.Count == 0)
+                {
+                  banks =
+                  [
+                    new Zashita.Core.Employees.OrganizationBankAccount { Label = "Основной", IsPrimary = true }
+                  ];
+                }
+              }
+              @for (var i = 0; i < banks.Count; i++)
+              {
+                var bank = banks[i];
+                <div class="org-bank-card" data-bank-row>
+                  <div class="org-bank-card-head">
+                    <label class="org-bank-primary">
+                      <input type="radio" name="bankPrimaryIndex" value="@i" @(bank.IsPrimary || i == 0 ? "checked" : null) />
+                      Основной
+                    </label>
+                    <button type="button" class="btn btn-outline btn-sm js-org-bank-remove" title="Удалить банк">Удалить</button>
+                  </div>
+                  <div class="org-requisites-grid">
+                    <label class="org-requisites-field">
+                      <span>Подпись</span>
+                      <input type="text" name="bankLabel" value="@bank.Label" class="org-input" placeholder="напр. Альфа / Сбер" autocomplete="off" />
+                    </label>
+                    <label class="org-requisites-field org-requisites-field-wide">
+                      <span>Банк</span>
+                      <input type="text" name="bankName" value="@bank.BankName" class="org-input" autocomplete="off" />
+                    </label>
+                    <label class="org-requisites-field">
+                      <span>БИК</span>
+                      <input type="text" name="bik" value="@bank.Bik" class="org-input" autocomplete="off" />
+                    </label>
+                    <label class="org-requisites-field">
+                      <span>Город банка</span>
+                      <input type="text" name="bankCity" value="@bank.BankCity" class="org-input" autocomplete="off" />
+                    </label>
+                    <label class="org-requisites-field">
+                      <span>р/с</span>
+                      <input type="text" name="checkingAccount" value="@bank.CheckingAccount" class="org-input" autocomplete="off" />
+                    </label>
+                    <label class="org-requisites-field">
+                      <span>к/с</span>
+                      <input type="text" name="correspondentAccount" value="@bank.CorrespondentAccount" class="org-input" autocomplete="off" />
+                    </label>
+                  </div>
+                </div>
+              }
+            </div>
+            <button type="button" class="btn btn-outline btn-sm" id="org-add-bank">+ Добавить банк</button>
+          </div>
+
+          <div class="org-requisites-actions">
+            <button type="submit" class="btn btn-primary btn-sm">Сохранить реквизиты</button>
+          </div>
+        </form>
+        <template id="org-bank-card-template">
+          <div class="org-bank-card" data-bank-row>
+            <div class="org-bank-card-head">
+              <label class="org-bank-primary">
+                <input type="radio" name="bankPrimaryIndex" value="0" />
+                Основной
+              </label>
+              <button type="button" class="btn btn-outline btn-sm js-org-bank-remove" title="Удалить банк">Удалить</button>
+            </div>
+            <div class="org-requisites-grid">
+              <label class="org-requisites-field">
+                <span>Подпись</span>
+                <input type="text" name="bankLabel" value="" class="org-input" placeholder="напр. Альфа / Сбер" autocomplete="off" />
+              </label>
+              <label class="org-requisites-field org-requisites-field-wide">
+                <span>Банк</span>
+                <input type="text" name="bankName" value="" class="org-input" autocomplete="off" />
+              </label>
+              <label class="org-requisites-field">
+                <span>БИК</span>
+                <input type="text" name="bik" value="" class="org-input" autocomplete="off" />
+              </label>
+              <label class="org-requisites-field">
+                <span>Город банка</span>
+                <input type="text" name="bankCity" value="" class="org-input" autocomplete="off" />
+              </label>
+              <label class="org-requisites-field">
+                <span>р/с</span>
+                <input type="text" name="checkingAccount" value="" class="org-input" autocomplete="off" />
+              </label>
+              <label class="org-requisites-field">
+                <span>к/с</span>
+                <input type="text" name="correspondentAccount" value="" class="org-input" autocomplete="off" />
+              </label>
+            </div>
+          </div>
+        </template>
+        <script>
+          (function () {
+            var list = document.getElementById('org-banks-list');
+            var tpl = document.getElementById('org-bank-card-template');
+            var addBtn = document.getElementById('org-add-bank');
+            if (!list || !tpl || !addBtn) return;
+
+            function reindex() {
+              list.querySelectorAll('[data-bank-row]').forEach(function (row, i) {
+                var radio = row.querySelector('input[name="bankPrimaryIndex"]');
+                if (radio) radio.value = String(i);
+              });
+            }
+
+            addBtn.addEventListener('click', function () {
+              var node = tpl.content.cloneNode(true);
+              list.appendChild(node);
+              reindex();
+            });
+
+            list.addEventListener('click', function (e) {
+              var btn = e.target.closest('.js-org-bank-remove');
+              if (!btn) return;
+              var row = btn.closest('[data-bank-row]');
+              if (!row) return;
+              if (list.querySelectorAll('[data-bank-row]').length <= 1) {
+                row.querySelectorAll('input[type="text"]').forEach(function (inp) { inp.value = ''; });
+                return;
+              }
+              var wasPrimary = row.querySelector('input[name="bankPrimaryIndex"]')?.checked;
+              row.remove();
+              reindex();
+              if (wasPrimary) {
+                var first = list.querySelector('input[name="bankPrimaryIndex"]');
+                if (first) first.checked = true;
+              }
+            });
+          })();
+        </script>
+      </div>
+
+      <div class="org-table-card org-risk-objects-panel">
+        <div class="org-employees-head">
+          <div>
+            <h2 class="org-employees-title">Объекты оценки рисков</h2>
+            <p class="org-employees-subtitle">@Model.Company · @Model.CompanyRiskObjects.Count</p>
+          </div>
+        </div>
+        @if (Model.CompanyRiskObjects.Count == 0)
+        {
+          <p class="hint" style="margin:0">Объектов пока нет — создайте в модуле «Риски».</p>
+        }
+        else
+        {
+          <div class="org-risk-objects-list">
+            @foreach (var obj in Model.CompanyRiskObjects)
+            {
+              var isEditing = string.Equals(obj.Id, Model.EditRiskObjectId, StringComparison.OrdinalIgnoreCase);
+              <div class="org-risk-object-row @(isEditing ? "is-editing" : "")" id="org-risk-object-@obj.Id">
+                @if (isEditing)
+                {
+                  <form method="post" asp-page-handler="SaveRiskObject" class="org-risk-object-edit">
+                    <input type="hidden" name="company" value="@Model.Company" />
+                    <input type="hidden" name="objectId" value="@obj.Id" />
+                    <input type="text"
+                           name="objectName"
+                           class="org-input"
+                           value="@obj.Name"
+                           placeholder="Название объекта"
+                           maxlength="200"
+                           required
+                           autocomplete="off" />
+                    <input type="text"
+                           name="officialName"
+                           class="org-input"
+                           value="@obj.OfficialName"
+                           placeholder="Официальное название"
+                           maxlength="500"
+                           autocomplete="off"
+                           title="Полное название объекта, как в договоре" />
+                    <div class="org-risk-object-edit-actions">
+                      <button type="submit" class="btn btn-primary btn-sm">Сохранить</button>
+                      <a class="btn btn-outline btn-sm"
+                         asp-page="/Organizations/Index"
+                         asp-route-company="@Model.Company"
+                         asp-fragment="@($"org-risk-object-{obj.Id}")">Отмена</a>
+                    </div>
+                  </form>
+                }
+                else
+                {
+                  <div class="org-risk-object-view">
+                    <div class="org-risk-object-text">
+                      <div class="org-risk-object-main">
+                        <span class="org-risk-object-name">@obj.Name</span>
+                        @if (obj.IsOrganizationWide)
+                        {
+                          <span class="hint">системный</span>
+                        }
+                      </div>
+                      @if (!string.IsNullOrWhiteSpace(obj.OfficialName))
+                      {
+                        <div class="org-risk-object-official" title="Официальное название">@obj.OfficialName</div>
+                      }
+                    </div>
+                    <div class="org-risk-object-actions">
+                      <a class="btn btn-outline btn-sm"
+                         asp-page="/Organizations/Index"
+                         asp-route-company="@Model.Company"
+                         asp-route-editRiskObjectId="@obj.Id"
+                         asp-fragment="@($"org-risk-object-{obj.Id}")">Изменить</a>
+                      @if (!obj.IsOrganizationWide)
+                      {
+                        <form method="post"
+                              asp-page-handler="DeleteRiskObject"
+                              class="org-inline-form"
+                              onsubmit="return confirm(@Json.Serialize($"Удалить объект «{obj.Name}»? Данные карт по объекту останутся в файле."));">
+                          <input type="hidden" name="company" value="@Model.Company" />
+                          <input type="hidden" name="objectId" value="@obj.Id" />
+                          <button type="submit" class="btn btn-outline btn-sm" title="Убрать объект из списка">Удалить</button>
+                        </form>
+                      }
+                    </div>
+                  </div>
+                }
+              </div>
+            }
+          </div>
+        }
+      </div>
+
+      <div class="org-table-card org-employees-panel">
+        <div class="org-employees-head">
+          <div>
+            <h2 class="org-employees-title">Сотрудники</h2>
+            <p class="org-employees-subtitle">@Model.Company · людей: @Model.CompanyEmployees.Count</p>
+          </div>
+          <a class="btn btn-outline btn-sm" asp-page="/Organizations/Index">Закрыть</a>
+        </div>
+
+        <form method="post" asp-page-handler="SaveEmployee" class="org-employee-add">
+          <input type="hidden" name="company" value="@Model.Company" />
+          <input type="text" name="name" placeholder="ФИО сотрудника" class="org-input" required />
+          <input type="text" name="profession" placeholder="Должность" class="org-input" />
+          <input type="text" name="department" placeholder="Подразделение" class="org-input" />
+          <input type="text" name="snils" placeholder="СНИЛС" class="org-input" />
+          <input type="date" name="birthDate" class="org-input" title="Дата рождения" />
+          <input type="date" name="employmentDate" class="org-input" title="Дата приёма" />
+          <button type="submit" class="btn btn-primary btn-sm">Добавить</button>
+        </form>
+
+        @if (Model.CompanyEmployees.Count == 0)
+        {
+          <p class="hint org-employees-empty">Сотрудники не найдены. Добавьте вручную или загрузите данные 1С.</p>
+        }
+        else
+        {
+          <div class="org-employees-table-wrap">
+            <table class="org-table org-employees-table">
+              <thead>
+                <tr>
+                  <th>ФИО</th>
+                  <th>Должность</th>
+                  <th>Подразделение</th>
+                  <th>СНИЛС</th>
+                  <th>Дата рождения</th>
+                  <th>Дата приёма</th>
+                  <th>Вид занятости</th>
+                  <th>Статус</th>
+                  <th>Адрес регистрации</th>
+                  <th class="org-th-actions">Действия</th>
+                </tr>
+              </thead>
+              <tbody>
+                @foreach (var employee in Model.CompanyEmployees)
+                {
+                  var formId = $"emp-save-{employee.Id}";
+                  <tr>
+                    <td>
+                      <form id="@formId" method="post" asp-page-handler="SaveEmployee">
+                        <input type="hidden" name="company" value="@Model.Company" />
+                        <input type="hidden" name="employeeId" value="@employee.Id" />
+                      </form>
+                      <input form="@formId" type="text" name="name" value="@employee.Name" class="org-input org-input-name" required />
+                    </td>
+                    <td>
+                      <input form="@formId" type="text" name="profession" value="@employee.Profession" class="org-input org-input-profession" placeholder="Должность" />
+                    </td>
+                    <td>
+                      <input form="@formId" type="text" name="department" value="@employee.Department" class="org-input org-input-department" placeholder="Подразделение" />
+                    </td>
+                    <td>
+                      <input form="@formId" type="text" name="snils" value="@Zashita.Core.Employees.OneCEmployeeListParser.FormatSnils(employee.Snils)" class="org-input org-input-snils" placeholder="000-000-000 00" />
+                    </td>
+                    <td>
+                      <input form="@formId" type="date" name="birthDate" value="@employee.BirthDate?.ToString("yyyy-MM-dd")" class="org-input org-input-date" />
+                    </td>
+                    <td>
+                      <input form="@formId" type="date" name="employmentDate" value="@employee.EmploymentDate?.ToString("yyyy-MM-dd")" class="org-input org-input-date" />
+                    </td>
+                    <td>
+                      <input form="@formId" type="text" name="employmentType" value="@employee.EmploymentType" class="org-input org-input-employment" placeholder="Основное / совместительство" />
+                    </td>
+                    <td>
+                      <input form="@formId" type="text" name="hrStatus" value="@EmployeeHrStatus.ForDisplay(employee.HrStatus, employee.IsActive)" class="org-input org-input-status" placeholder="Статус из 1С" />
+                    </td>
+                    <td>
+                      <input form="@formId" type="text" name="homeAddress" value="@employee.HomeAddress" class="org-input org-input-address" placeholder="Адрес регистрации" />
+                    </td>
+                    <td class="org-employee-actions">
+                      <button form="@formId" type="submit" class="btn btn-primary btn-sm">Сохранить</button>
+                      <form method="post" asp-page-handler="DeleteEmployee" class="org-employee-delete-form" onsubmit="return confirm('Удалить сотрудника?');">
+                        <input type="hidden" name="company" value="@Model.Company" />
+                        <input type="hidden" name="employeeId" value="@employee.Id" />
+                        <button type="submit" class="org-del-btn">Удалить</button>
+                      </form>
+                    </td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        }
+      </div>
+      </div>
+    }
+  </div>
+</div>
+
+@section Scripts {
+  <script>
+    document.addEventListener('DOMContentLoaded', function () {
+      var input = document.getElementById('org-add-name');
+      var group = document.querySelector('.org-add-type');
+      if (input && group) {
+        function setPlaceholder(button) {
+          var placeholder = button.getAttribute('data-placeholder');
+          if (placeholder) {
+            input.placeholder = placeholder;
+          }
+        }
+
+        group.querySelectorAll('.ui-segmented-btn').forEach(function (button) {
+          button.addEventListener('click', function () {
+            setPlaceholder(button);
+          });
+        });
+      }
+
+      document.querySelectorAll('.org-group-search').forEach(function (search) {
+        search.addEventListener('input', function () {
+          var query = (search.value || '').trim().toLowerCase();
+          var box = search.parentElement && search.parentElement.querySelector('.org-group-members-box');
+          if (!box) {
+            return;
+          }
+          box.querySelectorAll('.training-kind-filter-option').forEach(function (option) {
+            var name = option.getAttribute('data-org-name') || '';
+            option.hidden = query.length > 0 && name.indexOf(query) === -1;
+          });
+        });
+      });
+
+      function setOrgRenameMode(row, editing) {
+        if (!row) return;
+        row.classList.toggle('is-renaming', editing);
+        row.querySelectorAll('.org-td-view').forEach(function (cell) {
+          cell.hidden = editing;
+        });
+        var renameCell = row.querySelector('.org-td-rename');
+        if (renameCell) renameCell.hidden = !editing;
+        if (editing) {
+          var field = row.querySelector('.org-rename-input');
+          if (field) {
+            field.focus();
+            field.select();
+          }
+        }
+      }
+
+      document.querySelectorAll('[data-org-row]').forEach(function (row) {
+        row.querySelector('.js-org-rename-start')?.addEventListener('click', function (e) {
+          e.preventDefault();
+          e.stopPropagation();
+          document.querySelectorAll('[data-org-row].is-renaming').forEach(function (other) {
+            if (other !== row) setOrgRenameMode(other, false);
+          });
+          setOrgRenameMode(row, true);
+        });
+        row.querySelector('.js-org-rename-cancel')?.addEventListener('click', function (e) {
+          e.preventDefault();
+          e.stopPropagation();
+          var field = row.querySelector('.org-rename-input');
+          var oldName = row.querySelector('input[name="oldName"]');
+          if (field && oldName) field.value = oldName.value;
+          setOrgRenameMode(row, false);
+        });
+      });
+
+      var renaming = document.querySelector('[data-org-row].is-renaming');
+      if (renaming) {
+        renaming.scrollIntoView({ block: 'nearest' });
+        var field = renaming.querySelector('.org-rename-input');
+        if (field) {
+          field.focus();
+          field.select();
+        }
+      }
+    });
+  </script>
+}

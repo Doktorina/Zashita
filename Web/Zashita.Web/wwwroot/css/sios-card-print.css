@@ -1,0 +1,354 @@
+/* Печать личной карточки СИЗ — альбомная ориентация A4 */
+.sios-print-body {
+  margin: 0;
+  padding: 0;
+  font-family: "Times New Roman", Times, serif;
+  font-size: 11pt;
+  color: #000;
+  background: #fff;
+}
+
+.sios-print-body,
+.sios-print-body * {
+  color: #000 !important;
+}
+
+.sios-print-body.sios-print-preview {
+  padding: 12px 0 24px;
+  background: #f4f6f8;
+}
+
+.sios-print-body.sios-print-preview .sios-page {
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.12);
+}
+
+.sios-page {
+  box-sizing: border-box;
+  padding: 10mm;
+  width: 297mm;
+  max-width: 297mm;
+  min-height: 210mm;
+  margin: 0 auto 10mm;
+  background: #fff;
+}
+
+.sios-page-portrait,
+.sios-page-landscape {
+  /* без лишнего min-height при печати — иначе пустая страница между лицом и оборотом */
+}
+
+.sios-page-break {
+  page-break-before: always;
+  break-before: page;
+}
+
+.sios-dsiz .sios-dsiz-foot {
+  margin-top: 8px;
+  font-size: 10pt;
+}
+
+.sios-doc-title {
+  text-align: center;
+  font-size: 11pt;
+  margin-bottom: 2px;
+}
+
+.sios-face-caption {
+  text-align: right;
+  font-size: 10pt;
+  margin-bottom: 8px;
+}
+
+.sios-card-no {
+  text-align: center;
+  font-weight: bold;
+  font-size: 12pt;
+  margin: 6px 0 2px;
+  text-transform: uppercase;
+}
+
+.sios-subtitle {
+  text-align: center;
+  font-size: 11pt;
+  margin-bottom: 12px;
+}
+
+.sios-back-title {
+  text-align: center;
+  font-size: 11pt;
+  margin-bottom: 10px;
+}
+
+.sios-profile {
+  display: grid;
+  grid-template-columns: 1.25fr 0.75fr;
+  gap: 6px 18px;
+  margin-bottom: 12px;
+  border-bottom: 1px solid #000;
+  padding-bottom: 8px;
+}
+
+.sios-field {
+  margin: 2px 0;
+  line-height: 1.35;
+}
+
+.sios-field-multiline {
+  font-size: 10.5pt;
+  color: #000;
+}
+
+.sios-label {
+  font-weight: normal;
+}
+
+.sios-right-line {
+  display: flex;
+  gap: 0;
+  margin: 5px 0;
+  line-height: 1.35;
+  align-items: baseline;
+}
+
+.sios-right-label {
+  flex: 0 0 auto;
+  white-space: nowrap;
+}
+
+.sios-right-value {
+  flex: 1 1 auto;
+  border-bottom: 1px solid #000;
+  min-height: 14px;
+  padding: 0 2px 1px;
+}
+
+.sios-table {
+  width: 100%;
+  border: 1px solid #000;
+  border-collapse: collapse;
+  table-layout: fixed;
+  font-size: 10pt;
+}
+
+.sios-table th,
+.sios-table td {
+  border: 1px solid #000;
+  padding: 3px 4px;
+  vertical-align: middle;
+  overflow-wrap: break-word;
+  word-wrap: break-word;
+}
+
+.sios-table th {
+  font-weight: normal;
+  text-align: center;
+  line-height: 1.15;
+}
+
+.sios-center {
+  text-align: center;
+}
+
+.sios-date-cell {
+  white-space: nowrap !important;
+  overflow-wrap: normal !important;
+  word-wrap: normal !important;
+  word-break: keep-all !important;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0;
+  padding-left: 3px;
+  padding-right: 3px;
+}
+
+.sios-front-table th:nth-child(1) { width: 42%; }
+.sios-front-table th:nth-child(2) { width: 12%; }
+.sios-front-table th:nth-child(3) { width: 28%; }
+.sios-front-table th:nth-child(4) { width: 18%; }
+
+.sios-duty-profile {
+  margin: 10px 0 14px;
+  line-height: 1.45;
+}
+
+.sios-duty-label {
+  margin: 8px 0 2px;
+}
+
+.sios-duty-value {
+  min-height: 18px;
+  border-bottom: 1px solid #000;
+  margin-bottom: 6px;
+  padding: 0 2px 2px;
+}
+
+.sios-duty-line {
+  margin: 8px 0;
+}
+
+.sios-duty-fill {
+  display: inline-block;
+  min-width: 55%;
+  border-bottom: 1px solid #000;
+  padding: 0 4px 1px;
+  min-height: 16px;
+}
+
+.sios-duty-front-table th:nth-child(1) { width: 40%; }
+.sios-duty-front-table th:nth-child(2) { width: 12%; }
+.sios-duty-front-table th:nth-child(3) { width: 30%; }
+.sios-duty-front-table th:nth-child(4) { width: 18%; }
+
+.sios-duty-back-table th,
+.sios-duty-back-table td {
+  font-size: 9pt;
+}
+
+.sios-duty-footer {
+  margin-top: 22px;
+}
+
+.sios-duty-footer .sios-footer-text {
+  width: 36%;
+  padding-top: 8px;
+}
+
+.sios-back-table th,
+.sios-back-table td {
+  font-size: 9pt;
+  padding: 2px 3px;
+}
+
+/*
+  Оборот: колонки «дата» — фиксированная ширина в мм (DD.MM.YYYY ~20mm при 9pt).
+  Проценты для остальных, чтобы таблица тянулась на всю страницу.
+*/
+.sios-back-table col.sios-col-name { width: 16%; }
+.sios-back-table col.sios-col-model { width: 12%; }
+.sios-back-table col.sios-col-date { width: 26mm; }
+.sios-back-table col.sios-col-qty { width: 14mm; }
+.sios-back-table col.sios-col-method { width: 16mm; }
+.sios-back-table col.sios-col-sign { width: 18mm; }
+.sios-back-table col.sios-col-act { width: 20mm; }
+
+.sios-back-table td.sios-date-cell,
+.sios-back-table th.sios-date-cell {
+  white-space: nowrap !important;
+  overflow-wrap: normal !important;
+  word-wrap: normal !important;
+  word-break: keep-all !important;
+  font-size: 9pt !important;
+  line-height: 1.2;
+  padding: 2px 3px !important;
+  letter-spacing: 0 !important;
+  text-align: center;
+}
+.sios-back-group th {
+  vertical-align: middle;
+}
+
+.sios-back-nums th {
+  font-size: 8pt;
+  padding: 1px;
+}
+
+.sios-back-notes {
+  margin-top: 8px;
+  font-size: 8.5pt;
+  line-height: 1.35;
+}
+
+.sios-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-top: 18px;
+  gap: 12px;
+}
+
+.sios-footer-text {
+  width: 48%;
+  line-height: 1.35;
+}
+
+.sios-sign-block {
+  flex: 1;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px 16px;
+  align-items: end;
+}
+
+.sios-sign-col {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.sios-sign-cell {
+  min-height: 1.6em;
+}
+
+.sios-sign-line,
+.sios-name-line {
+  border-bottom: 1px solid #000;
+  min-height: 18px;
+}
+
+.sios-name-line {
+  text-align: center;
+  padding: 0 4px 1px;
+}
+
+.sios-sign-caption {
+  font-size: 8.5pt;
+  text-align: center;
+}
+
+.sios-dsiz-foot {
+  margin-top: 10px;
+  font-size: 10pt;
+}
+
+@media print {
+  @page {
+    size: A4 landscape !important;
+    margin: 8mm;
+  }
+
+  thead {
+    display: table-row-group !important;
+  }
+
+  body.sios-print-body {
+    margin: 0;
+  }
+
+  .sios-page {
+    padding: 0;
+    width: auto;
+    max-width: none;
+    min-height: auto;
+    margin: 0;
+  }
+
+  .sios-page-portrait,
+  .sios-page-landscape {
+    min-height: auto;
+  }
+
+  .sios-page-break {
+    page-break-before: always;
+    break-before: page;
+  }
+
+  .sios-back-table col.sios-col-date {
+    width: 26mm !important;
+  }
+
+  .sios-back-table td.sios-date-cell,
+  .sios-back-table th.sios-date-cell {
+    font-size: 9pt !important;
+    white-space: nowrap !important;
+    padding: 2px 3px !important;
+  }
+}

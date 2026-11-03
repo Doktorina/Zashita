@@ -1,0 +1,124 @@
+@page "/Training/PlanTypes"
+@model Zashita.Web.Pages.Training.PlanTypesModel
+@{
+    ViewData["Title"] = "Виды планов";
+    ViewData["Subtitle"] = "Справочник видов планов обучения.";
+}
+
+@if (!string.IsNullOrWhiteSpace(Model.Message))
+{
+  <p class="text-success">@Model.Message</p>
+}
+
+<div class="panel ppe-panel">
+  <div class="ppe-toolbar">
+    <button type="button" class="btn btn-outline btn-sm" id="plan-add-row-btn">Создать</button>
+    <button type="button" class="btn btn-outline btn-sm" id="plan-add-group-btn">Создать группу</button>
+    <button type="button" class="btn btn-outline btn-sm" id="plan-bulk-edit-btn">Изменить выделенные...</button>
+  </div>
+
+  <form method="post" asp-page-handler="Save">
+    <div class="ppe-actions ppe-actions-top">
+      <button type="submit" class="btn btn-primary">Сохранить</button>
+    </div>
+    <table class="data-grid ppe-edit-grid training-catalog-grid">
+      <thead>
+        <tr>
+          <th class="training-select-col"></th>
+          <th>Наименование</th>
+          <th>Действия</th>
+        </tr>
+      </thead>
+      <tbody id="plan-catalog-body">
+        @foreach (var item in Model.TreeItems)
+        {
+          var n = item.Node;
+          <tr class="training-catalog-row training-tree-row @(n.IsGroup ? "training-tree-folder training-tree-open" : "training-tree-file")"
+              data-id="@n.Id"
+              data-parent-id="@(n.ParentId ?? "")"
+              data-is-group="@n.IsGroup.ToString().ToLowerInvariant()"
+              data-depth="@item.Depth">
+            <td class="training-select-col">
+              <input type="checkbox" class="training-row-select" aria-label="Выделить" />
+            </td>
+            <td>
+              <input type="hidden" name="Id" value="@n.Id" />
+              <input type="hidden" name="ParentId" value="@n.ParentId" />
+              <input type="hidden" name="IsGroup" value="@n.IsGroup.ToString().ToLowerInvariant()" />
+              <input type="hidden" name="RouteUrl" value="@n.RouteUrl" />
+              @await Html.PartialAsync("_TrainingTreeName", new TrainingTreeNameModel
+              {
+                Depth = item.Depth,
+                IsGroup = n.IsGroup,
+                Name = n.Name,
+                InputClass = n.IsGroup ? "ppe-input training-group-name" : "ppe-input training-item-name"
+              })
+            </td>
+            <td>
+              <div class="suot-action-bar">
+                @if (!n.IsGroup && !string.IsNullOrWhiteSpace(n.RouteUrl))
+                {
+                  <a class="suot-action" href="@n.RouteUrl" title="Открыть">↗</a>
+                }
+                <button type="button" class="suot-action" data-action="edit" title="Редактировать">✏️</button>
+                <button type="button" class="suot-action suot-action-danger" data-action="delete" title="Удалить">🗑</button>
+              </div>
+              <input type="hidden" name="Delete" value="false" class="training-delete-flag" />
+            </td>
+          </tr>
+        }
+        <tr id="plan-add-row-template" class="training-tree-row training-tree-file" hidden data-id="" data-parent-id="" data-is-group="false" data-depth="0">
+          <td class="training-select-col"><input type="checkbox" class="training-row-select" aria-label="Выделить" /></td>
+          <td>
+            <input type="hidden" name="Id" value="" />
+            <input type="hidden" name="ParentId" value="" />
+            <input type="hidden" name="IsGroup" value="false" />
+            <input type="hidden" name="RouteUrl" value="" />
+            @await Html.PartialAsync("_TrainingTreeName", new TrainingTreeNameModel { Depth = 0, IsGroup = false, InputClass = "ppe-input training-item-name" })
+          </td>
+          <td>
+            <div class="suot-action-bar">
+              <button type="button" class="suot-action" data-action="edit" title="Редактировать">✏️</button>
+              <button type="button" class="suot-action suot-action-danger" data-action="delete" title="Удалить">🗑</button>
+            </div>
+            <input type="hidden" name="Delete" value="false" class="training-delete-flag" />
+          </td>
+        </tr>
+        <tr id="plan-add-group-template" class="training-tree-row training-tree-folder" hidden data-id="" data-parent-id="" data-is-group="true" data-depth="0">
+          <td class="training-select-col"><input type="checkbox" class="training-row-select" aria-label="Выделить" /></td>
+          <td>
+            <input type="hidden" name="Id" value="" />
+            <input type="hidden" name="ParentId" value="" />
+            <input type="hidden" name="IsGroup" value="true" />
+            <input type="hidden" name="RouteUrl" value="" />
+            @await Html.PartialAsync("_TrainingTreeName", new TrainingTreeNameModel { Depth = 0, IsGroup = true, InputClass = "ppe-input training-group-name" })
+          </td>
+          <td>
+            <div class="suot-action-bar">
+              <button type="button" class="suot-action" data-action="edit" title="Редактировать">✏️</button>
+              <button type="button" class="suot-action suot-action-danger" data-action="delete" title="Удалить">🗑</button>
+            </div>
+            <input type="hidden" name="Delete" value="false" class="training-delete-flag" />
+          </td>
+        </tr>
+      </tbody>
+    </table>
+    
+  </form>
+</div>
+
+@section Scripts {
+  <script src="~/js/training-catalog.js" asp-append-version="true"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', function () {
+      initTrainingCatalog({
+        addRowBtnId: 'plan-add-row-btn',
+        addGroupBtnId: 'plan-add-group-btn',
+        rowTemplateId: 'plan-add-row-template',
+        groupTemplateId: 'plan-add-group-template',
+        bulkEditBtnId: 'plan-bulk-edit-btn',
+        treeBodyId: 'plan-catalog-body'
+      });
+    });
+  </script>
+}

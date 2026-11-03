@@ -1,0 +1,41 @@
+{
+  "ООО «Демо Строй»": {
+    "Inn": "0000000000",
+    "Kpp": "000000000",
+    "Ogrn": "0000000000000",
+    "Address": "г. Демо, ул. Примерная, д. 1",
+    "BankName": "",
+    "Bik": "",
+    "CheckingAccount": "",
+    "CorrespondentAccount": "",
+    "BankCity": "",
+    "EmployerContacts": "",
+    "OwnershipOkved": ""
+  },
+  "ООО «Северные Технологии»": {
+    "Inn": "1111111111",
+    "Kpp": "111111111",
+    "Ogrn": "1111111111111",
+    "Address": "г. Демо, пр. Технологический, д. 5",
+    "BankName": "",
+    "Bik": "",
+    "CheckingAccount": "",
+    "CorrespondentAccount": "",
+    "BankCity": "",
+    "EmployerContacts": "",
+    "OwnershipOkved": ""
+  },
+  "ИП Пример Иван Иванович": {
+    "Inn": "222222222222",
+    "Kpp": "",
+    "Ogrn": "222222222222222",
+    "Address": "г. Демо, ул. Частная, д. 3",
+    "BankName": "",
+    "Bik": "",
+    "CheckingAccount": "",
+    "CorrespondentAccount": "",
+    "BankCity": "",
+    "EmployerContacts": "",
+    "OwnershipOkved": ""
+  }
+}

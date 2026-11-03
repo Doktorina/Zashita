@@ -1,0 +1,1574 @@
+.med-doc-panel {
+  overflow: visible;
+}
+
+.med-doc-panel .ppe-toolbar {
+  overflow: visible;
+  position: relative;
+  z-index: 5;
+}
+
+.ppe-print-menu .ppe-print-dropdown {
+  z-index: 100;
+  min-width: 420px;
+  max-width: 560px;
+}
+
+.sout-assignment-doc .ppe-print-menu {
+  position: relative;
+  z-index: 30;
+}
+
+.sout-assignment-toolbar {
+  overflow: visible;
+}
+
+.med-print-sheet {
+  width: 210mm;
+  min-height: 297mm;
+  max-width: 100%;
+}
+
+.med-print-sheet .med-print-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 10pt;
+}
+
+.med-print-sheet .med-print-table th,
+.med-print-sheet .med-print-table td {
+  border: 1px solid #000;
+  padding: 4px 5px;
+  vertical-align: top;
+}
+
+.med-print-sheet .med-print-head h2 {
+  margin: 0 0 10px;
+  font-size: 13pt;
+  text-align: center;
+  font-weight: 700;
+}
+
+.med-print-order-head {
+  min-height: 120px;
+  margin-bottom: 14px;
+}
+
+.med-print-approval {
+  width: 290px;
+  margin-left: auto;
+  margin-bottom: 24px;
+  font-size: 10.5pt;
+}
+
+.med-print-approval > div {
+  margin-bottom: 4px;
+}
+
+.med-print-order-title {
+  text-align: center;
+  white-space: pre-line;
+  font-size: 12pt;
+  font-weight: 700;
+  line-height: 1.25;
+  margin-bottom: 2px;
+}
+
+.med-print-order-org {
+  text-align: center;
+  font-size: 12pt;
+  margin-bottom: 12px;
+}
+
+.med-print-sheet .med-print-head p,
+.med-print-sheet .med-print-footer p {
+  margin: 4px 0;
+  font-size: 11pt;
+}
+
+@media print {
+  thead {
+    display: table-row-group !important;
+  }
+
+  .sout-preview-page {
+    background: #fff !important;
+  }
+
+  .med-print-sheet {
+    box-shadow: none !important;
+    width: auto;
+    min-height: 0;
+    padding: 0;
+  }
+}
+
+.med-person-list-hint {
+  margin: 0;
+}
+
+/* Вкладки / тулбар / подсказка — в палитре сайта */
+.med-doc-panel > .sout-assignment-tabs {
+  margin: -4px -4px 12px;
+  padding: 0 8px;
+  border-bottom: 1px solid var(--line-200, #d3dad8);
+  background: var(--surface-2, #f0f2f1);
+  border-radius: var(--radius-sm, 10px) var(--radius-sm, 10px) 0 0;
+  gap: 4px;
+}
+
+.med-doc-panel .sout-assignment-tab {
+  color: var(--text-secondary, #374150);
+  border-radius: 8px 8px 0 0;
+  padding: 10px 16px;
+  text-decoration: none;
+  transition:
+    color var(--zs-dur-fast, 0.22s) ease,
+    background var(--zs-dur-fast, 0.22s) ease,
+    border-color var(--zs-dur-fast, 0.22s) ease;
+}
+
+.med-doc-panel .sout-assignment-tab:hover {
+  color: var(--brand-600, #0b6649);
+  background: color-mix(in srgb, var(--brand-50, #ecf5f1) 70%, transparent);
+}
+
+.med-doc-panel .sout-assignment-tab-active {
+  background: var(--surface, #fff);
+  color: var(--brand-700, #084e38);
+  border-bottom-color: var(--accent, #00a86b);
+  font-weight: 600;
+}
+
+.med-doc-panel .sout-assignment-tab-panel {
+  padding: 0;
+}
+
+.med-doc-panel .ppe-toolbar.sout-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin: 0 0 12px;
+  padding: 0;
+}
+
+.med-contingent-hint-block {
+  margin: 0 0 12px;
+  padding: 12px 14px;
+  border: 1px solid var(--card-border, #e8ecea);
+  border-radius: var(--radius-sm, 10px);
+  background: color-mix(in srgb, var(--brand-50, #ecf5f1) 55%, var(--surface, #fff));
+  box-shadow: var(--shadow-card, 0 2px 10px rgba(15, 26, 21, 0.04));
+}
+
+.med-contingent-format-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  margin: 0 0 8px;
+}
+
+.med-contingent-format-toolbar .btn {
+  min-width: 2rem;
+  padding: 0.2rem 0.5rem;
+  line-height: 1.2;
+  border-radius: 8px;
+}
+
+.med-person-list-hint.js-contingent-hint {
+  outline: 1px dashed transparent;
+  border-radius: 8px;
+  padding: 8px 10px;
+  min-height: 2.5em;
+  white-space: pre-wrap;
+  background: var(--surface, #fff);
+  border: 1px solid var(--line-100, #e8ecea);
+  color: var(--text, #0f1a15);
+}
+
+.med-person-list-hint.js-contingent-hint:focus {
+  outline: none;
+  border-color: var(--accent, #00a86b);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent, #00a86b) 18%, transparent);
+  background: var(--surface, #fff);
+}
+
+.med-person-list-hint.js-contingent-hint[data-empty="1"]:empty::before {
+  content: "Подсказка к списку (не печатается)…";
+  color: var(--muted, #616d7e);
+}
+
+@media print {
+  .ppe-no-print,
+  .med-contingent-hint-block,
+  .med-contingent-format-toolbar {
+    display: none !important;
+  }
+}
+
+.med-filter-inline {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  min-height: 2.25rem;
+}
+
+.med-filter-actions {
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+}
+
+.med-person-dept-row {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.med-person-dept-row .ppe-input {
+  flex: 1 1 12rem;
+  min-width: 12rem;
+}
+
+.med-person-list-grid {
+  font-size: 13px;
+}
+
+.med-status-col {
+  width: 28px;
+  text-align: center;
+}
+
+.med-doc-status {
+  display: inline-block;
+  width: 12px;
+  height: 12px;
+  border-radius: 2px;
+  border: 1px solid #8aa;
+}
+
+.med-doc-status-posted {
+  background: #2e8b57;
+  border-color: #1f6b42;
+}
+
+.med-doc-status-draft {
+  background: #f4f7fb;
+  border-color: #b8c4d4;
+}
+
+.med-content-col {
+  max-width: 320px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.med-print-head h2 {
+  margin: 0 0 0.5rem;
+  font-size: 1.05rem;
+}
+
+.med-print-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.med-print-table th,
+.med-print-table td {
+  border: 1px solid #ccc;
+  padding: 0.35rem 0.5rem;
+  vertical-align: top;
+}
+
+.med-print-order-table {
+  table-layout: fixed;
+  font-size: 9pt;
+}
+
+.med-print-order-table th {
+  text-align: center;
+  font-weight: 700;
+  line-height: 1.15;
+}
+
+.med-print-order-table th:nth-child(1) { width: 3.5%; }
+.med-print-order-table th:nth-child(2) { width: 16%; }
+.med-print-order-table th:nth-child(3) { width: 16%; }
+.med-print-order-table th:nth-child(4) { width: 12%; }
+.med-print-order-table th:nth-child(5) { width: 31.5%; }
+.med-print-order-table th:nth-child(6) { width: 9.5%; }
+.med-print-order-table th:nth-child(7) { width: 11.5%; }
+
+.med-c {
+  text-align: center;
+}
+
+.med-print-psych-table {
+  table-layout: fixed;
+  font-size: 8.8pt;
+}
+
+.med-print-psych-table th {
+  text-align: center;
+  font-weight: 700;
+  line-height: 1.15;
+}
+
+.med-print-psych-table th:nth-child(1) { width: 3.5%; }
+.med-print-psych-table th:nth-child(2) { width: 12%; }
+.med-print-psych-table th:nth-child(3) { width: 19%; }
+.med-print-psych-table th:nth-child(4) { width: 8%; }
+.med-print-psych-table th:nth-child(5) { width: 11%; }
+.med-print-psych-table th:nth-child(6) { width: 25.5%; }
+.med-print-psych-table th:nth-child(7) { width: 21%; }
+
+.med-print-group td {
+  font-weight: 700;
+  background: #fff;
+}
+
+.med-print-order-body p,
+.med-print-signatures p {
+  margin: 0.5rem 0;
+}
+
+.med-print-order-footer {
+  margin-top: 20px;
+  font-size: 11pt;
+}
+
+.med-print-signatures {
+  margin-top: 26px;
+}
+
+.med-print-signatures-title {
+  margin-bottom: 12px;
+  font-size: 11pt;
+}
+
+.med-print-signatures-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 28px;
+}
+
+.med-sign-cell {
+  text-align: center;
+}
+
+.med-sign-line {
+  min-height: 1.2em;
+  border-bottom: 1px solid #000;
+}
+
+.med-sign-label {
+  font-size: 9pt;
+  margin-top: 2px;
+}
+
+.med-print-schedule-head {
+  text-align: center;
+  margin-bottom: 16px;
+}
+
+.med-print-schedule-title {
+  font-size: 14pt;
+  font-weight: 700;
+  line-height: 1.35;
+  text-align: center;
+  white-space: pre-line;
+}
+
+.med-print-schedule-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.med-print-schedule-table th {
+  font-size: 10pt;
+  font-weight: 700;
+  text-align: center;
+  vertical-align: middle;
+}
+
+.med-print-schedule-table th:nth-child(1) { width: 7%; }
+.med-print-schedule-table th:nth-child(2) { width: 16%; }
+.med-print-schedule-table th:nth-child(3) { width: 30%; }
+.med-print-schedule-table th:nth-child(4) { width: 16%; }
+.med-print-schedule-table th:nth-child(5) { width: 31%; }
+
+.med-print-schedule-table .med-c {
+  text-align: center;
+}
+
+.med-print-order-doc-head {
+  text-align: center;
+  margin-bottom: 18px;
+}
+
+.med-print-order-doc-title {
+  font-size: 18pt;
+  font-weight: 700;
+  letter-spacing: 0.35em;
+  text-align: center;
+  margin-bottom: 14px;
+}
+
+.med-print-order-meta {
+  display: flex;
+  justify-content: space-between;
+  gap: 24px;
+  margin-bottom: 8px;
+}
+
+.med-print-order-meta-left,
+.med-print-order-meta-right {
+  min-width: 40%;
+}
+
+.med-print-order-city {
+  text-align: left;
+  margin: 8px 0 14px;
+}
+
+.med-print-order-subject {
+  text-align: center;
+  font-weight: 700;
+  margin: 12px 0 16px;
+}
+
+.med-print-order-preamble,
+.med-print-order-point,
+.med-print-order-basis {
+  text-align: justify;
+  margin: 0 0 10px;
+  line-height: 1.45;
+}
+
+.med-print-order-command {
+  font-weight: 700;
+  text-align: center;
+  margin: 14px 0 12px;
+}
+
+.med-print-order-ack-title {
+  margin: 18px 0 8px;
+}
+
+.med-print-order-sign-table {
+  width: 100%;
+  margin: 12px 0 8px;
+}
+
+.med-print-order-sign-table th:nth-child(1) { width: 50%; }
+.med-print-order-sign-table th:nth-child(2) { width: 25%; }
+.med-print-order-sign-table th:nth-child(3) { width: 25%; }
+
+.med-print-order-sign-table td {
+  min-height: 2.2em;
+  height: 2.2em;
+}
+
+.med-psych-dir-sheet,
+.med-psych-dir-sheet [contenteditable="true"] {
+  font-family: "Times New Roman", Times, serif;
+  font-size: 12pt;
+  font-weight: 400;
+  line-height: 1.3;
+  color: #000;
+}
+
+.med-psych-dir-sheet {
+  max-width: 190mm;
+  margin: 0 auto 24px;
+  padding: 4px 8px 16px;
+}
+
+.med-psych-dir-org {
+  margin-bottom: 10px;
+  font-size: 12pt;
+}
+
+.med-psych-dir-org-name,
+.med-psych-dir-org-own,
+.med-psych-dir-org-line {
+  font-size: 12pt;
+  font-weight: 400;
+}
+
+.med-psych-dir-org-own {
+  text-transform: uppercase;
+  margin-top: 1px;
+}
+
+.med-psych-dir-org-line {
+  margin-top: 1px;
+}
+
+.med-psych-dir-org-rule {
+  border-bottom: 1px solid #000;
+  margin-top: 6px;
+}
+
+.med-psych-dir-title {
+  text-align: center;
+  font-weight: 700;
+  font-size: 14pt;
+  line-height: 1.3;
+  white-space: pre-line;
+  margin: 16px 0 20px;
+}
+
+.med-psych-dir-fields {
+  display: grid;
+  gap: 10px;
+  margin-bottom: 16px;
+}
+
+.med-psych-dir-row {
+  display: grid;
+  grid-template-columns: minmax(200px, 36%) 1fr;
+  gap: 10px;
+  align-items: start;
+}
+
+.med-psych-dir-label {
+  font-size: 12pt;
+  font-weight: 400;
+  line-height: 1.3;
+  padding-top: 1px;
+}
+
+.med-psych-dir-value-wrap,
+.med-psych-dir-blank {
+  min-width: 0;
+}
+
+.med-psych-dir-value {
+  min-height: 1.2em;
+  border-bottom: 1px solid #000;
+  padding-bottom: 1px;
+  font-size: 12pt;
+  font-weight: 400;
+}
+
+.med-psych-dir-hint {
+  margin-top: 2px;
+  font-size: 9pt;
+  font-weight: 400;
+  line-height: 1.2;
+  color: #000;
+  text-align: center;
+}
+
+.med-psych-dir-blank {
+  margin-top: 2px;
+}
+
+.med-psych-dir-legal {
+  margin-top: 22px;
+  font-size: 11pt;
+  font-weight: 400;
+  line-height: 1.35;
+  text-align: justify;
+}
+
+.med-print-pd-note {
+  margin-top: 12px;
+  font-size: 12px;
+  font-weight: 700;
+  color: #111;
+}
+
+.med-dir-person-block {
+  margin: 12px 0 16px;
+  padding: 12px;
+  border: 1px solid #d8dee8;
+  border-radius: 8px;
+  background: #fafbfd;
+  display: grid;
+  gap: 10px;
+}
+
+.med-dir-person-block .ppe-subtitle {
+  margin: 0;
+}
+
+/* Направления: список уже (~⅓), форма шире (~⅔) */
+.med-directions-split {
+  grid-template-columns: minmax(220px, 1fr) minmax(0, 2fr);
+  align-items: stretch;
+  gap: 16px;
+}
+
+.med-directions-side,
+.med-directions-main {
+  min-width: 0;
+  overflow: hidden;
+}
+
+.med-directions-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+}
+
+.med-directions-list-wrap {
+  overflow: auto;
+  max-height: calc(100vh - 220px);
+}
+
+.med-directions-list {
+  width: 100%;
+  table-layout: fixed;
+}
+
+.med-directions-list th,
+.med-directions-list td {
+  vertical-align: top;
+}
+
+.med-dir-col-date {
+  width: 96px;
+  white-space: nowrap;
+}
+
+.med-dir-col-name {
+  width: auto;
+  white-space: normal;
+  word-break: break-word;
+}
+
+.med-dir-col-name a {
+  display: block;
+  color: inherit;
+  text-decoration: none;
+  white-space: normal;
+  word-break: break-word;
+}
+
+.med-dir-col-name a:hover {
+  text-decoration: underline;
+}
+
+.med-dir-col-type {
+  width: 32%;
+  white-space: normal;
+  word-break: break-word;
+}
+
+.med-dir-col-actions {
+  width: 2.5rem;
+  text-align: center;
+  white-space: nowrap;
+}
+
+.med-dir-col-actions .btn {
+  min-width: 2rem;
+  padding-left: 0.35rem;
+  padding-right: 0.35rem;
+}
+
+.med-directions-main-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 12px;
+  align-items: center;
+}
+
+.med-directions-main-toolbar .hint {
+  min-width: 0;
+  flex: 1 1 180px;
+  white-space: normal;
+}
+
+@media (max-width: 1100px) {
+  .med-directions-split {
+    grid-template-columns: 1fr;
+  }
+
+  .med-directions-list-wrap {
+    max-height: 280px;
+  }
+}
+
+/* Медицинские организации: широкий список записей */
+.med-medical-orgs-split {
+  grid-template-columns: minmax(360px, 44%) minmax(0, 1fr);
+  align-items: stretch;
+  gap: 16px;
+}
+
+.med-medical-orgs-side,
+.med-medical-orgs-main {
+  min-width: 0;
+}
+
+.med-medical-orgs-side {
+  display: flex;
+  flex-direction: column;
+  min-height: calc(100vh - 200px);
+  max-height: none;
+}
+
+.med-medical-orgs-list-wrap {
+  flex: 1 1 auto;
+  overflow: auto;
+  min-height: 420px;
+  margin-top: 4px;
+}
+
+.med-medical-orgs-list a {
+  white-space: normal;
+  word-break: break-word;
+  line-height: 1.35;
+}
+
+.med-medical-orgs-list li {
+  padding: 12px 10px;
+}
+
+.med-medical-orgs-empty {
+  margin: 8px 4px 0;
+}
+
+@media (max-width: 1100px) {
+  .med-medical-orgs-split {
+    grid-template-columns: 1fr;
+  }
+
+  .med-medical-orgs-side {
+    min-height: 0;
+  }
+
+  .med-medical-orgs-list-wrap {
+    min-height: 240px;
+    max-height: 360px;
+  }
+}
+
+.med-print-page-break {
+  page-break-after: always;
+  break-after: page;
+  height: 0;
+}
+
+@media print {
+  thead {
+    display: table-row-group !important;
+  }
+
+  .med-print-table th,
+  .med-print-table td {
+    border-color: #000;
+  }
+
+  .med-print-page-break {
+    display: block;
+  }
+}
+
+/* Экранная таблица контингентов — в тоне сайта (бренд / surface / line). Печать не трогаем. */
+.med-contingent-scroll {
+  overflow: auto;
+  max-width: 100%;
+  border: 1px solid var(--card-border, #e8ecea);
+  border-radius: var(--radius-sm, 10px);
+  background: var(--surface, #fff);
+  box-shadow: var(--shadow-card, 0 2px 10px rgba(15, 26, 21, 0.05));
+}
+
+.med-contingent-table {
+  width: 100%;
+  min-width: 0;
+  border-collapse: collapse;
+  table-layout: fixed;
+  font-family: var(--font-sans, inherit);
+  font-size: 13px;
+  line-height: 1.35;
+  color: var(--text, #0f1a15);
+}
+
+.med-contingent-table col.med-cg-num { width: 1.4%; }
+.med-contingent-table col.med-cg-dept { width: 6.5%; }
+.med-contingent-table col.med-cg-prof { width: 7%; }
+.med-contingent-table col.med-cg-factors { width: 12%; }
+.med-contingent-table col.med-cg-code { width: 5.5%; }
+.med-contingent-table col.med-cg-pick { width: 7.5%; }
+.med-contingent-table col.med-cg-n { width: 2.05%; }
+
+.med-contingent-table th,
+.med-contingent-table td {
+  border: 1px solid var(--line-100, #e8ecea);
+  padding: 5px 4px;
+  vertical-align: middle;
+}
+
+.med-contingent-table thead th {
+  background: linear-gradient(180deg, var(--brand-50, #ecf5f1) 0%, color-mix(in srgb, var(--brand-100, #d2e9e0) 55%, #fff) 100%);
+  color: var(--brand-700, #084e38);
+  font-weight: 600;
+  text-align: center;
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  max-width: none;
+  font-size: 11.5px;
+  line-height: 1.2;
+  padding: 6px 4px;
+  hyphens: auto;
+  overflow-wrap: anywhere;
+  border-bottom-color: var(--line-200, #d3dad8);
+  box-shadow: 0 1px 0 var(--line-200, #d3dad8);
+}
+
+.med-contingent-table thead th[rowspan="4"] {
+  font-size: 12px;
+  line-height: 1.25;
+  padding: 8px 5px;
+  vertical-align: top;
+}
+
+.med-contingent-vcell {
+  vertical-align: bottom !important;
+  padding: 4px 0 !important;
+}
+
+.med-contingent-vtext {
+  display: inline-block;
+  writing-mode: vertical-rl;
+  transform: rotate(180deg);
+  white-space: normal;
+  max-height: 12rem;
+  line-height: 1.15;
+  font-size: 11px;
+  font-weight: 600;
+  text-align: left;
+  color: var(--ink-700, #243029);
+}
+
+.med-contingent-table thead th.med-contingent-cat {
+  vertical-align: middle;
+  font-size: 9.5px;
+  font-weight: 600;
+  line-height: 1.15;
+  padding: 5px 3px;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+  hyphens: auto;
+}
+
+.med-contingent-table .med-contingent-num {
+  text-align: center;
+  white-space: nowrap;
+  color: var(--muted, #616d7e);
+  font-variant-numeric: tabular-nums;
+}
+
+.med-contingent-table .med-c {
+  text-align: center;
+  white-space: nowrap;
+}
+
+.med-contingent-table .med-contingent-col-numbers th {
+  background: var(--brand-100, #d2e9e0);
+  font-weight: 700;
+  color: var(--brand-700, #084e38);
+  font-size: 11px;
+  padding: 3px 0;
+  letter-spacing: 0.02em;
+}
+
+.med-contingent-table tbody td:nth-child(2),
+.med-contingent-table tbody td:nth-child(3),
+.med-contingent-table tbody td:nth-child(4) {
+  text-align: left;
+  font-size: 13px;
+  padding: 6px 6px;
+}
+
+.med-contingent-table tbody tr.med-contingent-data-row[data-line="0"] > td {
+  background: var(--surface, #fff);
+}
+
+.med-contingent-table tbody tr.med-contingent-data-row:not([data-line="0"]) > td {
+  background: color-mix(in srgb, var(--brand-50, #ecf5f1) 35%, var(--surface, #fff));
+}
+
+.med-contingent-table tbody tr.med-contingent-data-row:hover > td {
+  background: var(--row-active-bg, #f3f8f5);
+}
+
+.med-contingent-table tfoot .med-contingent-total {
+  background: linear-gradient(180deg, var(--brand-50, #ecf5f1), color-mix(in srgb, var(--brand-100, #d2e9e0) 40%, #fff));
+  font-weight: 600;
+  color: var(--brand-700, #084e38);
+}
+
+.med-contingent-table tfoot .med-contingent-total td {
+  border-top: 2px solid color-mix(in srgb, var(--accent, #00a86b) 35%, var(--line-200, #d3dad8));
+  font-size: 13px;
+  padding: 7px 4px;
+}
+
+.med-contingent-pathology-head {
+  background: color-mix(in srgb, var(--brand-50, #ecf5f1) 70%, #e8f0fb) !important;
+  color: var(--ink-700, #243029) !important;
+}
+
+.med-contingent-edit-cell {
+  background: transparent;
+  padding: 0 !important;
+  vertical-align: top;
+}
+
+.med-contingent-table .js-format-cell.is-format-active {
+  outline: 2px solid var(--accent, #00a86b);
+  outline-offset: 1px;
+}
+
+.med-contingent-table .js-format-cell[style*="font-weight"],
+.med-contingent-table textarea.js-format-cell[style*="font-weight"] {
+  font-weight: 700 !important;
+}
+
+.med-contingent-prof-cell {
+  position: relative;
+  padding-right: 1.8rem !important;
+}
+
+.med-contingent-add-line {
+  position: absolute;
+  right: 0.25rem;
+  bottom: 0.25rem;
+  min-width: 1.5rem;
+  padding: 0.1rem 0.4rem;
+  line-height: 1.2;
+  font-size: 0.85rem;
+  border-radius: 6px;
+  border-color: color-mix(in srgb, var(--accent, #00a86b) 35%, var(--line-200, #d3dad8));
+  color: var(--brand-600, #0b6649);
+}
+
+.med-contingent-add-line:hover {
+  background: var(--select-hover, #ecf5f1);
+  border-color: var(--accent, #00a86b);
+}
+
+.med-contingent-factor-line-wrap {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.3rem;
+  padding: 2px 4px 2px 0;
+}
+
+.med-contingent-factor-line-wrap .med-contingent-text-input {
+  flex: 1;
+  min-width: 0;
+}
+
+.med-contingent-remove-line {
+  flex: 0 0 auto;
+  min-width: 1.5rem;
+  padding: 0.1rem 0.35rem;
+  line-height: 1.2;
+  font-size: 0.85rem;
+  border-radius: 6px;
+  color: var(--danger, #d24438);
+  border-color: color-mix(in srgb, var(--danger, #d24438) 30%, var(--line-200, #d3dad8));
+}
+
+.med-contingent-remove-line:hover:not(:disabled) {
+  background: #fef2f2;
+}
+
+.med-contingent-remove-line:disabled {
+  opacity: 0.35;
+  cursor: default;
+}
+
+/* Поименный: без +/× — поле само растёт по тексту */
+.med-contingent-named-table td.med-named-factors .med-contingent-text-input,
+.med-contingent-named-edit .js-named-line-factor,
+.med-contingent-named-edit .js-named-line-988,
+.med-contingent-named-edit .js-named-line-29,
+.med-contingent-named-edit .js-auto-textarea {
+  width: 100%;
+  min-height: 2.35rem;
+  height: auto;
+  field-sizing: content;
+  overflow: hidden;
+  resize: none;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
+.med-contingent-num-input,
+.med-contingent-text-input,
+.med-contingent-code-input,
+.med-contingent-factor-select {
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+  font-family: inherit;
+  font-size: 13px;
+  line-height: 1.35;
+  color: var(--text, #0f1a15);
+  border: none;
+  border-radius: 0;
+  padding: 6px 7px;
+  background: transparent;
+  box-shadow: none;
+  transition: background var(--zs-dur-fast, 0.22s) ease, box-shadow var(--zs-dur-fast, 0.22s) ease;
+}
+
+.med-contingent-num-input {
+  max-width: 100%;
+  margin: 0;
+  display: block;
+  text-align: center;
+  padding: 6px 2px;
+  font-variant-numeric: tabular-nums;
+}
+
+.med-contingent-text-input {
+  min-height: 2.1rem;
+  resize: vertical;
+}
+
+.med-contingent-text-input.js-auto-textarea {
+  overflow: hidden;
+  resize: none;
+  field-sizing: content;
+}
+
+.med-contingent-code-input {
+  max-width: none;
+  min-height: 2.1rem;
+  text-align: left;
+  resize: vertical;
+}
+
+.med-contingent-factor-select {
+  min-height: 2.1rem;
+  max-width: 100%;
+  cursor: pointer;
+  appearance: auto;
+}
+
+.med-contingent-factor-select option {
+  white-space: nowrap;
+  font-size: 12px;
+}
+
+.med-contingent-num-input:hover,
+.med-contingent-text-input:hover,
+.med-contingent-code-input:hover,
+.med-contingent-factor-select:hover {
+  background: color-mix(in srgb, var(--accent, #00a86b) 6%, transparent);
+}
+
+.med-contingent-num-input:focus,
+.med-contingent-text-input:focus,
+.med-contingent-code-input:focus,
+.med-contingent-factor-select:focus {
+  outline: none;
+  border: none;
+  background: color-mix(in srgb, var(--accent, #00a86b) 8%, var(--surface, #fff));
+  box-shadow: inset 0 0 0 2px color-mix(in srgb, var(--accent, #00a86b) 55%, transparent);
+  position: relative;
+  z-index: 5;
+}
+
+.med-contingent-text-input[readonly],
+.med-contingent-code-input[readonly] {
+  background: transparent;
+  color: var(--ink-700, #243029);
+  border: none;
+}
+
+/* Поименный список ЛПУ — тот же визуал, что таблица контингентов. */
+.med-contingent-named-table {
+  min-width: 1280px;
+}
+
+.med-contingent-named-table col.med-named-act { width: 2.2%; }
+.med-contingent-named-table col.med-named-c1 { width: 1.4%; }
+.med-contingent-named-table col.med-named-c2 { width: 8.2%; }
+.med-contingent-named-table col.med-named-c3 { width: 4.4%; }
+.med-contingent-named-table col.med-named-c4 { width: 5.4%; }
+.med-contingent-named-table col.med-named-c5 { width: 7.2%; }
+.med-contingent-named-table col.med-named-c6 { width: 6.4%; }
+.med-contingent-named-table col.med-named-c7 { width: 3.8%; }
+.med-contingent-named-table col.med-named-c8 { width: 3.8%; }
+.med-contingent-named-table col.med-named-c9 { width: 28%; }
+.med-contingent-named-table col.med-named-c10 { width: 3.4%; }
+.med-contingent-named-table col.med-named-c11 { width: 3%; }
+.med-contingent-named-table col.med-named-c12 { width: 3.6%; }
+.med-contingent-named-table col.med-named-c13 { width: 3.6%; }
+.med-contingent-named-table col.med-named-c14 { width: 4.2%; }
+.med-contingent-named-table col.med-named-c15 { width: 4.2%; }
+
+.med-contingent-named-table thead th {
+  background: linear-gradient(180deg, var(--brand-50, #ecf5f1) 0%, color-mix(in srgb, var(--brand-100, #d2e9e0) 55%, #fff) 100%);
+  color: var(--brand-700, #084e38);
+  font-weight: 600;
+  text-align: center;
+  font-size: 11.5px;
+  line-height: 1.2;
+  padding: 6px 4px;
+}
+
+.med-contingent-named-table .med-contingent-col-numbers th {
+  background: var(--brand-100, #d2e9e0);
+  font-weight: 700;
+  color: var(--brand-700, #084e38);
+  font-size: 11px;
+  padding: 3px 0;
+}
+
+.med-contingent-named-table tbody tr.med-named-data-row[data-line="0"] > td {
+  background: var(--surface, #fff);
+}
+
+.med-contingent-named-table tbody tr.med-named-data-row:not([data-line="0"]) > td {
+  background: color-mix(in srgb, var(--brand-50, #ecf5f1) 35%, var(--surface, #fff));
+}
+
+.med-contingent-named-table tbody tr.med-named-data-row:hover > td {
+  background: var(--row-active-bg, #f3f8f5);
+}
+
+.med-contingent-named-table tr.med-named-person-start > td {
+  border-top: 2px solid color-mix(in srgb, var(--accent, #00a86b) 40%, var(--line-200, #d3dad8));
+}
+
+.med-contingent-named-table tr.med-named-data-row > td {
+  vertical-align: top;
+  font-size: 13px;
+}
+
+.med-contingent-named-table .med-named-num {
+  text-align: center;
+  color: var(--muted, #616d7e);
+  font-variant-numeric: tabular-nums;
+  vertical-align: middle;
+}
+
+.med-named-remove-btn {
+  min-width: 1.7rem;
+  padding: 0.1rem 0.35rem;
+  line-height: 1.2;
+  font-size: 1.05rem;
+  color: var(--danger, #d24438);
+  border-radius: 8px;
+  border: 1px solid color-mix(in srgb, var(--danger, #d24438) 32%, var(--line-200, #d3dad8));
+  background: var(--surface, #fff);
+}
+
+.med-named-remove-btn:hover {
+  background: #fef2f2;
+  border-color: var(--danger, #d24438);
+}
+
+.med-contingent-named-edit .med-contingent-edit-cell {
+  background: transparent;
+  padding: 0 !important;
+  vertical-align: top;
+}
+
+.med-contingent-named-edit .med-contingent-text-input,
+.med-contingent-named-edit .med-contingent-code-input,
+.med-contingent-named-edit .med-contingent-factor-select {
+  width: 100%;
+  min-width: 0;
+  font-size: 13px;
+  border: none;
+  border-radius: 0;
+  padding: 6px 7px;
+  background: transparent;
+  box-shadow: none;
+}
+
+.med-contingent-named-edit td.med-named-factors .med-contingent-text-input {
+  min-height: 2.1rem;
+  white-space: pre-wrap;
+}
+
+.med-contingent-named-edit td.med-named-factors {
+  padding: 0 !important;
+}
+
+.med-contingent-named-table td.med-named-factors {
+  text-align: left;
+  word-break: break-word;
+  vertical-align: top;
+}
+
+.med-contingent-named-edit .med-named-empty-row td {
+  padding: 16px 12px;
+  text-align: left;
+  background: var(--surface-2, #f0f2f1);
+  color: var(--muted, #616d7e);
+  border: 1px solid var(--line-100, #e8ecea);
+}
+
+.med-contingent-named-print tr.med-named-person-start > td,
+.med-contingent-named-print tr.med-named-factor-cont > td {
+  vertical-align: top;
+}
+
+.med-contingent-named-print tr.med-named-person-start > td {
+  border-top: 2px solid #000;
+}
+
+.med-contingent-named-print td.med-named-factor-cell,
+.med-contingent-named-print td.med-named-code-cell {
+  vertical-align: top;
+  text-align: left;
+}
+
+.med-contingent-named-print td.med-named-code-cell {
+  text-align: center;
+}
+
+.med-contingent-print {
+  background: #fff;
+  color: #000;
+  padding: 6px 8px 12px;
+  font-family: "Times New Roman", Times, serif;
+  font-size: 10pt;
+}
+
+.med-contingent-print h2 {
+  margin: 0 0 6px;
+  text-align: center;
+  font-size: 16px;
+}
+
+.med-contingent-print-org {
+  text-align: center;
+  margin: 0 0 12px;
+  font-size: 13px;
+}
+
+.med-contingent-approve {
+  width: 36%;
+  margin-left: auto;
+  text-align: center;
+  margin-bottom: 10px;
+  line-height: 1.35;
+}
+
+.med-contingent-approve-title {
+  display: block;
+  font-weight: 700;
+  text-transform: uppercase;
+  margin-bottom: 4px;
+  letter-spacing: 0.04em;
+}
+
+.med-contingent-approve-role,
+.med-contingent-approve-name,
+.med-contingent-approve-date {
+  display: block;
+  margin-top: 3px;
+}
+
+.med-contingent-doc-title,
+.med-contingent-doc-subtitle,
+.med-contingent-doc-org {
+  display: block;
+  text-align: center;
+  font-weight: 700;
+  margin: 6px 4% 8px;
+  line-height: 1.35;
+  font-size: 11.5pt;
+}
+
+.med-contingent-doc-org {
+  margin-bottom: 2px;
+  font-size: 11pt;
+}
+
+.med-contingent-doc-subtitle {
+  font-weight: 400;
+  margin-top: 0;
+  font-size: 10.5pt;
+}
+
+.med-contingent-meta {
+  margin: 0 0 10px;
+  font-size: 9.5pt;
+  line-height: 1.45;
+}
+
+.med-contingent-meta-row {
+  margin: 3px 0;
+}
+
+.med-contingent-meta-split {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 16px;
+  margin: 2px 0;
+}
+
+.med-contingent-meta-left {
+  flex: 1 1 58%;
+  min-width: 0;
+}
+
+.med-contingent-meta-right {
+  flex: 0 0 34%;
+  text-align: left;
+  white-space: nowrap;
+}
+
+.med-contingent-meta-row.med-contingent-meta-right {
+  text-align: right;
+}
+
+.med-contingent-meta-stats {
+  margin-top: 6px;
+}
+
+.med-contingent-meta-sep {
+  margin-right: 0.15em;
+}
+
+.med-contingent-meta-orders {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 16px;
+  margin-top: 6px;
+}
+
+.med-contingent-meta-order-pmo {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.med-contingent-meta-order-mz {
+  flex: 0 0 auto;
+  white-space: nowrap;
+}
+
+.med-contingent-meta-label {
+  font-weight: 400;
+}
+
+.med-contingent-meta-value {
+  font-weight: 700;
+  border-bottom: 1px solid #000;
+  padding: 0 4px 1px;
+  min-width: 2.5em;
+  display: inline-block;
+}
+
+.med-contingent-meta-wide {
+  min-width: 10em;
+}
+
+.med-contingent-print-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 10.5pt;
+  table-layout: fixed;
+}
+
+/* Кол. 4 (факторы) шире; 7–24 чуть уже — числам хватает. */
+.med-contingent-print-table col.med-col-num { width: 1.4%; }
+.med-contingent-print-table col.med-col-dept { width: 7.2%; }
+.med-contingent-print-table col.med-col-prof { width: 7.2%; }
+.med-contingent-print-table col.med-col-factors { width: 14%; }
+.med-contingent-print-table col.med-col-code { width: 3.3%; }
+.med-contingent-print-table col.med-col-text { width: 7%; }
+.med-contingent-print-table col.med-col-n { width: 2.45%; }
+
+.med-contingent-print-table th,
+.med-contingent-print-table td {
+  border: 1px solid #000;
+  padding: 2px 1px;
+  vertical-align: middle;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+  hyphens: auto;
+}
+
+.med-contingent-print-table th {
+  text-align: center;
+  font-weight: 600;
+  line-height: 1.12;
+  font-size: 8pt;
+}
+
+.med-contingent-print-table .med-c {
+  text-align: center;
+  padding: 1px 0;
+  font-size: 10pt;
+}
+
+.med-contingent-print-table .med-contingent-col-numbers th {
+  font-weight: 700;
+  padding: 1px;
+  font-size: 8pt;
+}
+
+.med-contingent-print-table tr.med-contingent-total td,
+.med-contingent-print-table tfoot .med-contingent-total td {
+  font-weight: 700;
+}
+
+.med-contingent-print-table thead {
+  display: table-header-group;
+}
+
+.med-contingent-print-table tr.med-contingent-total {
+  break-inside: avoid;
+  page-break-inside: avoid;
+}
+
+.med-contingent-print-sheet {
+  width: 297mm;
+  min-width: 297mm;
+  max-width: none;
+  min-height: 210mm;
+  padding: 8mm 6mm 10mm;
+  box-sizing: border-box;
+}
+
+.med-contingent-print-page .sout-preview-doc-wrap {
+  overflow-x: auto;
+}
+
+.med-contingent-print-landscape {
+  min-width: 100%;
+  font-size: 9.5pt;
+}
+
+.med-contingent-print-page .sout-eq-doc.med-contingent-print-sheet {
+  width: 297mm !important;
+  min-width: 297mm !important;
+  min-height: 210mm !important;
+  max-width: none !important;
+  padding: 8mm 6mm 10mm;
+  box-shadow: 0 2px 14px rgba(0, 0, 0, 0.22);
+}
+
+.med-contingent-named-print {
+  font-size: 9.5pt;
+}
+
+/* Поименный список: кол. 9 шире; 1, 10–15 уже. */
+.med-contingent-named-print col.med-named-c1 { width: 1.4%; }
+.med-contingent-named-print col.med-named-c2 { width: 8.2%; }
+.med-contingent-named-print col.med-named-c3 { width: 4.4%; }
+.med-contingent-named-print col.med-named-c4 { width: 5.4%; }
+.med-contingent-named-print col.med-named-c5 { width: 7.2%; }
+.med-contingent-named-print col.med-named-c6 { width: 6.4%; }
+.med-contingent-named-print col.med-named-c7 { width: 3.8%; }
+.med-contingent-named-print col.med-named-c8 { width: 3.8%; }
+.med-contingent-named-print col.med-named-c9 { width: 26%; }
+.med-contingent-named-print col.med-named-c10 { width: 3.6%; }
+.med-contingent-named-print col.med-named-c11 { width: 3.2%; }
+.med-contingent-named-print col.med-named-c12 { width: 3.8%; }
+.med-contingent-named-print col.med-named-c13 { width: 3.8%; }
+.med-contingent-named-print col.med-named-c14 { width: 4.5%; }
+.med-contingent-named-print col.med-named-c15 { width: 4.5%; }
+
+.med-contingent-named-print th {
+  font-size: 8.5pt;
+}
+
+.med-contingent-print [contenteditable="true"]:hover,
+.med-contingent-print [contenteditable="true"]:focus {
+  outline: 1px dashed #6a8;
+  background: #f7fff9;
+}
+
+@media print {
+  /* Ориентация задаётся на страницах печати (ContingentLists/Print — landscape).
+     Здесь только стили вёрстки, без глобального @page — иначе ломает направления (книжная). */
+
+  .med-contingent-print-page .sout-eq-doc.med-contingent-print-sheet,
+  .med-contingent-print-sheet {
+    width: auto !important;
+    min-width: 0 !important;
+    min-height: 0 !important;
+    max-width: none !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    box-shadow: none !important;
+  }
+
+  .med-contingent-print {
+    padding: 0;
+  }
+
+  .med-contingent-print-table {
+    width: 100%;
+    table-layout: fixed;
+    font-size: 9.5pt;
+  }
+
+  .med-contingent-print-table th {
+    font-size: 7.5pt;
+    line-height: 1.1;
+  }
+
+  .med-contingent-print-table .med-c {
+    font-size: 9pt;
+  }
+
+  .med-contingent-print-table .med-contingent-col-numbers th {
+    font-size: 7.5pt;
+  }
+
+  .med-contingent-print-table thead {
+    display: table-header-group;
+  }
+
+  .med-contingent-print-table tfoot {
+    display: table-row-group;
+  }
+
+  .med-contingent-named-print {
+    font-size: 8.5pt;
+  }
+
+  .med-contingent-print [contenteditable="true"]:hover,
+  .med-contingent-print [contenteditable="true"]:focus {
+    outline: none;
+    background: transparent;
+  }
+}
+
+/* Планирование МО: ФИО/подразделение/должность объединены по человеку */
+.med-schedule-needs-grid .med-needs-person-cell {
+  vertical-align: top;
+  background: #eef6f0;
+  font-weight: 600;
+}
+
+.med-schedule-needs-grid .med-needs-person-name {
+  margin-bottom: 6px;
+}
+
+.med-schedule-needs-grid .med-needs-issue-btn {
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.med-schedule-needs-grid tr.med-needs-person-row:hover td:not(.med-needs-person-cell) {
+  background: #f7faf8;
+}
+

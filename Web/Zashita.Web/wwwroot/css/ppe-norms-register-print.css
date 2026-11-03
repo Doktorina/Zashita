@@ -1,0 +1,234 @@
+.ppe-norms-register-panel {
+  overflow-x: auto;
+}
+
+.ppe-norms-register-table {
+  width: 100%;
+  min-width: 960px;
+  table-layout: fixed;
+}
+
+.ppe-norms-register-table th,
+.ppe-norms-register-table td {
+  white-space: normal;
+  vertical-align: top;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+  overflow: hidden;
+}
+
+.ppe-norms-register-table th:nth-child(1),
+.ppe-norms-register-table td:nth-child(1) {
+  width: 42px;
+}
+
+.ppe-norms-register-table th:nth-child(2),
+.ppe-norms-register-table td:nth-child(2) {
+  width: 14%;
+}
+
+.ppe-norms-register-table th:nth-child(7),
+.ppe-norms-register-table td:nth-child(7) {
+  width: 12%;
+}
+
+.ppe-norms-register-table th:nth-child(8),
+.ppe-norms-register-table td:nth-child(8) {
+  width: 18%;
+}
+
+.ppe-norms-print-page {
+  margin: 0;
+  background: #fff;
+}
+
+.ppe-norms-print-toolbar {
+  display: flex;
+  gap: 8px;
+  padding: 12px 16px;
+  align-items: center;
+}
+
+.ppe-norms-print-sheet {
+  width: 297mm;
+  max-width: 100%;
+  min-height: 190mm;
+  padding: 12mm 10mm;
+  box-sizing: border-box;
+}
+
+.ppe-norms-sheet {
+  font-family: "Times New Roman", Times, serif;
+  color: #000;
+  font-size: 11pt;
+}
+
+/* Правый блок «УТВЕРЖДАЮ» как в 1С */
+.ppe-norms-approve {
+  width: 42%;
+  margin-left: auto;
+  text-align: center;
+  font-size: 11pt;
+  line-height: 1.4;
+  margin-bottom: 20px;
+}
+
+.ppe-norms-approve-title {
+  font-weight: 700;
+  text-transform: uppercase;
+  margin-bottom: 2px;
+}
+
+.ppe-norms-sheet-title {
+  text-align: center;
+  font-size: 16pt;
+  font-weight: 700;
+  margin: 4px 0 4px;
+}
+
+.ppe-norms-sheet-org {
+  text-align: center;
+  margin: 0 0 12px;
+  font-size: 10pt;
+  color: #333;
+}
+
+.ppe-norms-print-table {
+  font-size: 9pt;
+  width: 100%;
+  border-collapse: collapse;
+  table-layout: fixed;
+}
+
+.ppe-norms-print-table th,
+.ppe-norms-print-table td {
+  font-size: 9pt;
+  vertical-align: top;
+  border: 1px solid #000;
+  padding: 3px 4px;
+  white-space: normal;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+  word-wrap: break-word;
+  overflow: hidden;
+  /* с table-layout:fixed заставляет длинный текст переноситься внутри колонки */
+  max-width: 0;
+}
+
+.ppe-norms-print-table th {
+  font-weight: 700;
+  text-align: center;
+  vertical-align: middle;
+  line-height: 1.2;
+}
+
+.ppe-norms-print-table .c-num {
+  width: 36px;
+  text-align: center;
+  max-width: none;
+}
+
+.ppe-norms-print-table .c-norm {
+  text-align: left;
+  white-space: normal;
+}
+
+.ppe-norms-print-table th:nth-child(1),
+.ppe-norms-print-table td:nth-child(1) { width: 4%; }
+.ppe-norms-print-table th:nth-child(2),
+.ppe-norms-print-table td:nth-child(2) { width: 12%; }
+.ppe-norms-print-table th:nth-child(3),
+.ppe-norms-print-table td:nth-child(3) { width: 14%; }
+.ppe-norms-print-table th:nth-child(4),
+.ppe-norms-print-table td:nth-child(4) { width: 12%; }
+.ppe-norms-print-table th:nth-child(5),
+.ppe-norms-print-table td:nth-child(5) { width: 26%; }
+.ppe-norms-print-table th:nth-child(6),
+.ppe-norms-print-table td:nth-child(6) { width: 12%; }
+.ppe-norms-print-table th:nth-child(7),
+.ppe-norms-print-table td:nth-child(7) { width: 20%; }
+
+.ppe-norms-print-table [contenteditable="true"],
+.ppe-norms-sheet [contenteditable="true"] {
+  outline: none;
+}
+
+.ppe-norms-print-table [contenteditable="true"]:focus,
+.ppe-norms-sheet [contenteditable="true"]:focus {
+  background: #fff8d6;
+}
+
+.ppe-norms-empty {
+  text-align: center;
+  padding: 16px;
+}
+
+/* Подвал: слева должность, справа две подписи — как в 1С */
+.ppe-norms-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 24px;
+  margin-top: 28px;
+  font-size: 11pt;
+  line-height: 1.35;
+}
+
+.ppe-norms-footer-left {
+  flex: 0 1 42%;
+}
+
+.ppe-norms-footer-label {
+  margin-bottom: 2px;
+}
+
+.ppe-norms-footer-right {
+  flex: 0 1 52%;
+  display: flex;
+  gap: 28px;
+  justify-content: flex-end;
+  padding-top: 18px;
+}
+
+.ppe-norms-sign {
+  flex: 1 1 0;
+  min-width: 120px;
+  max-width: 220px;
+  text-align: center;
+}
+
+.ppe-norms-sign-line {
+  border-bottom: 1px solid #000;
+  min-height: 1.2em;
+  margin-bottom: 2px;
+}
+
+.ppe-norms-sign-hint {
+  font-size: 9pt;
+}
+
+@media print {
+  .ppe-norms-print-toolbar {
+    display: none !important;
+  }
+
+  .ppe-norms-print-page {
+    margin: 0;
+  }
+
+  .ppe-norms-print-sheet {
+    width: auto;
+    box-shadow: none !important;
+    padding: 0 !important;
+  }
+
+  .ppe-norms-sheet [contenteditable="true"]:focus,
+  .ppe-norms-print-table [contenteditable="true"]:focus {
+    background: transparent;
+  }
+
+  @page {
+    size: A4 landscape;
+    margin: 8mm;
+  }
+}

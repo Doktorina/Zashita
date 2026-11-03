@@ -1,0 +1,835 @@
+@page "/Sout/Status"
+@using Zashita.Core.Employees
+@using Zashita.Core.Risks
+@model Zashita.Web.Pages.Sout.StatusModel
+@{
+    ViewData["Title"] = "Отчет по СОУТ";
+    ViewData["Subtitle"] = Model.Organization;
+    const int ColCount = 9;
+    string Chip(string key) =>
+        string.Equals(Model.ActiveNeed, key, StringComparison.OrdinalIgnoreCase)
+            ? "btn btn-sm btn-primary"
+            : "btn btn-sm btn-outline";
+    var nf = Model.ActiveNeed;
+}
+
+<link rel="stylesheet" href="/css/risks-report.css" asp-append-version="true" />
+
+@if (!string.IsNullOrWhiteSpace(Model.Message))
+{
+  <p class="text-success sout-status-flash" role="status">@Model.Message</p>
+}
+
+@await Component.InvokeAsync("StaffingOnboardingAlerts", new { organization = Model.Organization, moduleKey = "специальная-оценка" })
+
+<div class="panel training-report-panel">
+  <div class="training-report-toolbar" style="margin-bottom:8px">
+    <a class="btn btn-outline" href="/module/специальная-оценка">Все разделы модуля</a>
+  </div>
+
+  <form method="get" class="training-report-filters" id="sout-status-filters">
+    <input type="hidden" name="needFilter" value="@nf" />
+    <div class="training-filter-grid">
+      <label class="ppe-field">
+        <span>Подразделение</span>
+        <select asp-for="Department" class="ppe-input js-auto-filter">
+          <option value="">все</option>
+          @foreach (var item in Model.DepartmentOptions)
+          {
+            <option value="@item">@item</option>
+          }
+        </select>
+      </label>
+      <label class="ppe-field">
+        <span>Профессия</span>
+        <select asp-for="Profession" class="ppe-input js-auto-filter">
+          <option value="">все</option>
+          @foreach (var item in Model.ProfessionOptions)
+          {
+            <option value="@item">@item</option>
+          }
+        </select>
+      </label>
+      <label class="ppe-field">
+        <span>Класс условий</span>
+        <select asp-for="ConditionsClass" class="ppe-input js-auto-filter">
+          <option value="">все</option>
+          @foreach (var item in Model.ConditionsClassOptions)
+          {
+            <option value="@item">@item</option>
+          }
+        </select>
+      </label>
+      <label class="ppe-field">
+        <span>Тип / статус</span>
+        <select asp-for="StatusFilter" class="ppe-input js-auto-filter">
+          <option value="">все</option>
+          @foreach (var item in Model.StatusOptions)
+          {
+            <option value="@item">@item</option>
+          }
+        </select>
+      </label>
+    </div>
+
+    <div class="training-report-toolbar">
+      <a class="btn btn-outline" asp-page="/Sout/Status">Сбросить</a>
+    </div>
+
+    <div class="training-report-toolbar" style="margin-top:10px;flex-wrap:wrap;gap:6px">
+      <a class="@Chip(SoutWorkplaceNeedsBuilder.NeedAll)"
+         asp-page="/Sout/Status"
+         asp-route-reportDate="@Model.ReportDate.ToString("yyyy-MM-dd")"
+         asp-route-selectedOrganization="@Model.SelectedOrganization"
+         asp-route-department="@Model.Department"
+         asp-route-profession="@Model.Profession"
+         asp-route-conditionsClass="@Model.ConditionsClass"
+         asp-route-statusFilter="@Model.StatusFilter"
+         asp-route-workplaceType="@Model.WorkplaceType"
+         asp-route-needFilter="all">Все</a>
+      <a class="@Chip(SoutWorkplaceNeedsBuilder.NeedNotConducted)"
+         asp-page="/Sout/Status"
+         asp-route-reportDate="@Model.ReportDate.ToString("yyyy-MM-dd")"
+         asp-route-selectedOrganization="@Model.SelectedOrganization"
+         asp-route-department="@Model.Department"
+         asp-route-profession="@Model.Profession"
+         asp-route-conditionsClass="@Model.ConditionsClass"
+         asp-route-statusFilter="@Model.StatusFilter"
+         asp-route-workplaceType="@Model.WorkplaceType"
+         asp-route-needFilter="notconducted">Нет спецоценки (@Model.NotConductedCount)</a>
+      <a class="@Chip(SoutWorkplaceNeedsBuilder.NeedOverdue)"
+         asp-page="/Sout/Status"
+         asp-route-reportDate="@Model.ReportDate.ToString("yyyy-MM-dd")"
+         asp-route-selectedOrganization="@Model.SelectedOrganization"
+         asp-route-department="@Model.Department"
+         asp-route-profession="@Model.Profession"
+         asp-route-conditionsClass="@Model.ConditionsClass"
+         asp-route-statusFilter="@Model.StatusFilter"
+         asp-route-workplaceType="@Model.WorkplaceType"
+         asp-route-needFilter="overdue">Просрочена (@Model.OverdueCount)</a>
+      <a class="@Chip(SoutWorkplaceNeedsBuilder.NeedExpiring)"
+         asp-page="/Sout/Status"
+         asp-route-reportDate="@Model.ReportDate.ToString("yyyy-MM-dd")"
+         asp-route-selectedOrganization="@Model.SelectedOrganization"
+         asp-route-department="@Model.Department"
+         asp-route-profession="@Model.Profession"
+         asp-route-conditionsClass="@Model.ConditionsClass"
+         asp-route-statusFilter="@Model.StatusFilter"
+         asp-route-workplaceType="@Model.WorkplaceType"
+         asp-route-needFilter="expiring">Истекает (@Model.ExpiringCount)</a>
+      <a class="@Chip(SoutWorkplaceNeedsBuilder.NeedAssessed)"
+         asp-page="/Sout/Status"
+         asp-route-reportDate="@Model.ReportDate.ToString("yyyy-MM-dd")"
+         asp-route-selectedOrganization="@Model.SelectedOrganization"
+         asp-route-department="@Model.Department"
+         asp-route-profession="@Model.Profession"
+         asp-route-conditionsClass="@Model.ConditionsClass"
+         asp-route-statusFilter="@Model.StatusFilter"
+         asp-route-workplaceType="@Model.WorkplaceType"
+         asp-route-needFilter="assessed">Оценено (@Model.AssessedCount)</a>
+      <a class="@Chip(SoutWorkplaceNeedsBuilder.NeedPlanned)"
+         asp-page="/Sout/Status"
+         asp-route-reportDate="@Model.ReportDate.ToString("yyyy-MM-dd")"
+         asp-route-selectedOrganization="@Model.SelectedOrganization"
+         asp-route-department="@Model.Department"
+         asp-route-profession="@Model.Profession"
+         asp-route-conditionsClass="@Model.ConditionsClass"
+         asp-route-statusFilter="@Model.StatusFilter"
+         asp-route-workplaceType="@Model.WorkplaceType"
+         asp-route-needFilter="planned">Запланировано (@Model.PlannedCount)</a>
+    </div>
+  </form>
+
+  <div class="risks-hazard-legend hint" style="margin:8px 0 12px">
+    <span class="risks-legend-item traffic-dot-green">Актуально</span>
+    <span class="risks-legend-item traffic-dot-yellow">Приближается срок</span>
+    <span class="risks-legend-item traffic-dot-red">Просрочено / нет карты СОУТ</span>
+    <span class="risks-legend-item traffic-dot-orange">Не ознакомлен с картой</span>
+  </div>
+
+  <div class="training-status-wrap">
+    <div class="training-report-toolbar training-status-save-bar report-save-bar" style="margin-bottom:8px;flex-wrap:wrap;gap:8px">
+      <button type="submit" form="sout-status-save" class="btn btn-primary" id="sout-status-save-btn">Сохранить данные карты СОУТ</button>
+      <button type="button" class="btn btn-outline" id="sout-status-add-toggle">Добавить</button>
+      <span class="hint" title="Людей = штат 1С (человек×компания), как в медосмотрах/обучении/рисках.">Рабочих мест: @Model.WorkplaceCount · людей: @Model.PeopleCount</span>
+    </div>
+
+    <form method="post" asp-page-handler="SyncFromStaff" id="sout-status-sync">
+      <input type="hidden" name="ReportDate" value="@Model.ReportDate.ToString("yyyy-MM-dd")" />
+      <input type="hidden" name="SelectedOrganization" value="@Model.Organization" />
+      <input type="hidden" name="Department" value="@Model.Department" />
+      <input type="hidden" name="Profession" value="@Model.Profession" />
+      <input type="hidden" name="ConditionsClass" value="@Model.ConditionsClass" />
+      <input type="hidden" name="StatusFilter" value="@Model.StatusFilter" />
+      <input type="hidden" name="NeedFilter" value="@Model.ActiveNeed" />
+      <input type="hidden" name="WorkplaceType" value="@Model.WorkplaceType" />
+    </form>
+
+    <div class="panel" id="sout-status-add-panel" hidden style="margin-bottom:12px;padding:12px">
+      <p class="hint" style="margin-top:0">Новое рабочее место — профессию можно выбрать из штата 1С или вписать вручную. После добавления строка редактируется в таблице.</p>
+      <form method="post" asp-page-handler="Add" class="training-filter-grid">
+        <input type="hidden" name="ReportDate" value="@Model.ReportDate.ToString("yyyy-MM-dd")" />
+        <input type="hidden" name="SelectedOrganization" value="@Model.Organization" />
+        <input type="hidden" name="Department" value="@Model.Department" />
+        <input type="hidden" name="Profession" value="@Model.Profession" />
+        <input type="hidden" name="ConditionsClass" value="@Model.ConditionsClass" />
+        <input type="hidden" name="StatusFilter" value="@Model.StatusFilter" />
+      <input type="hidden" name="NeedFilter" value="@Model.ActiveNeed" />
+        <input type="hidden" name="WorkplaceType" value="@Model.WorkplaceType" />
+
+        <label class="ppe-field">
+          <span>Профессия (из штата 1С)</span>
+          <input asp-for="NewProfession" class="ppe-input" list="sout-status-professions" placeholder="Начните вводить…" autocomplete="off" />
+        </label>
+        <label class="ppe-field">
+          <span>Наименование РМ</span>
+          <input asp-for="NewName" class="ppe-input" placeholder="если пусто — как профессия" autocomplete="off" />
+        </label>
+        <label class="ppe-field">
+          <span>Подразделение</span>
+          <input asp-for="NewDepartment" class="ppe-input" list="sout-status-departments" placeholder="Подразделение" autocomplete="off" />
+        </label>
+        <label class="ppe-field">
+          <span>№ рабочего места</span>
+          <input asp-for="NewWorkplaceNumber" class="ppe-input" placeholder="авто" autocomplete="off" />
+        </label>
+        <label class="ppe-field">
+          <span>Класс условий</span>
+          <select asp-for="NewConditionsClass" class="ppe-input">
+            <option value="2">2</option>
+            @foreach (var opt in Model.ConditionsClassOptions)
+            {
+              <option value="@opt">@opt</option>
+            }
+          </select>
+        </label>
+        <div class="ppe-field" style="align-self:end">
+          <button type="submit" class="btn btn-primary">Добавить в список</button>
+        </div>
+      </form>
+      <datalist id="sout-status-professions">
+        @foreach (var p in Model.ProfessionOptions)
+        {
+          <option value="@p"></option>
+        }
+      </datalist>
+      <datalist id="sout-status-departments">
+        @foreach (var d in Model.DepartmentOptions)
+        {
+          <option value="@d"></option>
+        }
+      </datalist>
+    </div>
+
+    <form method="post" asp-page-handler="Save" id="sout-status-save">
+      <input type="hidden" name="ReportDate" value="@Model.ReportDate.ToString("yyyy-MM-dd")" />
+      <input type="hidden" name="SelectedOrganization" value="@Model.Organization" />
+      <input type="hidden" name="Department" value="@Model.Department" />
+      <input type="hidden" name="Profession" value="@Model.Profession" />
+      <input type="hidden" name="ConditionsClass" value="@Model.ConditionsClass" />
+      <input type="hidden" name="StatusFilter" value="@Model.StatusFilter" />
+      <input type="hidden" name="NeedFilter" value="@Model.ActiveNeed" />
+      <input type="hidden" name="WorkplaceType" value="@Model.WorkplaceType" />
+    </form>
+
+    <table class="data-grid training-status-grid training-catalog-grid training-sticky-head-grid report-sticky-head-grid" id="sout-status-grid">
+      <thead>
+        <tr>
+          <th class="col-tree">Структура / Рабочее место</th>
+          <th>СНИЛС</th>
+          <th>№ карты СОУТ</th>
+          <th>Код профессии по ОК</th>
+          <th>Периодичность</th>
+          <th>Итоговый класс условий труда</th>
+          <th>Дата проведения СОУТ</th>
+          <th>Статус</th>
+          <th class="suot-actions-col">Действия</th>
+        </tr>
+      </thead>
+      <tbody id="sout-status-body">
+        @if (Model.TreeLines.Count == 0)
+        {
+          <tr>
+            <td colspan="@ColCount" class="hint">
+              Нет рабочих мест. Нажмите «Из штата 1С» или «Добавить».
+            </td>
+          </tr>
+        }
+        @foreach (var line in Model.TreeLines)
+        {
+          if (line.IsGroup)
+          {
+            var personNoCard = line.IsPerson && string.IsNullOrWhiteSpace(line.LinkedSoutCardWorkplaceId);
+            var personNotFam = line.IsPerson && !line.IsFamiliarized;
+            var personAlert = personNoCard
+                ? "traffic-red"
+                : (personNotFam ? "traffic-orange" : "");
+            var personAbsence = line.IsPerson && Model.HrStatusByName.TryGetValue(line.Label, out var shr) && EmployeeHrStatus.IsAbsence(shr)
+                ? "emp-absence-row"
+                : "";
+            <tr class="training-tree-row training-tree-folder training-tree-group training-tree-open level-@line.Level @(line.IsPerson ? "sout-status-person" : "") @personAlert @personAbsence"
+                data-id="@line.Id"
+                data-parent-id="@(line.ParentId ?? "")"
+                data-is-group="true"
+                data-depth="@line.Level"
+                data-level="@line.Level"
+                data-group="true"
+                data-expanded="true"
+                data-is-person="@(line.IsPerson ? "1" : "0")"
+                data-has-card="@(personNoCard ? "0" : (line.IsPerson ? "1" : ""))"
+                data-familiarized="@(line.IsPerson && line.IsFamiliarized ? "1" : "0")">
+              <td colspan="@(line.IsPerson ? 1 : ColCount)">
+                <div class="training-tree-name" style="--tree-depth:@line.Level">
+                  <button type="button" class="training-tree-toggle" aria-expanded="true" title="Свернуть / развернуть">
+                    <span class="training-tree-caret">▼</span>
+                  </button>
+                  <span>@line.Label</span>
+                  @if (line.IsPerson)
+                  {
+                    var hr = Model.HrStatusByName.TryGetValue(line.Label, out var hs) ? hs : "";
+                    if (!string.IsNullOrWhiteSpace(hr))
+                    {
+                      <span class="@EmployeeHrStatus.CssClass(hr)" style="margin-left:0.4rem">@hr</span>
+                    }
+                  }
+                </div>
+              </td>
+              @if (line.IsPerson)
+              {
+                var personCards = SoutStatusBuilder.CardsForProfession(Model.CardOptions, line.Profession);
+                <td colspan="@(ColCount - 1)">
+                  <div class="sout-card-num-cell">
+                    <select form="sout-status-save"
+                            name="attachCardId"
+                            class="ppe-input js-sout-card-select"
+                            style="min-width:18rem"
+                            title="Карта СОУТ по профессии — применится при сохранении">
+                      <option value="">— без карты СОУТ —</option>
+                      @foreach (var card in personCards)
+                      {
+                        if (string.Equals(card.WorkplaceId, line.LinkedSoutCardWorkplaceId, StringComparison.OrdinalIgnoreCase))
+                        {
+                          <option value="@card.WorkplaceId" selected>@card.Label</option>
+                        }
+                        else
+                        {
+                          <option value="@card.WorkplaceId">@card.Label</option>
+                        }
+                      }
+                    </select>
+                    <input form="sout-status-save" type="hidden" name="attachPerson" value="@line.Label" />
+                    <input form="sout-status-save" type="hidden" name="attachProfession" value="@line.Profession" />
+                    <input form="sout-status-save" type="hidden" name="attachWorkplaceIds" value="@string.Join(",", line.WorkplaceIds)" />
+                    @{
+                      var famWpId = !string.IsNullOrWhiteSpace(line.LinkedSoutCardWorkplaceId)
+                          ? line.LinkedSoutCardWorkplaceId
+                          : (line.WorkplaceIds.FirstOrDefault() ?? "");
+                    }
+                    <input form="sout-status-save" type="hidden" name="famWorkplaceId" value="@famWpId" />
+                    <input form="sout-status-save" type="hidden" name="famEmployeeKey" value="@line.EmployeeKey" />
+                    <input form="sout-status-save" type="hidden" name="famEmployeeName" value="@line.Label" />
+                    <select form="sout-status-save"
+                            name="famStatus"
+                            class="ppe-input ppe-input-sm js-sout-fam-status"
+                            style="min-width:10rem"
+                            title="Ознакомлен с картой СОУТ">
+                      @if (line.IsFamiliarized)
+                      {
+                        <option value="1" selected>Ознакомлен</option>
+                        <option value="0">Не ознакомлен</option>
+                      }
+                      else
+                      {
+                        <option value="1">Ознакомлен</option>
+                        <option value="0" selected>Не ознакомлен</option>
+                      }
+                    </select>
+                    @if (!string.IsNullOrWhiteSpace(line.LinkedSoutCardWorkplaceId))
+                    {
+                      <a class="btn btn-outline btn-sm"
+                         asp-page="/Sout/Workplaces/Card"
+                         asp-route-id="@line.LinkedSoutCardWorkplaceId"
+                         title="Открыть карту СОУТ">Открыть карту</a>
+                      <a class="btn btn-outline btn-sm"
+                         asp-page="/Sout/Workplaces/CardPreview"
+                         asp-route-id="@line.LinkedSoutCardWorkplaceId"
+                         target="_blank"
+                         title="Предпросмотр карты СОУТ">Предпросмотр</a>
+                    }
+                  </div>
+                </td>
+              }
+            </tr>
+          }
+          else if (line.Row is { } row)
+          {
+            var hasCard = !string.IsNullOrWhiteSpace(row.LinkedSoutCardWorkplaceId);
+            var cls = hasCard
+                ? row.Traffic switch
+                {
+                  "green" => "traffic-green",
+                  "yellow" => "traffic-yellow",
+                  "red" => "traffic-red",
+                  _ => ""
+                }
+                : "";
+            var conductIso = hasCard && row.ConductDate is { } cd
+                ? cd.ToString("yyyy-MM-dd")
+                : "";
+            var snilsText = string.IsNullOrWhiteSpace(row.Snils)
+                ? "—"
+                : Zashita.Core.Employees.OneCEmployeeListParser.FormatSnils(row.Snils);
+            var reportNumber = hasCard ? row.ReportNumber : string.Empty;
+            var okCode = hasCard ? row.OkCode : string.Empty;
+            var conditionsClass = hasCard ? row.ConditionsClass : string.Empty;
+            var periodicity = !hasCard
+                ? "—"
+                : (row.IsIndefinite || row.DeclarationOfConformity ? "бессрочно" : "1 раз в 5 лет");
+            var statusText = hasCard ? row.Status : "—";
+            var declarationOn = hasCard && row.DeclarationOfConformity;
+            var unscheduledOn = hasCard && row.RequiresUnscheduledSout;
+            var cardWorkplaceId = hasCard
+                ? (string.IsNullOrWhiteSpace(row.LinkedSoutCardWorkplaceId)
+                    ? row.WorkplaceId
+                    : row.LinkedSoutCardWorkplaceId)
+                : row.WorkplaceId;
+
+            <tr class="@cls training-tree-row training-tree-file training-tree-data"
+                data-id="@line.Id"
+                data-parent-id="@(line.ParentId ?? "")"
+                data-is-group="false"
+                data-depth="@line.Level"
+                data-level="@line.Level"
+                data-group="false"
+                data-has-card="@(hasCard ? "1" : "0")">
+              <td class="col-tree level-@line.Level">
+                <div class="training-tree-name" style="--tree-depth:@line.Level">
+                  <span class="training-tree-toggle-spacer"></span>
+                  <span class="hint" style="margin-right:4px">●</span>
+                  <input form="sout-status-save" type="text" name="workplaceNumber" value="@row.WorkplaceNumber" class="ppe-input" style="width:5.5rem;display:inline-block;margin-right:4px" title="№ РМ" placeholder="№" />
+                  @{
+                    var nameDup = !string.IsNullOrWhiteSpace(row.Profession)
+                        && string.Equals(row.WorkplaceName?.Trim(), row.Profession.Trim(), StringComparison.OrdinalIgnoreCase);
+                  }
+                  @if (nameDup)
+                  {
+                    <input form="sout-status-save" type="hidden" name="workplaceName" value="@row.WorkplaceName" />
+                  }
+                  else
+                  {
+                    <input form="sout-status-save" type="text" name="workplaceName" value="@row.WorkplaceName" class="ppe-input" style="min-width:10rem;flex:1" title="Наименование РМ" />
+                  }
+                </div>
+                <input form="sout-status-save" type="hidden" name="workplaceId" value="@row.WorkplaceId" />
+                <input form="sout-status-save" type="hidden" name="hasLinkedCard" value="@(hasCard ? "1" : "0")" />
+              </td>
+              <td><span class="hint" title="Из штата 1С">@snilsText</span></td>
+              <td>
+                <div class="sout-card-num-cell">
+                  @if (hasCard)
+                  {
+                    <input form="sout-status-save" type="text" name="reportNumber" value="@reportNumber" class="ppe-input" style="min-width:5.5rem" placeholder="№ карты" autocomplete="off" title="Номер карты СОУТ" />
+                    <a class="btn btn-outline btn-sm"
+                       asp-page="/Sout/Workplaces/Card"
+                       asp-route-id="@cardWorkplaceId"
+                       title="Открыть карту СОУТ">Открыть карту</a>
+                    <a class="btn btn-outline btn-sm"
+                       asp-page="/Sout/Workplaces/CardPreview"
+                       asp-route-id="@cardWorkplaceId"
+                       target="_blank"
+                       title="Предпросмотр карты СОУТ">Предпросмотр</a>
+                  }
+                  else
+                  {
+                    <input form="sout-status-save" type="hidden" name="reportNumber" value="" />
+                    <span class="hint">—</span>
+                  }
+                </div>
+              </td>
+              <td>
+                @if (hasCard)
+                {
+                  <input form="sout-status-save" type="text" name="okCode" value="@okCode" class="ppe-input" style="min-width:6rem" placeholder="код ОК" autocomplete="off" title="Код профессии по ОК" />
+                }
+                else
+                {
+                  <input form="sout-status-save" type="hidden" name="okCode" value="" />
+                  <span class="hint">—</span>
+                }
+              </td>
+              <td>
+                <span class="js-sout-periodicity" data-workplace-id="@row.WorkplaceId">@periodicity</span>
+              </td>
+              <td>
+                @if (hasCard)
+                {
+                  <select form="sout-status-save" name="conditionsClass" class="ppe-input" style="min-width:11rem" title="Итоговый класс условий труда">
+                    <option value="">—</option>
+                    @foreach (var opt in Model.ConditionsClassOptions)
+                    {
+                      if (string.Equals(opt, conditionsClass, StringComparison.OrdinalIgnoreCase))
+                      {
+                        <option value="@opt" selected>@opt</option>
+                      }
+                      else
+                      {
+                        <option value="@opt">@opt</option>
+                      }
+                    }
+                    @if (!string.IsNullOrWhiteSpace(conditionsClass) &&
+                         !Model.ConditionsClassOptions.Contains(conditionsClass, StringComparer.OrdinalIgnoreCase))
+                    {
+                      <option value="@conditionsClass" selected>@conditionsClass</option>
+                    }
+                  </select>
+                }
+                else
+                {
+                  <input form="sout-status-save" type="hidden" name="conditionsClass" value="" />
+                  <span class="hint">—</span>
+                }
+              </td>
+              <td>
+                @if (hasCard)
+                {
+                  <input form="sout-status-save" type="date" name="conductDate" value="@conductIso" class="ppe-input" style="min-width:9rem" title="Дата проведения СОУТ" />
+                }
+                else
+                {
+                  <input form="sout-status-save" type="hidden" name="conductDate" value="" />
+                  <span class="hint">—</span>
+                }
+              </td>
+              <td>
+                <div>@statusText</div>
+                @if (hasCard)
+                {
+                  <label class="hint sout-status-flag">
+                    <input form="sout-status-save" type="checkbox" name="declaration" value="@row.WorkplaceId" class="js-sout-declaration" data-workplace-id="@row.WorkplaceId" @(declarationOn ? "checked" : null) title="Декларация соответствия" />
+                    <span>декларация</span>
+                  </label>
+                  <label class="hint sout-status-flag" title="Требуется внеплановая специальная оценка условий труда">
+                    <input form="sout-status-save" type="checkbox" name="unscheduled" value="@row.WorkplaceId" @(unscheduledOn ? "checked" : null) />
+                    <span>требуется внеплановая<br />спецоценка</span>
+                  </label>
+                }
+              </td>
+              <td class="suot-actions-col">
+                @if (hasCard)
+                {
+                  <form method="post" asp-page-handler="MarkNotConducted" style="display:inline"
+                        onsubmit="return confirm('Отметить СОУТ как не проведённую?');">
+                    <input type="hidden" name="ReportDate" value="@Model.ReportDate.ToString("yyyy-MM-dd")" />
+                    <input type="hidden" name="SelectedOrganization" value="@Model.Organization" />
+                    <input type="hidden" name="Department" value="@Model.Department" />
+                    <input type="hidden" name="Profession" value="@Model.Profession" />
+                    <input type="hidden" name="ConditionsClass" value="@Model.ConditionsClass" />
+                    <input type="hidden" name="StatusFilter" value="@Model.StatusFilter" />
+                    <input type="hidden" name="NeedFilter" value="@Model.ActiveNeed" />
+                    <input type="hidden" name="WorkplaceType" value="@Model.WorkplaceType" />
+                    <input type="hidden" name="workplaceId" value="@row.WorkplaceId" />
+                    <button type="submit" class="btn btn-outline btn-sm" title="Отметить: специальная оценка не проведена">Не проведена</button>
+                  </form>
+                }
+                else
+                {
+                  <span class="hint">—</span>
+                }
+              </td>
+            </tr>
+          }
+        }
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<style>
+  .sout-card-num-cell {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 6px;
+  }
+  .risks-legend-item.traffic-dot-orange::before { background: #c45c12; }
+  #sout-status-grid tr.sout-status-person.traffic-red > td {
+    background: rgba(192, 57, 43, 0.12) !important;
+    box-shadow: inset 3px 0 0 #c0392b;
+  }
+  #sout-status-grid tr.sout-status-person.traffic-orange > td {
+    background: rgba(253, 126, 20, 0.14) !important;
+    box-shadow: inset 3px 0 0 #c45c12;
+  }
+  /* Сообщение поверх страницы — не сдвигает таблицу при сохранении */
+  .sout-status-flash {
+    position: fixed;
+    top: 0.85rem;
+    right: 1rem;
+    z-index: 80;
+    margin: 0;
+    max-width: min(28rem, calc(100vw - 2rem));
+    padding: 0.55rem 0.85rem;
+    border-radius: 8px;
+    background: color-mix(in srgb, var(--accent, #00a86b) 14%, #fff);
+    border: 1px solid color-mix(in srgb, var(--accent, #00a86b) 40%, #d3dad8);
+    box-shadow: 0 8px 24px rgba(16, 24, 40, 0.12);
+    pointer-events: none;
+  }
+</style>
+
+<script>
+  (function () {
+    var scrollKey = 'soutStatusScroll';
+    var pendingRestore = null;
+
+    function getScrollWrap() {
+      var grid = document.getElementById('sout-status-grid');
+      if (grid && grid.closest) {
+        var fromGrid = grid.closest('.training-status-wrap');
+        if (fromGrid) return fromGrid;
+      }
+      return document.querySelector('.training-status-wrap');
+    }
+
+    function saveScroll(extra) {
+      try {
+        var wrap = getScrollWrap();
+        var active = document.activeElement;
+        var rowId = '';
+        if (active && active.closest) {
+          var row = active.closest('#sout-status-body tr[data-id], #sout-status-grid tr[data-id]');
+          if (row) rowId = row.getAttribute('data-id') || '';
+        }
+        var state = {
+          top: wrap ? wrap.scrollTop : (window.scrollY || 0),
+          left: wrap ? wrap.scrollLeft : 0,
+          winY: window.scrollY || window.pageYOffset || 0,
+          rowId: rowId,
+          at: Date.now()
+        };
+        if (extra) {
+          Object.keys(extra).forEach(function (k) { state[k] = extra[k]; });
+        }
+        sessionStorage.setItem(scrollKey, JSON.stringify(state));
+      } catch (e) { /* ignore */ }
+    }
+
+    function loadPendingRestore() {
+      try {
+        var raw = sessionStorage.getItem(scrollKey);
+        if (!raw) return;
+        var saved = JSON.parse(raw);
+        sessionStorage.removeItem(scrollKey);
+        if (!saved || typeof saved.top !== 'number') return;
+        if (saved.at && Date.now() - saved.at > 180000) return;
+        pendingRestore = saved;
+      } catch (e) { pendingRestore = null; }
+    }
+
+    function restoreScroll() {
+      var saved = pendingRestore;
+      if (!saved) return;
+      var wrap = getScrollWrap();
+
+      function apply() {
+        if (saved.rowId) {
+          var safeId = String(saved.rowId).replace(/\\/g, '\\\\').replace(/"/g, '\\"');
+          var row = document.querySelector('#sout-status-body tr[data-id="' + safeId + '"]');
+          if (row && wrap) {
+            var y = row.getBoundingClientRect().top - wrap.getBoundingClientRect().top + wrap.scrollTop - 72;
+            wrap.scrollTop = Math.max(0, y);
+            if (typeof saved.left === 'number') wrap.scrollLeft = saved.left;
+            if (typeof saved.winY === 'number') window.scrollTo(0, saved.winY);
+            return;
+          }
+          if (row) {
+            row.scrollIntoView({ block: 'center', behavior: 'auto' });
+            return;
+          }
+        }
+        if (wrap) {
+          wrap.scrollTop = saved.top;
+          if (typeof saved.left === 'number') wrap.scrollLeft = saved.left;
+        }
+        if (typeof saved.winY === 'number') {
+          window.scrollTo(0, saved.winY);
+        } else if (!wrap) {
+          window.scrollTo(0, saved.top);
+        }
+      }
+
+      apply();
+      requestAnimationFrame(function () {
+        apply();
+        setTimeout(apply, 50);
+        setTimeout(apply, 200);
+        setTimeout(apply, 500);
+      });
+    }
+
+    loadPendingRestore();
+
+    document.querySelectorAll('form[method="post"]').forEach(function (form) {
+      if (!form.closest('.panel, .training-report-panel')) return;
+      form.addEventListener('submit', function () { saveScroll(); });
+    });
+    document.querySelectorAll('button[form="sout-status-save"], #sout-status-save-btn').forEach(function (btn) {
+      btn.addEventListener('click', function () { saveScroll(); });
+    });
+    document.querySelectorAll('a.btn[href*="/Sout/Status"]').forEach(function (link) {
+      link.addEventListener('click', function () { saveScroll(); });
+    });
+
+    var scrollTimer = null;
+    function rememberScrollSoon() {
+      if (scrollTimer) clearTimeout(scrollTimer);
+      scrollTimer = setTimeout(function () { saveScroll(); }, 120);
+    }
+    var wrapEl = getScrollWrap();
+    if (wrapEl) {
+      wrapEl.addEventListener('scroll', rememberScrollSoon, { passive: true });
+    }
+    window.addEventListener('scroll', rememberScrollSoon, { passive: true });
+
+    var flash = document.querySelector('.sout-status-flash');
+    if (flash) {
+      setTimeout(function () {
+        flash.style.opacity = '0';
+        flash.style.transition = 'opacity 0.4s ease';
+        setTimeout(function () { flash.remove(); }, 450);
+      }, 4500);
+    }
+
+    var addToggle = document.getElementById('sout-status-add-toggle');
+    var addPanel = document.getElementById('sout-status-add-panel');
+    if (addToggle && addPanel) {
+      addToggle.addEventListener('click', function () {
+        addPanel.hidden = !addPanel.hidden;
+      });
+    }
+
+    var form = document.getElementById('sout-status-filters');
+    if (form) {
+      form.querySelectorAll('.js-auto-filter').forEach(function (el) {
+        el.addEventListener('change', function () {
+          saveScroll();
+          form.submit();
+        });
+      });
+    }
+
+    document.querySelectorAll('.js-sout-declaration').forEach(function (box) {
+      box.addEventListener('change', function () {
+        var id = box.getAttribute('data-workplace-id') || '';
+        var cell = document.querySelector('.js-sout-periodicity[data-workplace-id="' + id + '"]');
+        if (cell) {
+          cell.textContent = box.checked ? 'бессрочно' : '1 раз в 5 лет';
+        }
+      });
+    });
+
+    function syncPersonAlert(personRow) {
+      if (!personRow || personRow.getAttribute('data-is-person') !== '1') return;
+      var cardSel = personRow.querySelector('.js-sout-card-select');
+      var famSel = personRow.querySelector('.js-sout-fam-status');
+      var hasCard = !!(cardSel && (cardSel.value || '').trim());
+      var familiarized = !!(famSel && famSel.value === '1');
+      personRow.classList.remove('traffic-red', 'traffic-orange');
+      if (!hasCard) personRow.classList.add('traffic-red');
+      else if (!familiarized) personRow.classList.add('traffic-orange');
+      personRow.setAttribute('data-has-card', hasCard ? '1' : '0');
+      personRow.setAttribute('data-familiarized', familiarized ? '1' : '0');
+    }
+
+    document.querySelectorAll('.js-sout-card-select').forEach(function (sel) {
+      sel.addEventListener('change', function () {
+        var cell = sel.closest('.sout-card-num-cell');
+        if (!cell) return;
+        var famWp = cell.querySelector('input[name="famWorkplaceId"]');
+        var cardId = (sel.value || '').trim();
+        if (famWp && cardId) {
+          famWp.value = cardId;
+        }
+        syncPersonAlert(sel.closest('tr.sout-status-person'));
+      });
+    });
+
+    document.querySelectorAll('.js-sout-fam-status').forEach(function (sel) {
+      sel.addEventListener('change', function () {
+        syncPersonAlert(sel.closest('tr.sout-status-person'));
+      });
+    });
+
+    var treeBody = document.getElementById('sout-status-body');
+    if (!treeBody) {
+      restoreScroll();
+      return;
+    }
+
+    treeBody.querySelectorAll('tr.sout-status-person').forEach(syncPersonAlert);
+
+    function getRows() {
+      return Array.prototype.slice.call(treeBody.querySelectorAll('.training-tree-row'));
+    }
+
+    function getChildren(folderRow) {
+      var id = folderRow.getAttribute('data-id') || '';
+      return getRows().filter(function (row) {
+        return (row.getAttribute('data-parent-id') || '') === id;
+      });
+    }
+
+    function collapseDescendants(row) {
+      getChildren(row).forEach(function (child) {
+        child.classList.add('training-tree-hidden');
+        child.classList.remove('training-tree-open');
+        var toggle = child.querySelector('.training-tree-toggle');
+        if (toggle) {
+          toggle.setAttribute('aria-expanded', 'false');
+          var caret = toggle.querySelector('.training-tree-caret');
+          if (caret) caret.textContent = '▶';
+        }
+        collapseDescendants(child);
+      });
+    }
+
+    function expandChildren(row) {
+      getChildren(row).forEach(function (child) {
+        child.classList.remove('training-tree-hidden');
+      });
+    }
+
+    function expandAllFolders() {
+      getRows().forEach(function (row) {
+        row.classList.remove('training-tree-hidden');
+        if (row.classList.contains('training-tree-folder')) {
+          row.classList.add('training-tree-open');
+          row.dataset.expanded = 'true';
+          var toggle = row.querySelector('.training-tree-toggle');
+          if (toggle) {
+            toggle.setAttribute('aria-expanded', 'true');
+            var caret = toggle.querySelector('.training-tree-caret');
+            if (caret) caret.textContent = '▼';
+          }
+        }
+      });
+    }
+    expandAllFolders();
+    restoreScroll();
+
+    treeBody.addEventListener('click', function (event) {
+      var toggle = event.target.closest('.training-tree-toggle');
+      if (!toggle) return;
+      event.preventDefault();
+      var folder = toggle.closest('.training-tree-folder');
+      if (!folder) return;
+      var open = folder.classList.toggle('training-tree-open');
+      folder.dataset.expanded = open ? 'true' : 'false';
+      toggle.setAttribute('aria-expanded', open ? 'true' : 'false');
+      var caret = toggle.querySelector('.training-tree-caret');
+      if (caret) caret.textContent = open ? '▼' : '▶';
+      if (open) expandChildren(folder);
+      else collapseDescendants(folder);
+    });
+  })();
+</script>

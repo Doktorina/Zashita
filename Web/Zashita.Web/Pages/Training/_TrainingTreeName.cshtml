@@ -1,0 +1,16 @@
+@model Zashita.Web.Pages.Training.TrainingTreeNameModel
+<div class="training-tree-name" style="--tree-depth:@Model.Depth">
+  @if (Model.IsGroup)
+  {
+    <button type="button" class="training-tree-toggle" aria-expanded="true" aria-label="Свернуть папку" title="Свернуть / развернуть">
+      <span class="training-tree-caret" aria-hidden="true">▼</span>
+    </button>
+    <span class="training-tree-icon training-tree-icon-folder" aria-hidden="true">📁</span>
+  }
+  else
+  {
+    <span class="training-tree-toggle-spacer" aria-hidden="true"></span>
+    <span class="training-tree-icon training-tree-icon-file" aria-hidden="true">📄</span>
+  }
+  <input name="Name" value="@Model.Name" class="@Model.InputClass" @(Model.Disabled ? "disabled" : null) @(!string.IsNullOrWhiteSpace(Model.ListId) ? $"list=\"{Model.ListId}\"" : null) placeholder="@Model.Placeholder" autocomplete="off" />
+</div>

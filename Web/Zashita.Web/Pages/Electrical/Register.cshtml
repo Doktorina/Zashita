@@ -1,0 +1,973 @@
+@page "/Electrical/Register"
+@using Zashita.Core.Electrical
+@using Zashita.Core.Employees
+@model Zashita.Web.Pages.Electrical.RegisterModel
+@{
+    ViewData["Title"] = "Реестр электробезопасность";
+    ViewData["Subtitle"] = Model.Organization;
+    var tab = string.IsNullOrWhiteSpace(Model.Tab) ? "knowledge" : Model.Tab.Trim().ToLowerInvariant();
+}
+
+<link rel="stylesheet" href="/css/electrical-register.css" asp-append-version="true" />
+
+@if (!string.IsNullOrWhiteSpace(Model.Message))
+{
+  <p class="text-success">@Model.Message</p>
+}
+
+<div class="panel ppe-panel eb-register-panel">
+  <div class="training-report-toolbar" style="margin-bottom:8px;flex-wrap:wrap;gap:10px;align-items:flex-end">
+    <a class="btn btn-outline" href="/module/обучение">Все разделы модуля</a>
+  </div>
+  <div class="eb-tabs">
+    <a class="eb-tab @(tab == "knowledge" ? "eb-tab-active" : "")"
+       asp-page="/Electrical/Register" asp-route-tab="knowledge">Проверка знаний ЭБ</a>
+    <a class="eb-tab" asp-page="/Electrical/Commissions">Комиссия по ЭБ</a>
+  </div>
+
+  @if (tab == "knowledge")
+  {
+    <p class="hint">
+      Здесь не весь штат 1С (в отчётах МО/обучение/риски — одно число «людей»).
+      В реестре ЭБ только добавленные на проверку знаний строки.
+      Выберите человека из списка сотрудников
+      @(Model.IsAllOrganizations ? " (по организациям выбранной группы)" : "")
+      и нажмите «Добавить». «Строк» — записи реестра, не численность штата.
+    </p>
+
+    <div class="training-report-filters eb-register-filters" id="eb-register-filters">
+      <div class="training-filter-grid">
+        <label class="ppe-field" style="grid-column:1 / -1;max-width:28rem">
+          <span>Поиск по таблице</span>
+          <input type="search" id="eb-employee-search" class="ppe-input" placeholder="ФИО, примечание…" autocomplete="off" />
+        </label>
+        @if (Model.IsAllOrganizations || Model.FilterOrganizationOptions.Count > 1)
+        {
+          <label class="ppe-field">
+            <span>Организация</span>
+            <select id="eb-filter-org" class="ppe-input js-eb-filter">
+              <option value="">все</option>
+              @foreach (var org in Model.FilterOrganizationOptions)
+              {
+                <option value="@org">@org</option>
+              }
+            </select>
+          </label>
+        }
+        <label class="ppe-field">
+          <span>Должность</span>
+          <select id="eb-filter-position" class="ppe-input js-eb-filter">
+            <option value="">все</option>
+            @foreach (var pos in Model.FilterPositionOptions)
+            {
+              <option value="@pos">@pos</option>
+            }
+          </select>
+        </label>
+        <label class="ppe-field">
+          <span>Группа по ЭБ</span>
+          <select id="eb-filter-group" class="ppe-input js-eb-filter">
+            <option value="">все</option>
+            <option value="__has_group">все с группой</option>
+            <option value="__empty">без группы</option>
+            @foreach (var g in ElectricalGroups.All)
+            {
+              <option value="@g">@g</option>
+            }
+          </select>
+        </label>
+        <label class="ppe-field">
+          <span>Результат проверки</span>
+          <select id="eb-filter-result" class="ppe-input js-eb-filter">
+            <option value="">все</option>
+            <option value="__empty">не указан</option>
+            @foreach (var r in ElectricalCheckResults.All)
+            {
+              <option value="@r">@r</option>
+            }
+          </select>
+        </label>
+        <label class="ppe-field">
+          <span>Статус</span>
+          <select id="eb-filter-status" class="ppe-input js-eb-filter">
+            <option value="">все</option>
+            <option value="__empty">без статуса</option>
+            @foreach (var s in Model.FilterStatusOptions)
+            {
+              <option value="@s">@s</option>
+            }
+          </select>
+        </label>
+      </div>
+      <div class="training-report-toolbar" style="margin-top:8px">
+        <button type="button" class="btn btn-outline btn-sm" id="eb-filter-reset">Сбросить фильтры</button>
+        <span class="hint" id="eb-filter-count"></span>
+      </div>
+    </div>
+
+    <form method="post"
+          asp-page="/Electrical/Register"
+          asp-page-handler="AddEmployee"
+          asp-route-tab="knowledge"
+          class="ppe-actions ppe-actions-top eb-add-bar"
+          id="eb-add-employee-form">
+      <input type="hidden" name="employeeName" id="eb-add-name" value="" />
+      <input type="hidden" name="employeeOrg" id="eb-add-org" value="" />
+      <div class="ppe-field eb-add-pick" style="margin:0;min-width:18rem;flex:1;max-width:36rem">
+        <span>Добавить сотрудника</span>
+        <div class="eb-staff-combo" id="eb-staff-combo">
+          <input type="search"
+                 id="eb-staff-combo-input"
+                 class="ppe-input"
+                 placeholder="@(Model.AvailableToAdd.Count == 0 ? "Все из штата уже в реестре или штат пуст" : "Начните вводить ФИО…")"
+                 autocomplete="off"
+                 @(Model.AvailableToAdd.Count == 0 ? "disabled" : null) />
+          <ul class="eb-staff-combo-list" id="eb-staff-combo-list" hidden></ul>
+        </div>
+      </div>
+      <button type="submit" class="btn btn-primary btn-sm" id="eb-add-from-staff"
+              @(Model.AvailableToAdd.Count == 0 ? "disabled" : null)>+ Добавить</button>
+    </form>
+
+    <form method="post" asp-page="/Electrical/Register" asp-page-handler="Save" asp-route-tab="knowledge" id="eb-knowledge-form">
+      <div class="ppe-actions ppe-actions-top" style="margin:4px 0 10px">
+        <button type="submit" class="btn btn-primary">Сохранить</button>
+        @if (Model.Rows.Count == 0)
+        {
+          <span class="hint">В реестре пока никого нет — добавьте из списка выше.</span>
+        }
+      </div>
+
+      <div class="eb-table-scroll" tabindex="0" title="Горизонтальная прокрутка таблицы">
+        <table class="data-grid ppe-edit-grid eb-knowledge-grid @(Model.IsAllOrganizations ? "eb-with-org" : "")" id="eb-knowledge-grid">
+          <thead>
+            <tr>
+              @if (Model.IsAllOrganizations)
+              {
+                <th class="eb-col-org">Организация</th>
+              }
+              <th class="eb-col-fio">ФИО работника</th>
+              <th class="eb-col-position">Должность</th>
+              <th class="eb-col-education">Образование (для расчета срока)</th>
+              <th class="eb-col-group">Текущая группа по ЭБ</th>
+              <th class="eb-col-assigned">Дата присвоения текущей группы</th>
+              <th class="eb-col-result">Результат последней проверки</th>
+              <th class="eb-col-min-months">Мин. срок в группе до след. группы, мес.</th>
+              <th class="eb-col-period">Периодичность период. провер. мес.</th>
+              <th class="eb-col-planned">Плановая дата след. дейст.</th>
+              <th class="eb-col-next-type">Тип следующего действия</th>
+              <th class="eb-col-days">Осталось дней</th>
+              <th class="eb-col-status">Статус</th>
+              <th class="eb-col-note">Ответственный / примечание</th>
+              <th class="eb-col-actions"></th>
+            </tr>
+          </thead>
+          <tbody id="eb-knowledge-body">
+            @foreach (var row in Model.Rows)
+            {
+              var c = ElectricalKnowledgeCalculator.Compute(row);
+              var hr = Model.HrStatusByName.TryGetValue(row.EmployeeName?.Trim() ?? "", out var hs) ? hs : "";
+              var absence = EmployeeHrStatus.IsAbsence(hr);
+              var rowOrg = (row.Organization ?? string.Empty).Trim();
+              var rowPos = (row.Position ?? string.Empty).Trim();
+              var rowGroup = ElectricalKnowledgeCalculator.NormalizeGroup(row.CurrentGroup);
+              var rowResult = (row.LastCheckResult ?? string.Empty).Trim();
+              var rowStatus = (c.Status ?? string.Empty).Trim();
+              <tr class="eb-knowledge-row @(absence ? "eb-hr-absence-row" : "")"
+                  data-id="@row.Id"
+                  data-org="@rowOrg"
+                  data-position="@rowPos"
+                  data-group="@rowGroup"
+                  data-result="@rowResult"
+                  data-status="@rowStatus"
+                  data-filled="@(string.IsNullOrWhiteSpace(row.CurrentGroup) && !row.CurrentGroupAssignedDate.HasValue && string.IsNullOrWhiteSpace(row.LastCheckResult) ? "0" : "1")">
+                @if (Model.IsAllOrganizations)
+                {
+                  <td class="eb-org-cell eb-col-org">
+                    <input type="hidden" name="RowOrganization" value="@row.Organization" />
+                    <span class="eb-org-label" title="@row.Organization">@(string.IsNullOrWhiteSpace(row.Organization) ? "—" : row.Organization)</span>
+                  </td>
+                }
+                <td class="eb-col-fio">
+                  @if (!Model.IsAllOrganizations)
+                  {
+                    <input type="hidden" name="RowOrganization" value="@(string.IsNullOrWhiteSpace(row.Organization) ? Model.Organization : row.Organization)" />
+                  }
+                  <input type="hidden" name="Id" value="@row.Id" />
+                  <input type="hidden" name="Snils" value="@row.Snils" />
+                  <textarea name="EmployeeName" class="ppe-input eb-fio" rows="2"
+                            list="eb-employees" autocomplete="off" placeholder="ФИО">@row.EmployeeName</textarea>
+                  @if (!string.IsNullOrWhiteSpace(hr))
+                  {
+                    <div class="@EmployeeHrStatus.CssClass(hr)">@hr</div>
+                  }
+                </td>
+                <td class="eb-col-position">
+                  <textarea name="Position" class="ppe-input eb-position" rows="2" autocomplete="off">@row.Position</textarea>
+                </td>
+                <td class="eb-col-education">
+                  <div class="eb-education-cell">
+                    <span class="eb-education-face">@(string.IsNullOrWhiteSpace(row.Education) ? "—" : row.Education)</span>
+                    <select name="Education" class="ppe-input eb-education" title="Образование">
+                      <option value="">—</option>
+                      @foreach (var edu in ElectricalEducationLevels.All)
+                      {
+                        if (string.Equals(edu, row.Education, StringComparison.OrdinalIgnoreCase))
+                        {
+                          <option value="@edu" selected>@edu</option>
+                        }
+                        else
+                        {
+                          <option value="@edu">@edu</option>
+                        }
+                      }
+                    </select>
+                  </div>
+                </td>
+                <td class="eb-col-group">
+                  <select name="CurrentGroup" class="ppe-input eb-group">
+                    <option value="">—</option>
+                    @foreach (var g in ElectricalGroups.All)
+                    {
+                      if (string.Equals(g, rowGroup, StringComparison.OrdinalIgnoreCase))
+                      {
+                        <option value="@g" selected>@g</option>
+                      }
+                      else
+                      {
+                        <option value="@g">@g</option>
+                      }
+                    }
+                  </select>
+                </td>
+                <td class="eb-col-assigned">
+                  <input type="date" name="CurrentGroupAssignedDate"
+                         value="@(row.CurrentGroupAssignedDate?.ToString("yyyy-MM-dd"))"
+                         class="ppe-input eb-assigned" />
+                </td>
+                <td class="eb-col-result">
+                  <select name="LastCheckResult" class="ppe-input eb-result">
+                    <option value="">—</option>
+                    @foreach (var r in ElectricalCheckResults.All)
+                    {
+                      if (string.Equals(r, row.LastCheckResult, StringComparison.OrdinalIgnoreCase))
+                      {
+                        <option value="@r" selected>@r</option>
+                      }
+                      else
+                      {
+                        <option value="@r">@r</option>
+                      }
+                    }
+                  </select>
+                </td>
+                <td class="eb-calc eb-min-months eb-col-min-months">@c.MinMonthsDisplay</td>
+                @{
+                  var hasGroup = !string.IsNullOrWhiteSpace(
+                    ElectricalKnowledgeCalculator.NormalizeGroup(row.CurrentGroup));
+                }
+                <td class="eb-period-cell eb-col-period">
+                  @if (hasGroup)
+                  {
+                    <select name="PeriodicityMonths" class="ppe-input eb-period">
+                      <option value="">—</option>
+                      @if (row.PeriodicityMonths == 12)
+                      {
+                        <option value="12" selected>12</option>
+                        <option value="36">36</option>
+                      }
+                      else if (row.PeriodicityMonths == 36)
+                      {
+                        <option value="12">12</option>
+                        <option value="36" selected>36</option>
+                      }
+                      else
+                      {
+                        <option value="12">12</option>
+                        <option value="36">36</option>
+                      }
+                    </select>
+                  }
+                  else
+                  {
+                    <input type="hidden" name="PeriodicityMonths" value="" />
+                    <span class="eb-calc">—</span>
+                  }
+                </td>
+                <td class="eb-calc eb-planned eb-col-planned">@(c.PlannedNextActionDate?.ToString("dd.MM.yyyy") ?? "—")</td>
+                <td class="eb-calc eb-next-type eb-col-next-type">@(string.IsNullOrWhiteSpace(c.NextActionType) ? "—" : c.NextActionType)</td>
+                <td class="eb-calc eb-days eb-col-days">@(c.DaysLeft?.ToString() ?? "—")</td>
+                <td class="eb-status-cell eb-col-status">
+                  @if (!string.IsNullOrWhiteSpace(c.Status))
+                  {
+                    <span class="eb-status @c.StatusCssClass">@c.Status</span>
+                  }
+                  else
+                  {
+                    <span class="eb-calc">—</span>
+                  }
+                </td>
+                <td class="eb-col-note">
+                  <textarea name="ResponsibleNote" class="ppe-input eb-note" rows="2" autocomplete="off">@row.ResponsibleNote</textarea>
+                </td>
+                <td class="eb-col-actions">
+                  <button type="button" class="suot-action suot-action-danger" data-action="delete-row" title="Удалить">🗑</button>
+                  <input type="checkbox" name="Delete" value="true" class="eb-delete-flag" hidden />
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    </form>
+
+    <datalist id="eb-employees">
+      @foreach (var emp in Model.EmployeeOptions)
+      {
+        <option value="@emp.Name"></option>
+      }
+    </datalist>
+
+    <template id="eb-row-template">
+      <tr class="eb-knowledge-row">
+        @if (Model.IsAllOrganizations)
+        {
+          <td class="eb-org-cell eb-col-org">
+            <input type="hidden" name="RowOrganization" value="@(Model.ScopeOrganizations.FirstOrDefault() ?? "")" />
+            <span class="eb-org-label">@(Model.ScopeOrganizations.FirstOrDefault() ?? "—")</span>
+          </td>
+        }
+        <td class="eb-col-fio">
+          @if (!Model.IsAllOrganizations)
+          {
+            <input type="hidden" name="RowOrganization" value="@Model.Organization" />
+          }
+          <input type="hidden" name="Id" value="" />
+          <input type="hidden" name="Snils" value="" class="eb-snils" />
+          <textarea name="EmployeeName" class="ppe-input eb-fio" rows="2" list="eb-employees" autocomplete="off" placeholder="ФИО"></textarea>
+        </td>
+        <td class="eb-col-position"><textarea name="Position" class="ppe-input eb-position" rows="2" autocomplete="off"></textarea></td>
+        <td class="eb-col-education">
+          <div class="eb-education-cell">
+            <span class="eb-education-face">—</span>
+            <select name="Education" class="ppe-input eb-education" title="Образование">
+              <option value="">—</option>
+              @foreach (var edu in ElectricalEducationLevels.All)
+              {
+                <option value="@edu">@edu</option>
+              }
+            </select>
+          </div>
+        </td>
+        <td class="eb-col-group">
+          <select name="CurrentGroup" class="ppe-input eb-group">
+            <option value="">—</option>
+            @foreach (var g in ElectricalGroups.All)
+            {
+              <option value="@g">@g</option>
+            }
+          </select>
+        </td>
+        <td class="eb-col-assigned"><input type="date" name="CurrentGroupAssignedDate" value="" class="ppe-input eb-assigned" /></td>
+        <td class="eb-col-result">
+          <select name="LastCheckResult" class="ppe-input eb-result">
+            <option value="">—</option>
+            @foreach (var r in ElectricalCheckResults.All)
+            {
+              <option value="@r">@r</option>
+            }
+          </select>
+        </td>
+        <td class="eb-calc eb-min-months eb-col-min-months">—</td>
+        <td class="eb-period-cell eb-col-period">
+          <input type="hidden" name="PeriodicityMonths" value="" class="eb-period-placeholder" />
+          <span class="eb-calc eb-period-display">—</span>
+        </td>
+        <td class="eb-calc eb-planned eb-col-planned">—</td>
+        <td class="eb-calc eb-next-type eb-col-next-type">—</td>
+        <td class="eb-calc eb-days eb-col-days">—</td>
+        <td class="eb-status-cell eb-col-status"><span class="eb-calc">—</span></td>
+        <td class="eb-col-note"><textarea name="ResponsibleNote" class="ppe-input eb-note" rows="2" autocomplete="off"></textarea></td>
+        <td class="eb-col-actions">
+          <button type="button" class="suot-action suot-action-danger" data-action="delete-row" title="Удалить">🗑</button>
+          <input type="checkbox" name="Delete" value="true" class="eb-delete-flag" hidden />
+        </td>
+      </tr>
+    </template>
+  }
+</div>
+
+@section Scripts {
+  <script>
+    (function () {
+      var employees = @Html.Raw(Model.EmployeesJson);
+      var availableStaff = @Html.Raw(Model.AvailableToAddJson);
+      var byName = {};
+      employees.forEach(function (e) {
+        if (e && e.name) byName[String(e.name).trim().toLowerCase()] = e.position || '';
+      });
+
+      var minLookup = {
+        'Основное общее образование': { I: 3, II: 3, III: 6 },
+        'Среднее общее образование': { I: 2, II: 2, III: 3 },
+        'Среднее профессиональное / высшее (техническое) образование': { I: 2, II: 2, III: 3 },
+        'Высшее (техническое) образование в области электроэнергетики': { I: 1, II: 1, III: 2 }
+      };
+
+      var body = document.getElementById('eb-knowledge-body');
+      var addForm = document.getElementById('eb-add-employee-form');
+      var addName = document.getElementById('eb-add-name');
+      var addOrg = document.getElementById('eb-add-org');
+      var comboInput = document.getElementById('eb-staff-combo-input');
+      var comboList = document.getElementById('eb-staff-combo-list');
+      var template = document.getElementById('eb-row-template');
+      if (!body) return;
+
+      var selectedStaff = null;
+      var staffPool = Array.isArray(availableStaff) ? availableStaff.slice() : [];
+
+      function renderComboList(filter) {
+        if (!comboList) return;
+        var needle = String(filter || '').trim().toLowerCase();
+        comboList.innerHTML = '';
+        var shown = 0;
+        staffPool.forEach(function (s) {
+          var hay = ((s.label || '') + ' ' + (s.name || '') + ' ' + (s.position || '') + ' ' + (s.org || '')).toLowerCase();
+          if (needle && hay.indexOf(needle) < 0) return;
+          var li = document.createElement('li');
+          li.className = 'eb-staff-combo-item';
+          li.setAttribute('role', 'option');
+          li.textContent = s.label || s.name;
+          li.dataset.name = s.name || '';
+          li.dataset.org = s.org || '';
+          li.dataset.position = s.position || '';
+          li.dataset.label = s.label || s.name || '';
+          comboList.appendChild(li);
+          shown++;
+        });
+        comboList.hidden = shown === 0;
+      }
+
+      function pickStaff(item) {
+        if (!item) return;
+        selectedStaff = {
+          name: item.dataset.name || '',
+          org: item.dataset.org || '',
+          position: item.dataset.position || '',
+          label: item.dataset.label || item.textContent || ''
+        };
+        if (comboInput) comboInput.value = selectedStaff.label;
+        if (addName) addName.value = selectedStaff.name;
+        if (addOrg) addOrg.value = selectedStaff.org;
+        if (comboList) comboList.hidden = true;
+      }
+
+      if (comboInput && comboList) {
+        comboInput.addEventListener('focus', function () {
+          renderComboList(comboInput.value);
+        });
+        comboInput.addEventListener('input', function () {
+          selectedStaff = null;
+          if (addName) addName.value = '';
+          if (addOrg) addOrg.value = '';
+          renderComboList(comboInput.value);
+        });
+        comboList.addEventListener('mousedown', function (e) {
+          var item = e.target && e.target.closest ? e.target.closest('.eb-staff-combo-item') : null;
+          if (!item) return;
+          e.preventDefault();
+          pickStaff(item);
+        });
+        document.addEventListener('click', function (e) {
+          if (!e.target.closest || !e.target.closest('#eb-staff-combo')) {
+            comboList.hidden = true;
+          }
+        });
+      }
+
+      if (addForm) {
+        addForm.addEventListener('submit', function (e) {
+          if (selectedStaff && selectedStaff.name) {
+            if (addName) addName.value = selectedStaff.name;
+            if (addOrg) addOrg.value = selectedStaff.org || '';
+            return;
+          }
+          // Попытка точного совпадения по вводу
+          var needle = (comboInput && comboInput.value || '').trim().toLowerCase();
+          var match = staffPool.find(function (s) {
+            return String(s.label || '').toLowerCase() === needle
+              || String(s.name || '').toLowerCase() === needle;
+          });
+          if (!match) {
+            match = staffPool.filter(function (s) {
+              var hay = ((s.label || '') + ' ' + (s.name || '')).toLowerCase();
+              return needle && hay.indexOf(needle) >= 0;
+            });
+            match = match.length === 1 ? match[0] : null;
+          }
+          if (!match) {
+            e.preventDefault();
+            window.alert('Выберите сотрудника из выпадающего списка (начните вводить ФИО).');
+            if (comboInput) comboInput.focus();
+            return;
+          }
+          if (addName) addName.value = match.name;
+          if (addOrg) addOrg.value = match.org || '';
+        });
+      }
+
+      function newRowId() {
+        return (window.crypto && crypto.randomUUID)
+          ? crypto.randomUUID().replace(/-/g, '')
+          : String(Date.now()) + Math.random().toString(16).slice(2);
+      }
+
+      function autosizeField(el) {
+        if (!el || el.tagName !== 'TEXTAREA') return;
+        el.style.height = 'auto';
+        el.style.height = Math.max(el.scrollHeight, 36) + 'px';
+      }
+
+      function syncEducationFace(sel) {
+        if (!sel || !sel.classList.contains('eb-education')) return;
+        var cell = sel.closest('.eb-education-cell');
+        var face = cell && cell.querySelector('.eb-education-face');
+        if (!face) return;
+        var opt = sel.options[sel.selectedIndex];
+        var text = (opt && opt.text ? opt.text : '').trim();
+        face.textContent = text || '—';
+        sel.title = text && text !== '—' ? text : 'Образование';
+      }
+
+      function autosizeRowFields(row) {
+        if (!row) return;
+        row.querySelectorAll('textarea.ppe-input').forEach(autosizeField);
+        row.querySelectorAll('select.eb-education').forEach(syncEducationFace);
+      }
+
+      function insertRowFromTemplate(opts) {
+        opts = opts || {};
+        if (!template) return null;
+        var node = template.content.cloneNode(true);
+        var row = node.querySelector('tr');
+        if (!row) return null;
+        var idInput = row.querySelector('input[name="Id"]');
+        if (idInput) idInput.value = newRowId();
+        var orgHidden = row.querySelector('input[name="RowOrganization"]');
+        if (orgHidden && opts.org) orgHidden.value = opts.org;
+        var orgLabel = row.querySelector('.eb-org-label');
+        if (orgLabel && opts.org) orgLabel.textContent = opts.org;
+        var fio = row.querySelector('.eb-fio');
+        if (fio && opts.name) fio.value = opts.name;
+        var snils = row.querySelector('input[name="Snils"]');
+        if (snils && opts.snils) snils.value = opts.snils;
+        var pos = row.querySelector('.eb-position');
+        if (pos && opts.position != null) pos.value = opts.position;
+        row.setAttribute('data-org', (opts.org || '').trim());
+        row.setAttribute('data-position', (opts.position || '').trim());
+        row.setAttribute('data-group', '');
+        row.setAttribute('data-result', '');
+        row.setAttribute('data-status', '');
+        row.setAttribute('data-filled', '0');
+        // Без группы — в конец, чтобы не перекрывать строки с группой ЭБ.
+        body.appendChild(node);
+        var inserted = body.lastElementChild;
+        autosizeRowFields(inserted);
+        return inserted;
+      }
+
+      function addMonths(date, months) {
+        var d = new Date(date.getTime());
+        d.setMonth(d.getMonth() + months);
+        return d;
+      }
+
+      function fmtDate(d) {
+        if (!d || isNaN(d.getTime())) return '—';
+        var dd = String(d.getDate()).padStart(2, '0');
+        var mm = String(d.getMonth() + 1).padStart(2, '0');
+        return dd + '.' + mm + '.' + d.getFullYear();
+      }
+
+      function daysBetween(a, b) {
+        var ms = Date.UTC(b.getFullYear(), b.getMonth(), b.getDate()) -
+                 Date.UTC(a.getFullYear(), a.getMonth(), a.getDate());
+        return Math.round(ms / 86400000);
+      }
+
+      function ensurePeriodCell(row, hasGroup, currentValue) {
+        var cell = row.querySelector('.eb-period-cell');
+        if (!cell) return;
+        if (hasGroup) {
+          var sel = cell.querySelector('select[name="PeriodicityMonths"]');
+          if (!sel) {
+            cell.innerHTML = '';
+            sel = document.createElement('select');
+            sel.name = 'PeriodicityMonths';
+            sel.className = 'ppe-input eb-period';
+            sel.innerHTML = '<option value="">—</option><option value="12">12</option><option value="36">36</option>';
+            if (currentValue === 12 || currentValue === 36) sel.value = String(currentValue);
+            cell.appendChild(sel);
+          }
+        } else {
+          cell.innerHTML = '<input type="hidden" name="PeriodicityMonths" value="" /><span class="eb-calc">—</span>';
+        }
+      }
+
+      function recomputeRow(row) {
+        var edu = (row.querySelector('.eb-education') || {}).value || '';
+        var group = (row.querySelector('.eb-group') || {}).value || '';
+        var assignedEl = row.querySelector('.eb-assigned');
+        var assigned = assignedEl && assignedEl.value ? new Date(assignedEl.value + 'T00:00:00') : null;
+        var periodSel = row.querySelector('select[name="PeriodicityMonths"]');
+        var periodVal = periodSel && periodSel.value ? parseInt(periodSel.value, 10) : null;
+        var hasGroup = !!group;
+
+        ensurePeriodCell(row, hasGroup, periodVal);
+        periodSel = row.querySelector('select[name="PeriodicityMonths"]');
+        periodVal = periodSel && periodSel.value ? parseInt(periodSel.value, 10) : null;
+
+        var minCell = row.querySelector('.eb-min-months');
+        var plannedCell = row.querySelector('.eb-planned');
+        var typeCell = row.querySelector('.eb-next-type');
+        var daysCell = row.querySelector('.eb-days');
+        var statusCell = row.querySelector('.eb-status-cell') || row.querySelector('td:has(.eb-status), td:has(.eb-status-cell)');
+        if (!statusCell) {
+          var noteInput = row.querySelector('[name="ResponsibleNote"]');
+          statusCell = noteInput ? noteInput.closest('td')?.previousElementSibling : null;
+        }
+
+        var minMonths = null;
+        if (group === 'I' || group === 'II' || group === 'III') {
+          var map = minLookup[edu];
+          if (map) minMonths = map[group];
+        }
+        if (minCell) minCell.textContent = minMonths != null ? String(minMonths) : '—';
+
+        var planned = null;
+        var nextType = '—';
+        if (periodVal === 12 || periodVal === 36) {
+          nextType = 'Очередная периодическая проверка';
+          if (assigned) planned = addMonths(assigned, periodVal);
+        } else if (group === 'IV' || group === 'V') {
+          nextType = 'Очередная периодическая проверка';
+        } else if (group === 'I' || group === 'II' || group === 'III') {
+          nextType = 'Плановое повышение группы';
+          if (assigned && minMonths != null) planned = addMonths(assigned, minMonths);
+        }
+        if (plannedCell) plannedCell.textContent = fmtDate(planned);
+        if (typeCell) typeCell.textContent = nextType;
+
+        var days = null;
+        if (planned) {
+          var today = new Date();
+          today.setHours(0, 0, 0, 0);
+          days = daysBetween(today, planned);
+        }
+        if (daysCell) daysCell.textContent = days != null ? String(days) : '—';
+
+        if (statusCell) {
+          var status = '—';
+          var css = '';
+          if (days != null) {
+            if (periodVal === 12 || periodVal === 36 || group === 'IV' || group === 'V') {
+              if (days >= 0) {
+                status = 'В норме';
+                css = 'eb-status-ok';
+              } else {
+                status = 'Просрочено';
+                css = 'eb-status-overdue';
+              }
+            } else if (group === 'I' || group === 'II' || group === 'III') {
+              if (days <= 0) { status = 'Стаж набран — можно повышать'; css = 'eb-status-ready'; }
+              else { status = 'Стаж набирается'; css = 'eb-status-gaining'; }
+            }
+          }
+          statusCell.innerHTML = status === '—'
+            ? '<span class="eb-calc">—</span>'
+            : '<span class="eb-status ' + css + '">' + status + '</span>';
+        }
+      }
+
+      function fillPosition(row) {
+        var nameInput = row.querySelector('.eb-fio');
+        var posInput = row.querySelector('.eb-position');
+        if (!nameInput || !posInput) return;
+        var key = (nameInput.value || '').trim().toLowerCase();
+        if (key && Object.prototype.hasOwnProperty.call(byName, key)) {
+          posInput.value = byName[key];
+        }
+      }
+
+      body.addEventListener('change', function (e) {
+        var row = e.target.closest('.eb-knowledge-row');
+        if (!row) return;
+        if (e.target.classList.contains('eb-fio')) fillPosition(row);
+        recomputeRow(row);
+        syncRowFilterAttrs(row);
+        autosizeRowFields(row);
+        // Только видимость строки — без ensureMissingStaffRows и без перестановки.
+        refreshRowVisibility(row);
+      });
+      body.addEventListener('input', function (e) {
+        var row = e.target.closest('.eb-knowledge-row');
+        if (!row) return;
+        if (e.target.classList.contains('eb-fio')) fillPosition(row);
+        if (e.target.tagName === 'TEXTAREA') autosizeField(e.target);
+        if (e.target.classList.contains('eb-education')) syncEducationFace(e.target);
+        if (e.target.classList.contains('eb-assigned') ||
+            e.target.classList.contains('eb-education') ||
+            e.target.classList.contains('eb-group') ||
+            e.target.classList.contains('eb-period')) {
+          recomputeRow(row);
+          syncRowFilterAttrs(row);
+          refreshRowVisibility(row);
+        }
+      });
+      body.addEventListener('click', function (e) {
+        var btn = e.target.closest('[data-action="delete-row"]');
+        if (!btn) return;
+        var row = btn.closest('.eb-knowledge-row');
+        if (!row) return;
+        var flag = row.querySelector('.eb-delete-flag');
+        if (flag) flag.checked = true;
+        row.style.display = 'none';
+      });
+
+      var search = document.getElementById('eb-employee-search');
+      var filterOrg = document.getElementById('eb-filter-org');
+      var filterPos = document.getElementById('eb-filter-position');
+      var filterGroup = document.getElementById('eb-filter-group');
+      var filterResult = document.getElementById('eb-filter-result');
+      var filterStatus = document.getElementById('eb-filter-status');
+      var filterReset = document.getElementById('eb-filter-reset');
+      var filterCount = document.getElementById('eb-filter-count');
+
+      function norm(v) { return (v || '').trim().toLowerCase(); }
+
+      function matchSelect(selected, actual) {
+        if (!selected) return true;
+        var a = (actual || '').trim();
+        if (selected === '__empty') return !a || a === '—';
+        if (selected === '__has_group') return !!a && a !== '—';
+        return norm(selected) === norm(a);
+      }
+
+      function hasEbGroup(row) {
+        var group = (row.querySelector('.eb-group')?.value || row.getAttribute('data-group') || '').trim();
+        return !!group && group !== '—';
+      }
+
+      function rowPersonKey(org, name) {
+        return norm(org) + '|' + norm(name);
+      }
+
+      function collectExistingPersonKeys() {
+        var keys = {};
+        body.querySelectorAll('.eb-knowledge-row').forEach(function (row) {
+          if (row.querySelector('.eb-delete-flag')?.checked) return;
+          var name = (row.querySelector('.eb-fio')?.value || '').trim();
+          if (!name) return;
+          var org = (row.getAttribute('data-org')
+            || row.querySelector('input[name="RowOrganization"]')?.value
+            || row.querySelector('.eb-org-label')?.textContent
+            || '').trim();
+          keys[rowPersonKey(org, name)] = true;
+          // Без орг. — чтобы не плодить строки при чуть другом написании юрлица.
+          keys['*|' + norm(name)] = true;
+          var snils = (row.querySelector('input[name="Snils"]')?.value
+            || row.querySelector('.eb-snils')?.value || '').replace(/\D/g, '');
+          if (snils.length === 11) {
+            keys[norm(org) + '|snils:' + snils] = true;
+            keys['*|snils:' + snils] = true;
+          }
+        });
+        return keys;
+      }
+
+      function isEmptyEbTrainingRow(row) {
+        var group = (row.querySelector('.eb-group')?.value || '').trim();
+        var date = (row.querySelector('.eb-assigned')?.value || '').trim();
+        var result = (row.querySelector('select[name="LastCheckResult"]')?.value || '').trim();
+        var note = (row.querySelector('[name="ResponsibleNote"]')?.value || '').trim();
+        return !group && !date && !result && !note;
+      }
+
+      /** «все» / «без группы» — подтянуть из штата всех, кого ещё нет в реестре. */
+      function ensureMissingStaffRows() {
+        var orgFilter = filterOrg ? filterOrg.value : '';
+        // Убрать временные строки других организаций / лишние, если сменили фильтр орг.
+        body.querySelectorAll('.eb-knowledge-row[data-eb-no-group-staff="1"]').forEach(function (row) {
+          var org = (row.getAttribute('data-org')
+            || row.querySelector('input[name="RowOrganization"]')?.value
+            || '').trim();
+          if (orgFilter && norm(orgFilter) !== norm(org) && isEmptyEbTrainingRow(row)) {
+            row.remove();
+          }
+        });
+
+        var keys = collectExistingPersonKeys();
+        staffPool.forEach(function (s) {
+          var name = String(s.name || '').trim();
+          var org = String(s.org || '').trim();
+          if (!name) return;
+          if (orgFilter && norm(orgFilter) !== norm(org)) return;
+          var snils = String(s.snils || '').replace(/\D/g, '');
+          if (keys[rowPersonKey(org, name)]
+              || keys['*|' + norm(name)]
+              || (snils.length === 11 && (keys[norm(org) + '|snils:' + snils] || keys['*|snils:' + snils]))) {
+            return;
+          }
+          var row = insertRowFromTemplate({
+            name: name,
+            org: org,
+            position: s.position || '',
+            snils: s.snils || ''
+          });
+          if (!row) return;
+          row.setAttribute('data-eb-no-group-staff', '1');
+          row.setAttribute('data-group', '');
+          syncRowFilterAttrs(row);
+          keys[rowPersonKey(org, name)] = true;
+          keys['*|' + norm(name)] = true;
+          if (snils.length === 11) {
+            keys[norm(org) + '|snils:' + snils] = true;
+            keys['*|snils:' + snils] = true;
+          }
+        });
+      }
+
+      /** Убрать временные строки штата, если фильтр сменили и данные ЭБ не заполняли. */
+      function clearMissingStaffRows() {
+        body.querySelectorAll('.eb-knowledge-row[data-eb-no-group-staff="1"]').forEach(function (row) {
+          if (!isEmptyEbTrainingRow(row)) {
+            row.removeAttribute('data-eb-no-group-staff');
+            return;
+          }
+          row.remove();
+        });
+      }
+
+      function rowFillScore(row) {
+        var score = 0;
+        var group = row.querySelector('.eb-group')?.value || '';
+        var date = row.querySelector('.eb-assigned')?.value || '';
+        var result = row.querySelector('select[name="LastCheckResult"]')?.value || '';
+        var note = row.querySelector('[name="ResponsibleNote"]')?.value || '';
+        if (group) score += 2;
+        if (date) score += 2;
+        if (result) score += 2;
+        if (note) score += 1;
+        row.setAttribute('data-filled', score > 0 ? '1' : '0');
+        return score;
+      }
+
+      function rowMatchesFilters(row) {
+        if (row.querySelector('.eb-delete-flag')?.checked) return false;
+        var q = norm(search && search.value);
+        var org = filterOrg ? filterOrg.value : '';
+        var pos = filterPos ? filterPos.value : '';
+        var group = filterGroup ? filterGroup.value : '';
+        var result = filterResult ? filterResult.value : '';
+        var status = filterStatus ? filterStatus.value : '';
+
+        var rowOrg = row.getAttribute('data-org') || row.querySelector('.eb-org-label')?.textContent || '';
+        var rowPos = row.getAttribute('data-position') || row.querySelector('.eb-position')?.value || '';
+        var rowGroup = row.querySelector('.eb-group')?.value || row.getAttribute('data-group') || '';
+        var rowResult = row.querySelector('select[name="LastCheckResult"]')?.value
+          || row.getAttribute('data-result') || '';
+        var rowStatus = row.getAttribute('data-status') || '';
+        var statusText = row.querySelector('.eb-status')?.textContent || '';
+        if (statusText && statusText !== '—') rowStatus = statusText;
+
+        var fio = row.querySelector('.eb-fio')?.value || '';
+        var note = row.querySelector('[name="ResponsibleNote"]')?.value || '';
+        var edu = row.querySelector('.eb-education')?.value || '';
+        var textOk = !q ||
+          norm(fio).indexOf(q) >= 0 ||
+          norm(note).indexOf(q) >= 0 ||
+          norm(rowPos).indexOf(q) >= 0 ||
+          norm(rowOrg).indexOf(q) >= 0 ||
+          norm(edu).indexOf(q) >= 0;
+
+        return textOk &&
+          matchSelect(org, rowOrg) &&
+          matchSelect(pos, rowPos) &&
+          matchSelect(group, rowGroup) &&
+          matchSelect(result, rowResult) &&
+          matchSelect(status, rowStatus);
+      }
+
+      function refreshRowVisibility(row) {
+        if (!row) return;
+        row.style.display = rowMatchesFilters(row) ? '' : 'none';
+        updateFilterCount();
+      }
+
+      function updateFilterCount() {
+        if (!filterCount) return;
+        var total = 0;
+        var shown = 0;
+        body.querySelectorAll('.eb-knowledge-row').forEach(function (row) {
+          if (row.querySelector('.eb-delete-flag')?.checked) return;
+          total++;
+          if (row.style.display !== 'none') shown++;
+        });
+        filterCount.textContent = shown === total
+          ? ('Строк реестра ЭБ: ' + total + ' (не штат 1С)')
+          : ('Показано ' + shown + ' из ' + total + ' (реестр ЭБ)');
+      }
+
+      /** Порядок строк меняется только после «Сохранить» (сервер). Здесь не переставляем. */
+      function applyFilters() {
+        var group = filterGroup ? filterGroup.value : '';
+
+        // «все» и «без группы» — весь штат компании; «все с группой» / I–V — только реестр.
+        // Подтягивание штата — только при смене фильтра, не при правке ячеек.
+        if (group === '' || group === '__empty') {
+          ensureMissingStaffRows();
+        } else {
+          clearMissingStaffRows();
+        }
+
+        body.querySelectorAll('.eb-knowledge-row').forEach(function (row) {
+          row.style.display = rowMatchesFilters(row) ? '' : 'none';
+        });
+        updateFilterCount();
+      }
+
+      function syncRowFilterAttrs(row) {
+        var org = row.querySelector('.eb-org-label')?.textContent ||
+                  row.querySelector('input[name="RowOrganization"]')?.value || '';
+        var pos = row.querySelector('.eb-position')?.value || '';
+        var group = row.querySelector('.eb-group')?.value || '';
+        var result = row.querySelector('select[name="LastCheckResult"]')?.value || '';
+        var statusEl = row.querySelector('.eb-status');
+        var status = statusEl ? statusEl.textContent : '';
+        row.setAttribute('data-org', (org || '').trim());
+        row.setAttribute('data-position', (pos || '').trim());
+        row.setAttribute('data-group', (group || '').trim());
+        row.setAttribute('data-result', (result || '').trim());
+        row.setAttribute('data-status', (status || '').trim());
+      }
+
+      [search, filterOrg, filterPos, filterGroup, filterResult, filterStatus].forEach(function (el) {
+        if (!el) return;
+        el.addEventListener(el.tagName === 'INPUT' ? 'input' : 'change', applyFilters);
+      });
+      if (filterReset) {
+        filterReset.addEventListener('click', function () {
+          if (search) search.value = '';
+          [filterOrg, filterPos, filterGroup, filterResult, filterStatus].forEach(function (el) {
+            if (el) el.value = '';
+          });
+          applyFilters();
+        });
+      }
+
+      // Не вызываем applyFilters из recompute — иначе строка «улетала» вверх при каждом изменении.
+      body.querySelectorAll('.eb-knowledge-row').forEach(autosizeRowFields);
+      applyFilters();
+    })();
+  </script>
+}

@@ -1,0 +1,29 @@
+@page "/Incidents/Assistants"
+@model Zashita.Web.Pages.Incidents.AssistantsModel
+@{
+    ViewData["Title"] = "Помощники по несчастным случаям";
+    ViewData["Subtitle"] = "Несчастные случаи и микротравмы";
+}
+
+<div class="panel ppe-panel training-assistants-panel">
+  <p class="ppe-subtitle training-assistants-lead">Помощники по регистрации, расследованию и учёту несчастных случаев</p>
+
+  <div class="training-assistants-list">
+    @foreach (var entry in Model.Entries)
+    {
+      <article class="training-assistant-item">
+        <div class="training-assistant-body">
+          @if (!string.IsNullOrWhiteSpace(entry.RouteUrl))
+          {
+            <a class="training-assistant-link" href="@entry.RouteUrl">@entry.Title</a>
+          }
+          else
+          {
+            <span class="training-assistant-link">@entry.Title</span>
+          }
+          <p class="training-assistant-desc">@entry.Description</p>
+        </div>
+      </article>
+    }
+  </div>
+</div>

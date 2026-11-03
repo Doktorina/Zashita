@@ -1,0 +1,100 @@
+.med-factors-grid {
+  width: 100%;
+  font-size: 13px;
+}
+
+.med-factors-grid th {
+  vertical-align: bottom;
+  line-height: 1.25;
+}
+
+.med-factors-col-group {
+  width: 18%;
+  min-width: 140px;
+}
+
+.med-factors-col-num {
+  width: 72px;
+  white-space: nowrap;
+}
+
+.med-factors-col-name {
+  min-width: 280px;
+}
+
+.med-factors-col-period {
+  width: 120px;
+  white-space: nowrap;
+}
+
+.med-factors-col-actions {
+  width: 220px;
+  white-space: nowrap;
+  text-align: right;
+}
+
+.med-factors-col-actions .ppe-inline-form {
+  display: inline-block;
+  margin: 0;
+  vertical-align: middle;
+}
+
+.med-factors-row-group {
+  background: #f3f6fa;
+}
+
+.med-factors-indent {
+  display: inline-block;
+  width: calc(var(--depth, 0) * 14px);
+}
+
+.med-factors-print-sheet {
+  max-width: 210mm;
+  margin: 0 auto;
+  padding: 12mm;
+  background: #fff;
+}
+
+.med-factors-print-sheet h2 {
+  margin: 0 0 8px;
+  font-size: 14pt;
+  text-align: center;
+}
+
+.med-factors-print-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 10pt;
+}
+
+.med-factors-print-table th,
+.med-factors-print-table td {
+  border: 1px solid #000;
+  padding: 4px 6px;
+  vertical-align: top;
+}
+
+.med-factors-print-group td {
+  background: #f0f0f0;
+}
+
+[data-theme='dark'] .med-factors-row-group {
+  background: #243044;
+}
+
+@media print {
+  thead {
+    display: table-row-group !important;
+  }
+
+  .ppe-no-print,
+  .sout-preview-toolbar {
+    display: none !important;
+  }
+
+  .med-factors-print-sheet {
+    box-shadow: none;
+    padding: 0;
+    max-width: none;
+  }
+}

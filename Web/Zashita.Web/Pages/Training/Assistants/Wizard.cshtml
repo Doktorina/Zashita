@@ -1,0 +1,303 @@
+@page "/Training/Assistants/Wizard"
+@using Zashita.Core.Training
+@model Zashita.Web.Pages.Training.Assistants.WizardModel
+@{
+    ViewData["Title"] = Model.Title;
+    ViewData["Subtitle"] = "Помощники по обучению";
+    var isPlan = Model.WizardKind is TrainingAssistantWizardKind.Plan or TrainingAssistantWizardKind.TrainPlan;
+    var isStep1 = Model.StepNumber == 1;
+    var isStep2 = Model.StepNumber == 2;
+    var isStep3 = Model.StepNumber == 3;
+    var employeeGroups = Model.EmployeeRows
+        .GroupBy(row => row.Department, StringComparer.CurrentCultureIgnoreCase)
+        .OrderBy(group => group.Key, StringComparer.CurrentCultureIgnoreCase)
+        .ToList();
+}
+
+<link rel="stylesheet" href="~/css/training-assistant-wizard.css" asp-append-version="true" />
+
+<div class="training-assistant-wizard panel ppe-panel">
+  <div class="training-assistant-wizard-header">
+    <div class="training-assistant-wizard-header-left">
+      @if (!isStep1)
+      {
+        <a class="btn btn-outline btn-sm" asp-page="/Training/Assistants/Wizard"
+           asp-route-kind="@Model.Kind"
+           asp-route-step="@(Model.StepNumber - 1)"
+           asp-route-selectedIndex="@Model.SelectedIndex"
+           asp-route-analyticsDate="@Model.EffectiveAnalyticsDate.ToString("yyyy-MM-dd")"
+           asp-route-allDepartments="@Model.AllDepartments"
+           asp-route-trainingKindFilter="@Model.TrainingKindFilter">← Назад</a>
+      }
+      <h2 class="training-assistant-wizard-title">@Model.Title</h2>
+    </div>
+    <div class="training-assistant-wizard-header-right">
+      @if (isStep1)
+      {
+        <button type="submit" form="assistant-step1-form" class="btn btn-primary btn-sm">Далее ›</button>
+      }
+      else if (isStep2)
+      {
+        <button type="submit" form="assistant-step2-form" class="btn btn-primary btn-sm">Далее ›</button>
+      }
+      else
+      {
+        @if (!string.IsNullOrWhiteSpace(Model.SavedPlanningId))
+        {
+          <a class="btn btn-primary btn-sm"
+             asp-page="/Training/Applications"
+             asp-route-editId="@Model.SavedPlanningId"
+             asp-fragment="application-form-panel">Готово</a>
+        }
+        else
+        {
+          <a class="btn btn-primary btn-sm" asp-page="/Training/Applications">Готово</a>
+        }
+      }
+      <a class="btn btn-outline btn-sm" asp-page="/Training/Assistants">Отмена</a>
+    </div>
+  </div>
+
+  <p class="training-assistant-wizard-hint">@Model.Hint</p>
+
+  @if (isStep1)
+  {
+    <form method="post" asp-page-handler="Next" id="assistant-step1-form" class="training-assistant-wizard-step1">
+      <input type="hidden" name="kind" value="@Model.Kind" />
+      <div class="training-assistant-wizard-options">
+        <label class="training-assistant-wizard-option">
+          <span>Организация</span>
+          <input type="text" class="ppe-input" value="@Model.Organization" readonly />
+        </label>
+        <label class="training-assistant-wizard-option">
+          <span>Вид @(isPlan && Model.WizardKind == TrainingAssistantWizardKind.TrainPlan ? "обучения" : "инструктажа / обучения")</span>
+          <select name="trainingKindFilter" id="assistant-training-kind-filter" class="ppe-input">
+            <option value="">все подходящие</option>
+            @foreach (var kind in Model.TrainingKindOptions)
+            {
+              if (string.Equals(Model.TrainingKindFilter, kind, StringComparison.OrdinalIgnoreCase))
+              {
+                <option value="@kind" selected>@kind</option>
+              }
+              else
+              {
+                <option value="@kind">@kind</option>
+              }
+            }
+          </select>
+        </label>
+        @if (isPlan)
+        {
+          <label class="training-assistant-wizard-option">
+            <span>Дата аналитики для отображения данных</span>
+            <input type="date" name="analyticsDate" value="@Model.EffectiveAnalyticsDate.ToString("yyyy-MM-dd")" class="ppe-input" />
+          </label>
+          <label class="training-assistant-wizard-check">
+            <input type="checkbox" name="allDepartments" value="true" @(Model.AllDepartments ? "checked" : null) />
+            <span>Формировать документы по всем подразделениям</span>
+          </label>
+        }
+        else
+        {
+          <label class="training-assistant-wizard-check">
+            <input type="radio" name="allDepartments" value="false" @(!Model.AllDepartments ? "checked" : null) />
+            <span>Использовать отбор по подразделениям</span>
+          </label>
+          <label class="training-assistant-wizard-check">
+            <input type="radio" name="allDepartments" value="true" @(Model.AllDepartments ? "checked" : null) />
+            <span>Формировать документ@(Model.WizardKind == TrainingAssistantWizardKind.Direct ? "ы" : "") по всем подразделениям</span>
+          </label>
+        }
+      </div>
+
+      <p class="hint">Показаны только виды для текущей организации «@Model.Organization». Выберите строку (вид) и нажмите «Далее».</p>
+
+      <table class="data-grid training-assistant-summary-grid" id="assistant-summary-grid">
+        <thead>
+          <tr>
+            <th>Организация</th>
+            <th>Вид обучения</th>
+            <th class="training-assistant-num-col">Количество человек</th>
+          </tr>
+        </thead>
+        <tbody>
+          @if (Model.SummaryRows.Count == 0)
+          {
+            <tr>
+              <td colspan="3" class="hint">Нет подходящих видов для этой организации и фильтра. Смените вид или проверьте стандарты обучения.</td>
+            </tr>
+          }
+          @for (var i = 0; i < Model.SummaryRows.Count; i++)
+          {
+            var row = Model.SummaryRows[i];
+            var isSelected = i == Model.SelectedIndex;
+            <tr class="training-assistant-summary-row @(isSelected ? "training-row-active" : "")"
+                data-index="@i">
+              <td>@row.Organization</td>
+              <td>@row.TrainingKind</td>
+              <td class="training-assistant-num-col">@row.HeadCount</td>
+            </tr>
+          }
+        </tbody>
+      </table>
+      <input type="hidden" name="selectedIndex" id="assistant-selected-index" value="@Model.SelectedIndex" />
+    </form>
+  }
+  else if (isStep2)
+  {
+    <form method="get" id="assistant-step2-search" class="training-assistant-wizard-search">
+      <input type="hidden" name="kind" value="@Model.Kind" />
+      <input type="hidden" name="step" value="2" />
+      <input type="hidden" name="selectedIndex" value="@Model.SelectedIndex" />
+      <input type="hidden" name="analyticsDate" value="@Model.EffectiveAnalyticsDate.ToString("yyyy-MM-dd")" />
+      <input type="hidden" name="allDepartments" value="@Model.AllDepartments.ToString().ToLowerInvariant()" />
+      <input type="hidden" name="trainingKindFilter" value="@Model.TrainingKindFilter" />
+      <label class="training-assistant-wizard-search-label">
+        <span class="visually-hidden">Поиск</span>
+        <input type="search" name="q" value="@Model.Q" class="ppe-input" placeholder="Поиск (Ctrl+F)" autocomplete="off" />
+      </label>
+    </form>
+
+    <form method="post" asp-page-handler="Finish" id="assistant-step2-form">
+      <input type="hidden" name="kind" value="@Model.Kind" />
+      <input type="hidden" name="selectedIndex" value="@Model.SelectedIndex" />
+      <input type="hidden" name="analyticsDate" value="@Model.EffectiveAnalyticsDate.ToString("yyyy-MM-dd")" />
+      <input type="hidden" name="allDepartments" value="@Model.AllDepartments.ToString().ToLowerInvariant()" />
+      <input type="hidden" name="trainingKindFilter" value="@Model.TrainingKindFilter" />
+
+      <table class="data-grid training-assistant-employee-grid">
+        <thead>
+          <tr>
+            @if (isPlan)
+            {
+              <th>Физическое лицо</th>
+              <th>Профессия</th>
+              <th>Дата планирования</th>
+              <th>Примечание</th>
+              <th>Дата до</th>
+            }
+            else
+            {
+              <th>Физическое лицо</th>
+              <th>Профессия</th>
+              <th>Дата след. обучения</th>
+              <th>Неявка</th>
+              <th>Примечание</th>
+            }
+          </tr>
+        </thead>
+        <tbody>
+          @foreach (var group in employeeGroups)
+          {
+            <tr class="training-assistant-group-row" data-group-id="@group.Key">
+              <td colspan="5">
+                <button type="button" class="training-assistant-group-toggle" aria-expanded="true">
+                  <span class="training-tree-caret training-assistant-group-open" aria-hidden="true">▶</span>
+                  <span class="training-assistant-group-name">@group.Key</span>
+                </button>
+              </td>
+            </tr>
+            @foreach (var employee in group)
+            {
+              <tr class="training-assistant-employee-row" data-group-id="@group.Key">
+                <td>
+                  <label class="training-assistant-employee-name">
+                    <input type="checkbox" checked />
+                    <span>@employee.Person</span>
+                  </label>
+                </td>
+                <td>@employee.Profession</td>
+                @if (isPlan)
+                {
+                  <td>@(employee.PlanningDate?.ToString("dd.MM.yyyy") ?? "—")</td>
+                  <td>@employee.Note</td>
+                  <td>@(employee.NextTrainingDate?.ToString("dd.MM.yyyy") ?? "—")</td>
+                }
+                else
+                {
+                  <td>@(employee.NextTrainingDate?.ToString("dd.MM.yyyy") ?? "—")</td>
+                  <td>@employee.Attendance</td>
+                  <td>@employee.Note</td>
+                }
+              </tr>
+            }
+          }
+        </tbody>
+      </table>
+    </form>
+  }
+  else if (isStep3)
+  {
+    <p class="hint training-assistant-result-hint">
+      @if (Model.WizardKind is TrainingAssistantWizardKind.Plan or TrainingAssistantWizardKind.TrainPlan)
+      {
+        <span>
+          Создана заявка на планирование по выбранному виду обучения.
+          Участники «группы» сохранены в составе этой заявки — отдельные группы в системе не создаются.
+          Открыть:
+          @if (!string.IsNullOrWhiteSpace(Model.SavedPlanningId))
+          {
+            <a asp-page="/Training/Applications" asp-route-editId="@Model.SavedPlanningId" asp-fragment="application-form-panel">Заявки на обучение</a>
+          }
+          else
+          {
+            <a asp-page="/Training/Applications">Заявки на обучение</a>
+          }
+          (раздел «Заявки»).
+        </span>
+      }
+      else
+      {
+        <span>Записи проведения сохранены и отобразятся в разделе <a asp-page="/Training/Status">Отчет по обучению</a>.</span>
+      }
+    </p>
+    <table class="data-grid training-assistant-result-grid">
+      <thead>
+        <tr>
+          <th>Дата</th>
+          <th>Номер</th>
+          <th>Организация</th>
+          <th>Тип документа</th>
+          <th>Вид обучения, инструктажа, проверки знаний</th>
+          <th>Программа</th>
+          <th>Ответственный</th>
+          <th>Комментарий</th>
+        </tr>
+      </thead>
+      <tbody>
+        @foreach (var doc in Model.ResultDocuments)
+        {
+          <tr>
+            <td>@doc.DocumentDate.ToString("dd.MM.yyyy HH:mm:ss")</td>
+            <td>@doc.Number</td>
+            <td>@doc.Organization</td>
+            <td>@doc.DocumentType</td>
+            <td>@doc.TrainingKind</td>
+            <td>@doc.Program</td>
+            <td>@doc.Responsible</td>
+            <td>@doc.Comment</td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  }
+</div>
+
+@section Scripts {
+  <script src="~/js/training-assistant-wizard.js" asp-append-version="true"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', function () {
+      var kindFilter = document.getElementById('assistant-training-kind-filter');
+      if (!kindFilter) return;
+      kindFilter.addEventListener('change', function () {
+        var url = new URL(window.location.href);
+        url.searchParams.set('kind', '@Model.Kind');
+        url.searchParams.set('step', '1');
+        var v = kindFilter.value || '';
+        if (v) url.searchParams.set('trainingKindFilter', v);
+        else url.searchParams.delete('trainingKindFilter');
+        window.location.href = url.toString();
+      });
+    });
+  </script>
+}

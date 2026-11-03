@@ -1,0 +1,130 @@
+@page "/Sout/Preparation"
+@model Zashita.Web.Pages.Sout.PreparationModel
+@{
+    ViewData["Title"] = "Подготовка проведения СОУТ";
+    ViewData["Subtitle"] = Model.Organization;
+}
+
+<div class="panel ppe-panel">
+  <div class="ppe-toolbar sout-toolbar">
+    <a class="btn btn-primary btn-sm" asp-page="/Sout/Preparation/Edit">Создать</a>
+    @if (!string.IsNullOrWhiteSpace(Model.PrintId))
+    {
+      <a class="btn btn-outline btn-sm" asp-page="/Sout/Preparation/Edit" asp-route-id="@Model.PrintId">Перейти</a>
+    }
+    else
+    {
+      <button type="button" class="btn btn-outline btn-sm" disabled title="Выберите документ в списке">Перейти</button>
+    }
+    @if (Model.SelectedPrintDocument is not null)
+    {
+      <span class="hint ppe-print-selected" id="sout-preparation-selected-hint">Для печати: @Model.SelectedPrintDocument.Number</span>
+    }
+    else
+    {
+      <span class="hint ppe-print-selected" id="sout-preparation-selected-hint"></span>
+    }
+    <details class="ppe-print-menu" id="sout-preparation-print-menu">
+      <summary class="btn btn-outline btn-sm">Печать</summary>
+      <div class="ppe-print-dropdown">
+        <p class="hint ppe-print-hint" id="sout-preparation-print-hint" style="@(string.IsNullOrWhiteSpace(Model.PrintId) ? null : "display:none")">
+          Выберите документ в списке.
+        </p>
+        <a class="sout-print-link @(string.IsNullOrWhiteSpace(Model.PrintId) ? "training-print-disabled" : null)"
+           data-href-template="/Sout/Preparation/Preview?id={id}&amp;mode=workplaces-list"
+           href="@(string.IsNullOrWhiteSpace(Model.PrintId) ? "#" : $"/Sout/Preparation/Preview?id={Uri.EscapeDataString(Model.PrintId)}&mode=workplaces-list")"
+           aria-disabled="@(string.IsNullOrWhiteSpace(Model.PrintId) ? "true" : "false")">
+          Перечень рабочих мест, подлежащих специальной оценке условий труда
+        </a>
+        <a class="sout-print-link @(string.IsNullOrWhiteSpace(Model.PrintId) ? "training-print-disabled" : null)"
+           data-href-template="/Sout/Preparation/Preview?id={id}&amp;mode=equipment"
+           href="@(string.IsNullOrWhiteSpace(Model.PrintId) ? "#" : $"/Sout/Preparation/Preview?id={Uri.EscapeDataString(Model.PrintId)}&mode=equipment")"
+           aria-disabled="@(string.IsNullOrWhiteSpace(Model.PrintId) ? "true" : "false")">
+          Перечень оборудования, инструментов и приспособлений
+        </a>
+        <a class="sout-print-link @(string.IsNullOrWhiteSpace(Model.PrintId) ? "training-print-disabled" : null)"
+           data-href-template="/Sout/Preparation/Preview?id={id}&amp;mode=info-needed"
+           href="@(string.IsNullOrWhiteSpace(Model.PrintId) ? "#" : $"/Sout/Preparation/Preview?id={Uri.EscapeDataString(Model.PrintId)}&mode=info-needed")"
+           aria-disabled="@(string.IsNullOrWhiteSpace(Model.PrintId) ? "true" : "false")">
+          Информация, необходимая для проведения СОУТ
+        </a>
+      </div>
+    </details>
+    <a class="btn btn-outline btn-sm" asp-page="/Sout/Preparation/Templates">Шаблоны для печати</a>
+    <a class="btn btn-outline btn-sm" asp-page="/Sout/Preparation" asp-route-list="1">Документы</a>
+    <a class="btn btn-outline btn-sm" asp-page="/Sout/Workplaces">Рабочие места</a>
+  </div>
+
+  <form method="get" id="sout-preparation-filter-form" class="training-report-filters sout-preparation-filters">
+    <input type="hidden" name="printId" id="sout-preparation-print-id" value="@Model.PrintId" />
+    <div class="training-planning-filter-grid">
+      <label class="training-planning-filter-item">
+        <span>Организация</span>
+        <input type="text" class="ppe-input" value="@Model.Organization" readonly />
+      </label>
+      <label class="training-planning-filter-item">
+        <span>Подразделение</span>
+        <input name="department" value="@Model.Department" class="ppe-input" list="sout-preparation-departments" placeholder="все" autocomplete="off" />
+      </label>
+      <label class="training-planning-filter-item">
+        <span>Поиск</span>
+        <input name="q" value="@Model.Q" class="ppe-input" placeholder="номер, подразделение, организация СОУТ" autocomplete="off" />
+      </label>
+    </div>
+  </form>
+
+  <datalist id="sout-preparation-departments">
+    @foreach (var department in Model.Departments)
+    {
+      <option value="@department"></option>
+    }
+  </datalist>
+
+  <table class="data-grid sout-preparation-grid" id="sout-preparation-grid">
+    <thead>
+      <tr>
+        <th>Дата</th>
+        <th>Номер</th>
+        <th>Дата начала</th>
+        <th>Дата окончания</th>
+        <th>Подразделение</th>
+        <th>Организация</th>
+        <th>Организация, проводящая специальную оценку</th>
+        <th>Статус</th>
+      </tr>
+    </thead>
+    <tbody>
+      @if (Model.Rows.Count == 0)
+      {
+        <tr>
+          <td colspan="8" class="hint">Документов пока нет. Нажмите «Создать», заполните шапку и нажмите «Записать» или «Провести и закрыть».</td>
+        </tr>
+      }
+      @foreach (var row in Model.Rows)
+      {
+        var isSelected = !string.IsNullOrWhiteSpace(Model.PrintId) && Model.PrintId == row.Id;
+        <tr class="sout-preparation-row @(isSelected ? "training-row-active" : "")"
+            data-id="@row.Id"
+            data-number="@row.Number">
+          <td>@row.Date.ToString("dd.MM.yyyy HH:mm:ss")</td>
+          <td><a asp-page="/Sout/Preparation/Edit" asp-route-id="@row.Id">@row.Number</a></td>
+          <td>@(row.StartDate?.ToString("dd.MM.yyyy") ?? "—")</td>
+          <td>@(row.EndDate?.ToString("dd.MM.yyyy") ?? "—")</td>
+          <td>@(string.IsNullOrWhiteSpace(row.Department) ? "—" : row.Department)</td>
+          <td>@row.Organization</td>
+          <td>@(string.IsNullOrWhiteSpace(row.ContractorOrganization) ? "—" : row.ContractorOrganization)</td>
+          <td>@(row.IsPosted ? "Проведён" : "Черновик")</td>
+        </tr>
+      }
+    </tbody>
+  </table>
+</div>
+
+@section Scripts {
+  <script src="~/js/sout-preparation.js" asp-append-version="true"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', function () {
+      initSoutPreparationList();
+    });
+  </script>
+}

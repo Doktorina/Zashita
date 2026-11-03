@@ -1,0 +1,696 @@
+@page "/Training/Standards"
+@using Zashita.Core.Training
+@model Zashita.Web.Pages.Training.StandardsModel
+@{
+    ViewData["Title"] = "Стандарт обучения";
+    ViewData["Subtitle"] = Model.Organization;
+    var isEdit = !string.IsNullOrWhiteSpace(Model.EditId);
+    var availableProfessions = Model.Professions
+        .Where(p => !Model.SelectedProfessions.Contains(p, StringComparer.OrdinalIgnoreCase))
+        .ToList();
+}
+
+@if (!string.IsNullOrWhiteSpace(Model.Message))
+{
+    <p class="form-error">@Model.Message</p>
+}
+
+<div class="qual-page">
+    <div class="ppe-split qual-layout">
+        <aside class="panel ppe-panel ppe-split-side qual-sidebar">
+            <a class="btn btn-outline qual-new-btn" asp-page="/Training/Standards">Новый стандарт</a>
+            <a class="btn btn-outline btn-sm"
+               style="margin-top:8px;display:inline-flex"
+               asp-page="/Training/Standards"
+               asp-page-handler="ExportExcel"
+               asp-route-q="@Model.Q"
+               title="Скачать стандарты текущей организации в Excel">Выгрузить в Excel</a>
+            <form method="get" class="ppe-field" style="margin:10px 0">
+                <input type="hidden" asp-for="EditId" />
+                <input type="hidden" asp-for="PersonnelCategory" />
+                <span>Поиск</span>
+                <div style="display:flex; gap:8px; align-items:center">
+                    <input asp-for="Q" class="ppe-input" placeholder="название, профессия, программа" autocomplete="off" />
+                    <button type="submit" class="btn btn-outline btn-sm">Найти</button>
+                </div>
+            </form>
+            @if (Model.Standards.Count == 0)
+            {
+                <p class="hint qual-sidebar-empty">Шаблоны не созданы</p>
+            }
+            else
+            {
+                <ul class="ppe-standards-list qual-standards-list">
+                    @foreach (var s in Model.Standards)
+                    {
+                        var professions = string.Join(", ", s.AllProfessions);
+                        <li class="@(s.Id == Model.EditId ? "active" : "")">
+                            <a asp-page="/Training/Standards"
+                               asp-route-editId="@s.Id"
+                               asp-route-q="@Model.Q">@s.Name</a>
+                            <span class="ppe-muted">@professions</span>
+                            <span class="qual-list-tag">@((s.PersonnelCategory ?? s.TrainingCategory).Trim())</span>
+                            <div class="qual-list-actions">
+                              <form method="post" asp-page-handler="Copy" class="qual-list-copy">
+                                <input type="hidden" name="id" value="@s.Id" />
+                                <input type="hidden" name="Q" value="@Model.Q" />
+                                <button type="submit" class="btn btn-outline btn-sm" title="Создать копию стандарта">Дублировать</button>
+                              </form>
+                              <form method="post" asp-page-handler="Delete" class="qual-list-delete"
+                                    onsubmit="return confirm(@Html.Raw(System.Text.Json.JsonSerializer.Serialize($"Удалить стандарт «{s.Name}»?")));">
+                                <input type="hidden" name="id" value="@s.Id" />
+                                <input type="hidden" name="Q" value="@Model.Q" />
+                                <button type="submit" class="btn btn-outline btn-sm btn-danger" title="Удалить стандарт">Удалить</button>
+                              </form>
+                            </div>
+                        </li>
+                    }
+                </ul>
+            }
+        </aside>
+
+        <div class="panel ppe-panel ppe-split-main qual-form-panel">
+            <div class="qual-form-head">
+                <h2 class="ppe-step-title">@(isEdit ? "Редактирование стандарта" : "Новый стандарт обучения")</h2>
+                <span class="qual-version-badge">
+                    версия @Model.Version — действует с @Model.EffectiveFrom.ToString("dd.MM.yyyy")
+                </span>
+            </div>
+
+            <div class="ppe-field qual-field">
+                <span>Категория персонала</span>
+                <div class="ui-segmented qual-segmented"
+                     data-nav="true"
+                     role="group"
+                     aria-label="Категория персонала">
+                    @foreach (var category in Model.PersonnelCategoryOptions)
+                    {
+                        <a class="ui-segmented-btn @(category == Model.PersonnelCategory ? "active" : "")"
+                           asp-page="/Training/Standards"
+                           asp-route-editId="@Model.EditId"
+                           asp-route-personnelCategory="@category"
+                           asp-route-q="@Model.Q"
+                           asp-route-section="@Model.Section"
+                           asp-route-programQ="@Model.ProgramQ">@category</a>
+                    }
+                </div>
+                <p class="hint" style="margin-top:6px">При смене категории список программ ниже перезагружается из справочника.</p>
+            </div>
+
+            <form method="get" id="qual-program-filter">
+                <input type="hidden" name="editId" value="@Model.EditId" />
+                <input type="hidden" name="personnelCategory" value="@Model.PersonnelCategory" />
+                <input type="hidden" name="q" value="@Model.Q" />
+            </form>
+
+            <form method="post" asp-page-handler="Save" class="qual-form" id="qual-template-form">
+                <input type="hidden" name="EditId" value="@Model.EditId" />
+                <input type="hidden" name="PersonnelCategory" id="personnel-category-value" value="@Model.PersonnelCategory" />
+                <input type="hidden" name="Section" value="@Model.Section" />
+                <input type="hidden" name="ProgramQ" value="@Model.ProgramQ" />
+
+                <label class="ppe-field qual-field">
+                    <span>Название</span>
+                    <input name="Name"
+                           id="qual-standard-name"
+                           value="@Model.Name"
+                           class="ppe-input"
+                           placeholder="Если пусто — подставится из профессии" />
+                </label>
+
+                <div class="ppe-field qual-field">
+                    <span>Профессии <span class="qual-field-hint">(можно выбрать несколько)</span></span>
+                    <div class="qual-prof-box" id="qual-prof-box">
+                        <div class="qual-chips" id="qual-chips">
+                            @foreach (var profession in Model.SelectedProfessions)
+                            {
+                                <span class="qual-chip" data-value="@profession">
+                                    <span>@profession</span>
+                                    <button type="button" class="qual-chip-remove" aria-label="Удалить">×</button>
+                                    <input type="hidden" name="SelectedProfessions" value="@profession" />
+                                </span>
+                            }
+                        </div>
+                        @if (availableProfessions.Count > 0)
+                        {
+                            <button type="button" class="qual-add-prof-link" id="qual-add-prof">+ Добавить профессию</button>
+                            <div class="qual-prof-picker-wrap" id="qual-prof-picker-wrap" hidden>
+                                <select id="qual-prof-picker" class="ppe-input qual-prof-picker">
+                                    <option value="">— выберите профессию —</option>
+                                    @foreach (var profession in availableProfessions)
+                                    {
+                                        <option value="@profession">@profession</option>
+                                    }
+                                </select>
+                            </div>
+                        }
+                        else if (Model.SelectedProfessions.Count == 0)
+                        {
+                            <p class="hint qual-prof-empty">Нет профессий в справочнике сотрудников выбранной организации.</p>
+                        }
+                    </div>
+                </div>
+
+                <div class="ppe-field qual-field">
+                    <span>Способ обучения</span>
+                    <div class="ui-segmented qual-segmented"
+                         data-target="training-method-value"
+                         role="group"
+                         aria-label="Способ обучения">
+                        @foreach (var method in Model.TrainingMethodOptions)
+                        {
+                            <button type="button"
+                                    class="ui-segmented-btn @(method == Model.TrainingMethod ? "active" : "")"
+                                    data-value="@method">@method</button>
+                        }
+                    </div>
+                    <input type="hidden"
+                           name="TrainingMethod"
+                           id="training-method-value"
+                           value="@Model.TrainingMethod" />
+                </div>
+
+                <div class="ppe-field qual-field">
+                    <span>Программы обучения</span>
+                    <p class="hint qual-program-hint">Список формируется из справочника <a asp-page="/Training/Kinds">«Виды обучения»</a> для категории <b>@Model.PersonnelCategory</b>. Отметьте программы ниже — выбранные появятся в таблице, откуда их можно убрать.</p>
+                    <div class="training-filter-grid" style="margin-bottom:10px">
+                      <label class="ppe-field">
+                        <span>Раздел</span>
+                        <select name="Section"
+                                class="ppe-input"
+                                form="qual-program-filter"
+                                onchange="document.getElementById('qual-program-filter').submit()">
+                          <option value="">все</option>
+                          @foreach (var sectionName in Model.SectionOptions)
+                          {
+                            if (string.Equals(Model.Section, sectionName, StringComparison.OrdinalIgnoreCase))
+                            {
+                              <option value="@sectionName" selected>@sectionName</option>
+                            }
+                            else
+                            {
+                              <option value="@sectionName">@sectionName</option>
+                            }
+                          }
+                        </select>
+                      </label>
+                      <label class="ppe-field training-filter-span-2">
+                        <span>Поиск по названию</span>
+                        <div style="display:flex;gap:8px;align-items:center">
+                          <input name="ProgramQ" form="qual-program-filter" value="@Model.ProgramQ" class="ppe-input" placeholder="название программы" autocomplete="off" />
+                          <button type="submit" form="qual-program-filter" class="btn btn-outline btn-sm">Найти</button>
+                        </div>
+                      </label>
+                    </div>
+                    <div class="qual-program-list" id="qual-program-list">
+                        @foreach (var sectionGroup in Model.ProgramRows
+                                          .GroupBy(row => string.IsNullOrWhiteSpace(row.Section) ? "Прочее" : row.Section)
+                                          .OrderBy(group => group.Key, StringComparer.CurrentCultureIgnoreCase))
+                        {
+                            <details class="training-kind-section">
+                                <summary class="training-kind-section-summary">
+                                    <span class="training-kind-section-caret" aria-hidden="true">▶</span>
+                                    <span class="training-kind-section-title">
+                                        <span>@sectionGroup.Key</span>
+                                        <span class="training-kind-section-count">@sectionGroup.Count()</span>
+                                    </span>
+                                </summary>
+                                <div class="training-kind-section-body">
+                                    @foreach (var program in sectionGroup.OrderBy(p => p.Name, StringComparer.CurrentCultureIgnoreCase))
+                                    {
+                                        var selected = Model.SelectedPrograms.Contains(program.Name, StringComparer.OrdinalIgnoreCase);
+                                        var period = Model.PeriodicityFor(program.Name);
+                                        if (string.IsNullOrWhiteSpace(period))
+                                        {
+                                            period = program.DefaultPeriodicity;
+                                        }
+                                        <div class="qual-program-row">
+                                            <label class="qual-program-check">
+                                                <input type="checkbox"
+                                                       class="qual-program-checkbox"
+                                                       value="@program.Name"
+                                                       data-period="@period"
+                                                       data-section="@sectionGroup.Key"
+                                                       @(selected ? "checked" : null) />
+                                                <span class="qual-program-name">@program.Name</span>
+                                                @if (program.IsRenamed)
+                                                {
+                                                    <span class="qual-badge-renamed">переименовано</span>
+                                                }
+                                            </label>
+                                            <span class="qual-period-label ppe-muted" title="Из справочника «Виды обучения»">@(string.IsNullOrWhiteSpace(period) ? "—" : period)</span>
+                                        </div>
+                                    }
+                                </div>
+                            </details>
+                        }
+                    </div>
+
+                    <div class="qual-selected-wrap" id="qual-selected-wrap">
+                      <div class="qual-selected-head">
+                        <strong>Выбранные программы</strong>
+                        <span class="hint" id="qual-selected-count">@Model.SelectedPrograms.Count</span>
+                      </div>
+                      <table class="data-grid qual-selected-table" id="qual-selected-table">
+                        <thead>
+                          <tr>
+                            <th style="width:3rem">№</th>
+                            <th>Программа обучения</th>
+                            <th style="width:11rem">Периодичность</th>
+                            <th style="width:6rem"></th>
+                          </tr>
+                        </thead>
+                        <tbody id="qual-selected-body">
+                          @{
+                            var selectedIndex = 0;
+                          }
+                          @foreach (var programName in Model.SelectedPrograms)
+                          {
+                            selectedIndex++;
+                            var period = Model.PeriodicityFor(programName);
+                            var section = Model.SectionFor(programName);
+                            var periodOpts = Model.PeriodicityOptionsFor(period);
+                            <tr data-program="@programName">
+                              <td class="qual-selected-n">@selectedIndex</td>
+                              <td>
+                                <input type="hidden" name="SelectedPrograms" value="@programName" class="qual-selected-program-input" />
+                                <div class="qual-selected-name">@programName</div>
+                                @if (!string.IsNullOrWhiteSpace(section))
+                                {
+                                  <div class="hint qual-selected-section">@(section)</div>
+                                }
+                              </td>
+                              <td>
+                                <select name="ProgramPeriodicity" class="ppe-input qual-selected-period">
+                                  @foreach (var opt in periodOpts)
+                                  {
+                                    if (string.Equals(opt, period, StringComparison.OrdinalIgnoreCase))
+                                    {
+                                      <option value="@opt" selected>@opt</option>
+                                    }
+                                    else
+                                    {
+                                      <option value="@opt">@opt</option>
+                                    }
+                                  }
+                                </select>
+                              </td>
+                              <td>
+                                <button type="button" class="btn btn-outline btn-sm qual-selected-remove">Убрать</button>
+                              </td>
+                            </tr>
+                          }
+                        </tbody>
+                      </table>
+                      <p class="hint" id="qual-selected-empty" style="@(Model.SelectedPrograms.Count == 0 ? null : "display:none")">Пока ничего не выбрано — отметьте программы в списке выше.</p>
+                    </div>
+                </div>
+
+                @if (isEdit)
+                {
+                    <details class="qual-history-details">
+                        <summary class="qual-history-link">
+                            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                                <circle cx="12" cy="12" r="9"></circle>
+                                <path d="M12 7v5l3 2"></path>
+                            </svg>
+                            История версий шаблона
+                        </summary>
+                        <div class="qual-history-panel">
+                            <ul class="qual-history-list">
+                                <li>
+                                    <strong>версия @Model.Version</strong>
+                                    <span>действует с @Model.EffectiveFrom.ToString("dd.MM.yyyy") (текущая)</span>
+                                </li>
+                                @foreach (var entry in Model.VersionHistory)
+                                {
+                                    <li>
+                                        <strong>версия @entry.Version</strong>
+                                        <span>действовала с @entry.EffectiveFrom.ToString("dd.MM.yyyy")</span>
+                                        <span class="ppe-muted">@entry.Name</span>
+                                    </li>
+                                }
+                            </ul>
+                        </div>
+                    </details>
+                }
+
+                <div class="qual-form-footer">
+                    <div class="qual-form-actions">
+                        <a class="btn btn-outline" asp-page="/Training/Standards">Отмена</a>
+                        @if (isEdit)
+                        {
+                            <button type="submit"
+                                    formaction="?handler=Copy"
+                                    formmethod="post"
+                                    name="id"
+                                    value="@Model.EditId"
+                                    class="btn btn-outline"
+                                    title="Создать копию сохранённого стандарта">
+                                Дублировать
+                            </button>
+                            <button type="submit"
+                                    formaction="?handler=Delete"
+                                    formmethod="post"
+                                    name="id"
+                                    value="@Model.EditId"
+                                    class="btn btn-outline qual-delete-btn"
+                                    onclick="return confirm('Удалить шаблон?');">
+                                Удалить
+                            </button>
+                        }
+                        <button type="submit" class="btn btn-primary">Сохранить</button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@{
+    var periodJsonOptions = TrainingProgramCatalog.PeriodicityOptions
+        .Concat(new[]
+        {
+            "1 раз",
+            "при приёме",
+            "по необходимости",
+            "1 раз в 6 месяцев",
+            "1 раз в год",
+            "1 раз в 2 года",
+            "1 раз в 3 года",
+            "1 раз в 5 лет"
+        })
+        .Concat(Model.SelectedPrograms.Select(Model.PeriodicityFor))
+        .Where(x => !string.IsNullOrWhiteSpace(x))
+        .Distinct(StringComparer.OrdinalIgnoreCase)
+        .ToList();
+    var periodJson = System.Text.Json.JsonSerializer.Serialize(periodJsonOptions);
+}
+
+<script>
+    window.qualPeriodicityOptions = @Html.Raw(periodJson);
+</script>
+
+@section Scripts {
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            var chips = document.getElementById('qual-chips');
+            var picker = document.getElementById('qual-prof-picker');
+            var pickerWrap = document.getElementById('qual-prof-picker-wrap');
+            var addBtn = document.getElementById('qual-add-prof');
+            var nameInput = document.getElementById('qual-standard-name');
+
+            function collectProfessions() {
+                if (!chips) {
+                    return [];
+                }
+
+                return Array.prototype.map.call(
+                    chips.querySelectorAll('.qual-chip[data-value]'),
+                    function (chip) { return chip.getAttribute('data-value') || ''; })
+                    .filter(function (value) { return value.trim().length > 0; });
+            }
+
+            function syncNameFromProfessions() {
+                if (!nameInput) {
+                    return;
+                }
+
+                var professions = collectProfessions();
+                if (professions.length === 0) {
+                    return;
+                }
+
+                var autoName = professions.join(', ');
+                var current = String(nameInput.value || '').trim();
+                var looksLikeCopy = /\(копия\)\s*$/i.test(current);
+                if (!current || nameInput.dataset.autoFilled === '1' || looksLikeCopy) {
+                    nameInput.value = autoName;
+                    nameInput.dataset.autoFilled = '1';
+                }
+            }
+
+            if (nameInput) {
+                nameInput.addEventListener('input', function () {
+                    var professions = collectProfessions();
+                    var autoName = professions.join(', ');
+                    nameInput.dataset.autoFilled =
+                        String(nameInput.value || '').trim() === autoName ? '1' : '0';
+                });
+            }
+
+            function addChip(value) {
+                if (!value || !chips) {
+                    return;
+                }
+
+                var exists = chips.querySelector('.qual-chip[data-value="' + value.replace(/"/g, '\\"') + '"]');
+                if (exists) {
+                    return;
+                }
+
+                var chip = document.createElement('span');
+                chip.className = 'qual-chip';
+                chip.setAttribute('data-value', value);
+                chip.innerHTML =
+                    '<span>' + value + '</span>' +
+                    '<button type="button" class="qual-chip-remove" aria-label="Удалить">×</button>' +
+                    '<input type="hidden" name="SelectedProfessions" value="' + value.replace(/"/g, '&quot;') + '" />';
+                chips.appendChild(chip);
+
+                if (picker) {
+                    var option = picker.querySelector('option[value="' + value.replace(/"/g, '\\"') + '"]');
+                    if (option) {
+                        option.remove();
+                    }
+                    picker.value = '';
+                }
+
+                if (pickerWrap) {
+                    pickerWrap.hidden = true;
+                }
+
+                syncNameFromProfessions();
+            }
+
+            if (chips) {
+                chips.addEventListener('click', function (event) {
+                    var button = event.target.closest('.qual-chip-remove');
+                    if (!button) {
+                        return;
+                    }
+
+                    var chip = button.closest('.qual-chip');
+                    if (!chip) {
+                        return;
+                    }
+
+                    var value = chip.getAttribute('data-value') || '';
+                    chip.remove();
+
+                    if (picker && value) {
+                        var option = document.createElement('option');
+                        option.value = value;
+                        option.textContent = value;
+                        picker.appendChild(option);
+                    }
+
+                    syncNameFromProfessions();
+                });
+            }
+
+            if (addBtn && picker) {
+                addBtn.addEventListener('click', function () {
+                    if (pickerWrap) {
+                        pickerWrap.hidden = false;
+                    }
+                    picker.focus();
+                });
+
+                picker.addEventListener('change', function () {
+                    if (picker.value) {
+                        addChip(picker.value);
+                    }
+                });
+            }
+
+            syncNameFromProfessions();
+
+            var form = document.getElementById('qual-template-form');
+            if (form) {
+                form.addEventListener('submit', function () {
+                    if (!nameInput) {
+                        return;
+                    }
+
+                    var professions = collectProfessions();
+                    if (professions.length === 0) {
+                        return;
+                    }
+
+                    if (!String(nameInput.value || '').trim()) {
+                        nameInput.value = professions.join(', ');
+                        nameInput.dataset.autoFilled = '1';
+                    }
+                });
+            }
+
+            var selectedBody = document.getElementById('qual-selected-body');
+            var selectedEmpty = document.getElementById('qual-selected-empty');
+            var selectedCount = document.getElementById('qual-selected-count');
+            var programList = document.getElementById('qual-program-list');
+            var periodOptions = Array.isArray(window.qualPeriodicityOptions) ? window.qualPeriodicityOptions.slice() : [];
+
+            function escapeHtml(text) {
+                return String(text || '')
+                    .replace(/&/g, '&amp;')
+                    .replace(/</g, '&lt;')
+                    .replace(/>/g, '&gt;')
+                    .replace(/"/g, '&quot;');
+            }
+
+            function refreshSelectedUi() {
+                if (!selectedBody) {
+                    return;
+                }
+
+                var rows = selectedBody.querySelectorAll('tr');
+                rows.forEach(function (row, idx) {
+                    var n = row.querySelector('.qual-selected-n');
+                    if (n) {
+                        n.textContent = String(idx + 1);
+                    }
+                });
+
+                if (selectedEmpty) {
+                    selectedEmpty.style.display = rows.length ? 'none' : '';
+                }
+
+                if (selectedCount) {
+                    selectedCount.textContent = String(rows.length);
+                }
+            }
+
+            function findSelectedRow(program) {
+                if (!selectedBody) {
+                    return null;
+                }
+
+                return selectedBody.querySelector('tr[data-program="' + CSS.escape(program) + '"]');
+            }
+
+            function findCheckbox(program) {
+                if (!programList) {
+                    return null;
+                }
+
+                var boxes = programList.querySelectorAll('.qual-program-checkbox');
+                for (var i = 0; i < boxes.length; i++) {
+                    if (String(boxes[i].value || '') === program) {
+                        return boxes[i];
+                    }
+                }
+
+                return null;
+            }
+
+            function buildPeriodSelect(period) {
+                var opts = periodOptions.slice();
+                var current = String(period || '').trim();
+                if (current && opts.indexOf(current) < 0) {
+                    opts.push(current);
+                }
+
+                var html = '<select name="ProgramPeriodicity" class="ppe-input qual-selected-period">';
+                opts.forEach(function (opt) {
+                    var selected = opt === current ? ' selected' : '';
+                    html += '<option value="' + escapeHtml(opt) + '"' + selected + '>' + escapeHtml(opt) + '</option>';
+                });
+                html += '</select>';
+                return html;
+            }
+
+            function addSelectedProgram(program, period, section) {
+                if (!selectedBody || !program) {
+                    return;
+                }
+
+                if (findSelectedRow(program)) {
+                    return;
+                }
+
+                var tr = document.createElement('tr');
+                tr.setAttribute('data-program', program);
+                var sectionHtml = section
+                    ? '<div class="hint qual-selected-section">' + escapeHtml(section) + '</div>'
+                    : '';
+                tr.innerHTML =
+                    '<td class="qual-selected-n"></td>' +
+                    '<td>' +
+                      '<input type="hidden" name="SelectedPrograms" value="' + escapeHtml(program) + '" class="qual-selected-program-input" />' +
+                      '<div class="qual-selected-name">' + escapeHtml(program) + '</div>' +
+                      sectionHtml +
+                    '</td>' +
+                    '<td>' + buildPeriodSelect(period) + '</td>' +
+                    '<td><button type="button" class="btn btn-outline btn-sm qual-selected-remove">Убрать</button></td>';
+                selectedBody.appendChild(tr);
+                refreshSelectedUi();
+            }
+
+            function removeSelectedProgram(program) {
+                var row = findSelectedRow(program);
+                if (row) {
+                    row.remove();
+                }
+
+                var box = findCheckbox(program);
+                if (box) {
+                    box.checked = false;
+                }
+
+                refreshSelectedUi();
+            }
+
+            if (programList) {
+                programList.addEventListener('change', function (event) {
+                    var box = event.target.closest('.qual-program-checkbox');
+                    if (!box) {
+                        return;
+                    }
+
+                    var program = String(box.value || '').trim();
+                    if (!program) {
+                        return;
+                    }
+
+                    if (box.checked) {
+                        addSelectedProgram(
+                            program,
+                            box.getAttribute('data-period') || '',
+                            box.getAttribute('data-section') || '');
+                    } else {
+                        removeSelectedProgram(program);
+                    }
+                });
+            }
+
+            if (selectedBody) {
+                selectedBody.addEventListener('click', function (event) {
+                    var btn = event.target.closest('.qual-selected-remove');
+                    if (!btn) {
+                        return;
+                    }
+
+                    var row = btn.closest('tr');
+                    if (!row) {
+                        return;
+                    }
+
+                    removeSelectedProgram(row.getAttribute('data-program') || '');
+                });
+            }
+
+            refreshSelectedUi();
+        });
+    </script>
+}

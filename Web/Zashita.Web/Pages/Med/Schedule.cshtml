@@ -1,0 +1,224 @@
+@page "/Med/Schedule"
+@model Zashita.Web.Pages.Med.ScheduleModel
+@using Zashita.Core.Employees
+@using Zashita.Core.Med
+@{
+    ViewData["Title"] = "Планирование медосмотров";
+    ViewData["Subtitle"] = Model.Organization;
+    var nf = string.IsNullOrWhiteSpace(Model.NeedFilter) ? "all" : Model.NeedFilter.Trim();
+    string NeedChip(string key) =>
+        string.Equals(nf, key, StringComparison.OrdinalIgnoreCase) ? "btn btn-primary btn-sm" : "btn btn-outline btn-sm";
+}
+
+@section Styles {
+  <link rel="stylesheet" href="~/css/med-person-list.css" asp-append-version="true" />
+}
+
+<div class="panel ppe-panel">
+  <div class="training-planning-actions-row">
+    <a class="btn btn-primary training-planning-action-btn" asp-page="/Med/Calendar">Календарь медосмотров</a>
+    <a class="btn btn-outline training-planning-action-btn" asp-page="/Med/Directions">Выдать направление</a>
+    <a class="btn btn-outline training-planning-action-btn" asp-page="/Med/Schedule/Edit">Создать документ графика</a>
+    <a class="btn btn-outline btn-sm training-planning-action-secondary" asp-page="/Med/Schedule/Documents">Документы (@Model.ScheduleDocumentsCount)</a>
+  </div>
+
+  <p class="hint">
+    Сотрудники, у которых медосмотр <b>просрочен</b>, <b>не проведён</b> или <b>истекает в ближайшие 30 дней</b>.
+    Фильтры по подразделению и виду осмотра. Лишние строки «Предварительный» скрыты, если уже есть периодический.
+  </p>
+
+  <form method="get" class="training-report-filters training-planning-filters" id="med-schedule-needs-form">
+    <input type="hidden" name="needFilter" value="@nf" />
+    <div class="training-planning-filter-grid">
+      <label class="training-planning-filter-item">
+        <span>Подразделение</span>
+        <select name="department" class="ppe-input js-auto-filter">
+          <option value="">все</option>
+          @foreach (var item in Model.Departments)
+          {
+            if (string.Equals(Model.Department, item, StringComparison.OrdinalIgnoreCase))
+            {
+              <option value="@item" selected>@item</option>
+            }
+            else
+            {
+              <option value="@item">@item</option>
+            }
+          }
+        </select>
+      </label>
+      <label class="training-planning-filter-item">
+        <span>Вид медосмотра</span>
+        <select name="examType" class="ppe-input js-auto-filter">
+          <option value="">все</option>
+          @foreach (var item in Model.ExamTypeOptions)
+          {
+            if (string.Equals(Model.ExamType, item, StringComparison.OrdinalIgnoreCase))
+            {
+              <option value="@item" selected>@item</option>
+            }
+            else
+            {
+              <option value="@item">@item</option>
+            }
+          }
+        </select>
+      </label>
+      <label class="training-planning-filter-item">
+        <span>Год</span>
+        <input type="number" name="planYear" value="@Model.PlanYear" class="ppe-input" min="2000" max="2100" />
+      </label>
+      <label class="training-planning-filter-item">
+        <span>Месяц срока</span>
+        <select name="dueMonth" class="ppe-input js-auto-filter">
+          <option value="">все</option>
+          @for (var m = 1; m <= 12; m++)
+          {
+            if (Model.DueMonth == m)
+            {
+              <option value="@m" selected>@m</option>
+            }
+            else
+            {
+              <option value="@m">@m</option>
+            }
+          }
+        </select>
+      </label>
+      <label class="training-planning-filter-item">
+        <span>Поиск</span>
+        <input name="q" value="@Model.Q" class="ppe-input" placeholder="ФИО, профессия" autocomplete="off" />
+      </label>
+    </div>
+
+    <div class="training-report-toolbar" style="margin-top:10px;flex-wrap:wrap;gap:6px">
+      <a class="@NeedChip("all")"
+         asp-page="/Med/Schedule"
+         asp-route-department="@Model.Department"
+         asp-route-examType="@Model.ExamType"
+         asp-route-q="@Model.Q"
+         asp-route-needFilter="all"
+         asp-route-dueMonth="@Model.DueMonth"
+         asp-route-planYear="@Model.PlanYear">Все потребности</a>
+      <a class="@NeedChip("overdue")"
+         asp-page="/Med/Schedule"
+         asp-route-department="@Model.Department"
+         asp-route-examType="@Model.ExamType"
+         asp-route-q="@Model.Q"
+         asp-route-needFilter="overdue"
+         asp-route-dueMonth="@Model.DueMonth"
+         asp-route-planYear="@Model.PlanYear">Просрочено (@Model.NeedsOverdueCount)</a>
+      <a class="@NeedChip("notconducted")"
+         asp-page="/Med/Schedule"
+         asp-route-department="@Model.Department"
+         asp-route-examType="@Model.ExamType"
+         asp-route-q="@Model.Q"
+         asp-route-needFilter="notconducted"
+         asp-route-dueMonth="@Model.DueMonth"
+         asp-route-planYear="@Model.PlanYear">Не проведено (@Model.NeedsNotConductedCount)</a>
+      <a class="@NeedChip("expiring")"
+         asp-page="/Med/Schedule"
+         asp-route-department="@Model.Department"
+         asp-route-examType="@Model.ExamType"
+         asp-route-q="@Model.Q"
+         asp-route-needFilter="expiring"
+         asp-route-dueMonth="@Model.DueMonth"
+         asp-route-planYear="@Model.PlanYear">Истекает 30 дн. (@Model.NeedsExpiringCount)</a>
+      <a class="@NeedChip("passed")"
+         asp-page="/Med/Schedule"
+         asp-route-department="@Model.Department"
+         asp-route-examType="@Model.ExamType"
+         asp-route-q="@Model.Q"
+         asp-route-needFilter="passed"
+         asp-route-dueMonth="@Model.DueMonth"
+         asp-route-planYear="@Model.PlanYear">Пройдено (@Model.NeedsPassedCount)</a>
+      <a class="@NeedChip("planned")"
+         asp-page="/Med/Schedule"
+         asp-route-department="@Model.Department"
+         asp-route-examType="@Model.ExamType"
+         asp-route-q="@Model.Q"
+         asp-route-needFilter="planned"
+         asp-route-dueMonth="@Model.DueMonth"
+         asp-route-planYear="@Model.PlanYear">Запланировано (@Model.NeedsPlannedCount)</a>
+    </div>
+  </form>
+
+  <div class="training-status-wrap" style="margin-top:12px">
+    <table class="data-grid training-planning-grid med-schedule-needs-grid">
+      <thead>
+        <tr>
+          <th>ФИО</th>
+          <th>Подразделение</th>
+          <th>Должность</th>
+          <th>Вид осмотра</th>
+          <th>Пункт</th>
+          <th>Дата осмотра</th>
+          <th>Дата очередного</th>
+          <th>Статус</th>
+        </tr>
+      </thead>
+      <tbody>
+        @if (Model.NeedPersonGroups.Count == 0)
+        {
+          <tr><td colspan="8" class="hint">Нет записей по текущим фильтрам.</td></tr>
+        }
+        @foreach (var group in Model.NeedPersonGroups)
+        {
+          var items = group.Items.ToList();
+          var directionExamType = items
+              .Select(x => x.ExamType?.Trim())
+              .FirstOrDefault(t => !string.IsNullOrWhiteSpace(t))
+              ?? "Периодический";
+          for (var i = 0; i < items.Count; i++)
+          {
+            var row = items[i];
+            <tr class="med-needs-person-row" data-person-key="@group.Key">
+              @if (i == 0)
+              {
+                <td rowspan="@items.Count" class="med-needs-person-cell">
+                  <div class="med-needs-person-name">@group.Person</div>
+                  @{
+                    var hr = Model.HrStatusByName.TryGetValue(group.Person, out var hs) ? hs : "";
+                    if (!string.IsNullOrWhiteSpace(hr))
+                    {
+                      <div class="@EmployeeHrStatus.CssClass(hr)" style="margin-bottom:6px">@hr</div>
+                    }
+                  }
+                  <a class="btn btn-outline btn-sm med-needs-issue-btn"
+                     asp-page="/Med/Directions"
+                     asp-route-employeeName="@group.Person"
+                     asp-route-examType="@directionExamType"
+                     asp-route-fromSchedule="true"
+                     asp-route-itemNumbers="@string.Join(",", items
+                         .Select(x => MedItemNumber.Normalize(x.ItemNumber))
+                         .Where(x => !string.IsNullOrWhiteSpace(x))
+                         .Distinct(StringComparer.OrdinalIgnoreCase))"
+                     title="Направление только по факторам из таблицы планирования">Выдать направление</a>
+                </td>
+                <td rowspan="@items.Count" class="med-needs-person-cell">@(string.IsNullOrWhiteSpace(group.Department) ? "—" : group.Department)</td>
+                <td rowspan="@items.Count" class="med-needs-person-cell">@(string.IsNullOrWhiteSpace(group.Profession) ? "—" : group.Profession)</td>
+              }
+              <td>@row.ExamType</td>
+              <td>@(string.IsNullOrWhiteSpace(row.ItemNumber) ? "—" : row.ItemNumber)</td>
+              <td>@(row.ExamDate is { Year: > 1900 } d ? d.ToString("dd.MM.yyyy") : "—")</td>
+              <td>@(row.ExpiresOn is { } e ? e.ToString("dd.MM.yyyy") : "—")</td>
+              <td>@(string.IsNullOrWhiteSpace(row.DisplayStatus) ? "—" : row.DisplayStatus)</td>
+            </tr>
+          }
+        }
+      </tbody>
+    </table>
+  </div>
+</div>
+
+@section Scripts {
+  <script>
+    (function () {
+      var form = document.getElementById('med-schedule-needs-form');
+      if (!form) return;
+      form.querySelectorAll('.js-auto-filter').forEach(function (el) {
+        el.addEventListener('change', function () { form.submit(); });
+      });
+    })();
+  </script>
+}

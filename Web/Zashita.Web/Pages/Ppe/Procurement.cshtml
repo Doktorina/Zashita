@@ -1,0 +1,93 @@
+@page "/Ppe/Procurement"
+@model Zashita.Web.Pages.Ppe.ProcurementModel
+@{
+    ViewData["Title"] = "Установки потребностей в спецодежде, СИЗ";
+    ViewData["Subtitle"] = Model.Organization;
+}
+
+@section Styles {
+  <link rel="stylesheet" href="~/css/med-person-list.css" asp-append-version="true" />
+}
+
+<div class="panel ppe-panel med-doc-panel">
+  <div class="ppe-toolbar sout-toolbar">
+    <a class="btn btn-primary btn-sm" asp-page="/Ppe/IssueStandards">Создать</a>
+    @if (!string.IsNullOrWhiteSpace(Model.SelectedId))
+    {
+      <a class="btn btn-outline btn-sm" asp-page="/Ppe/IssueStandards" asp-route-editId="@Model.SelectedId">Перейти</a>
+    }
+    else
+    {
+      <button type="button" class="btn btn-outline btn-sm" disabled>Перейти</button>
+    }
+  </div>
+
+  <form method="get" id="ppe-procurement-filter-form" class="training-report-filters sout-preparation-filters">
+    <input type="hidden" name="selectedId" id="ppe-procurement-selected-id" value="@Model.SelectedId" />
+    <div class="training-planning-filter-grid">
+      <label class="training-planning-filter-item"><span>Организация</span><input class="ppe-input" name="filterOrg" value="@Model.FilterOrg" placeholder="все" /></label>
+      <label class="training-planning-filter-item"><span>Наименование ЕТН</span><input class="ppe-input" name="etnName" value="@Model.EtnName" /></label>
+      <label class="training-planning-filter-item">
+        <span>Подразделение</span>
+        <select class="ppe-input" name="department" onchange="this.form.submit()">
+          <option value="">все</option>
+          @foreach (var dep in Model.Departments)
+          {
+            if (dep == Model.Department)
+            {
+              <option value="@dep" selected>@dep</option>
+            }
+            else
+            {
+              <option value="@dep">@dep</option>
+            }
+          }
+        </select>
+      </label>
+      <label class="training-planning-filter-item training-assistant-wizard-check">
+        <span>&nbsp;</span>
+        <span class="med-filter-inline"><input type="hidden" name="inGroup" value="false" /><input type="checkbox" name="inGroup" value="true" @(Model.InGroup ? "checked" : null) /><span>В группе</span></span>
+      </label>
+      <label class="training-planning-filter-item"><span>Поиск</span><input class="ppe-input" name="q" value="@Model.Q" placeholder="номер, подразделение, организация" /></label>
+    </div>
+  </form>
+
+  @if (Model.Rows.Count == 0)
+  {
+    <p class="hint">Нет данных. Создайте шаблоны в разделе <a asp-page="/Ppe/IssueStandards">Стандарты выдачи</a>.</p>
+  }
+  else
+  {
+    <table class="data-grid sout-preparation-grid med-person-list-grid" id="ppe-procurement-grid">
+      <thead>
+        <tr>
+          <th class="med-status-col"></th>
+          <th>Дата</th>
+          <th>Номер</th>
+          <th>Подразделение</th>
+          <th>Организация</th>
+          <th>Наименование ЕТН</th>
+        </tr>
+      </thead>
+      <tbody>
+        @foreach (var row in Model.Rows)
+        {
+          var isSelected = !string.IsNullOrWhiteSpace(Model.SelectedId) && Model.SelectedId == row.Id;
+          <tr class="med-person-list-row @(isSelected ? "training-row-active" : "")" data-id="@row.Id" data-number="@row.Number">
+            <td class="med-status-col"><span class="med-doc-status med-doc-status-posted"></span></td>
+            <td>@row.Date.ToString("dd.MM.yyyy")</td>
+            <td><a asp-page="/Ppe/IssueStandards" asp-route-editId="@row.Id">@row.Number</a></td>
+            <td>@row.Department</td>
+            <td>@row.OrganizationName</td>
+            <td>@row.EtnName</td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  }
+</div>
+
+@section Scripts {
+  <script src="~/js/med-doc-list.js" asp-append-version="true"></script>
+  <script>document.addEventListener('DOMContentLoaded',function(){initMedDocList({gridId:'ppe-procurement-grid',printIdInputId:'ppe-procurement-selected-id',filterFormId:'ppe-procurement-filter-form',selectedHintId:null,printMenuId:null,editUrlPrefix:'/Ppe/IssueStandards?editId=',autoSelectFirst:true});});</script>
+}

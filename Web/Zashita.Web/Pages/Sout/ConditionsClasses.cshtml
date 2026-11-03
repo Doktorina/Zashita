@@ -1,0 +1,61 @@
+@page "/Sout/ConditionsClasses"
+@model Zashita.Web.Pages.Sout.ConditionsClassesModel
+@{
+    ViewData["Title"] = "Классы условий труда";
+    ViewData["Subtitle"] = "общий для всех ЮЛ";
+}
+
+@if (!string.IsNullOrWhiteSpace(Model.Message))
+{
+  <p class="text-success">@Model.Message</p>
+}
+
+<div class="panel ppe-panel">
+  <p class="hint">Справочник для выбора в поле «Класс условий труда» (СОУТ). Можно хранить и «3.1», и «Вредные (класс 3.1)» — как удобно.</p>
+
+  <form method="post" asp-page-handler="Save">
+    <div class="ppe-actions ppe-actions-top">
+      <button type="submit" class="btn btn-primary">Сохранить</button>
+      <button type="button" class="btn btn-outline btn-sm" onclick="addRow()">Добавить строку</button>
+    </div>
+
+    <table class="data-grid ppe-edit-grid" id="sout-conditions-classes-grid">
+      <thead>
+        <tr>
+          <th style="width:64px">№</th>
+          <th>Класс условий труда</th>
+        </tr>
+      </thead>
+      <tbody id="sout-conditions-classes-body">
+        @for (var i = 0; i < Model.Values.Count; i++)
+        {
+          <tr>
+            <td>@(i + 1)</td>
+            <td><input name="Value" value="@Model.Values[i]" class="ppe-input" /></td>
+          </tr>
+        }
+        <tr id="sout-conditions-classes-template" hidden>
+          <td>—</td>
+          <td><input name="Value" value="" class="ppe-input" /></td>
+        </tr>
+      </tbody>
+    </table>
+  </form>
+</div>
+
+@section Scripts {
+  <script>
+    function addRow() {
+      var body = document.getElementById('sout-conditions-classes-body');
+      var tpl = document.getElementById('sout-conditions-classes-template');
+      if (!body || !tpl) return;
+      var clone = tpl.cloneNode(true);
+      clone.removeAttribute('id');
+      clone.removeAttribute('hidden');
+      body.appendChild(clone);
+      var input = clone.querySelector('input');
+      if (input) input.focus();
+    }
+  </script>
+}
+
