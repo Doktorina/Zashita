@@ -1,4 +1,18 @@
-# Веб-система «Охрана труда»
+<p align="center">
+  <img src="Web/Zashita.Web/wwwroot/brand/site-icon.svg" alt="Охрана труда" width="72" height="72" />
+</p>
+
+<h1 align="center">Веб-система «Охрана труда»</h1>
+
+<p align="center">
+  <img alt=".NET" src="https://img.shields.io/badge/.NET-10-512BD4?style=for-the-badge&logo=dotnet&logoColor=white" />
+  <img alt="ASP.NET Core" src="https://img.shields.io/badge/ASP.NET%20Core-Razor%20Pages-512BD4?style=for-the-badge&logo=dotnet&logoColor=white" />
+  <img alt="C#" src="https://img.shields.io/badge/C%23-13-239120?style=for-the-badge&logo=csharp&logoColor=white" />
+  <img alt="Platform" src="https://img.shields.io/badge/Platform-Windows-0078D6?style=for-the-badge&logo=windows&logoColor=white" />
+  <img alt="Demo data" src="https://img.shields.io/badge/Data-Demo-2ea44f?style=for-the-badge" />
+</p>
+
+---
 
 Комплексная веб-система для автоматизации процессов управления охраной труда на предприятии. Объединяет основные направления работы в едином интерфейсе: управление организационной структурой и персоналом, обучение сотрудников, медицинские осмотры, обеспечение средствами индивидуальной защиты, специальную оценку условий труда (СОУТ) и контроль электробезопасности.
 
@@ -16,6 +30,14 @@
 - **Формирование документов** — автоматизированная печать и подготовка документов на основе шаблонов Word и Excel.
 
 ## Технологический стек
+
+<p>
+  <img alt="ASP.NET" src="https://img.shields.io/badge/ASP.NET%20Core-Razor%20Pages-512BD4?logo=dotnet&logoColor=white" />
+  <img alt="C#" src="https://img.shields.io/badge/Language-C%23-239120?logo=csharp&logoColor=white" />
+  <img alt="JSON store" src="https://img.shields.io/badge/Storage-JSON%20App__Data-informational" />
+  <img alt="Excel" src="https://img.shields.io/badge/Import-Excel%20%2F%20CSV%201C-0F9D58" />
+  <img alt="Docs" src="https://img.shields.io/badge/Export-Word%20%2F%20Excel-2B579A" />
+</p>
 
 - **Платформа:** .NET 10
 - **Backend:** ASP.NET Core
