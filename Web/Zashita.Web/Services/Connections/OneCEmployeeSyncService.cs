@@ -50,17 +50,26 @@ public sealed class OneCEmployeeSyncService
         _logger = logger;
     }
 
+    /// <summary>false — демо/локально: синк 1С выключен, к SharedPath не ходим.</summary>
+    public bool IsEnabled => _options.Enabled;
+
     /// <summary>Серверный путь OneC:SharedPath (по умолчанию /srv/share). Без локального inbox/UNC.</summary>
-    public string ConfiguredSharePath => ResolveServerSharePath(_options.SharedPath);
+    public string ConfiguredSharePath =>
+        IsEnabled ? ResolveServerSharePath(_options.SharedPath) : string.Empty;
 
     /// <summary>Тот же серверный путь — выгрузка только оттуда.</summary>
     public string EffectiveSharePath => ConfiguredSharePath;
 
-    /// <summary>true, если серверная папка/файл недоступны.</summary>
+    /// <summary>true, если синк выключен или серверная папка/файл недоступны.</summary>
     public bool SharePathMissing
     {
         get
         {
+            if (!IsEnabled)
+            {
+                return true;
+            }
+
             var path = ConfiguredSharePath;
             try
             {
@@ -80,6 +89,11 @@ public sealed class OneCEmployeeSyncService
     /// <summary>Файлы выгрузки только из серверного SharedPath.</summary>
     public IReadOnlyList<FileInfo> FindSharedFiles()
     {
+        if (!IsEnabled)
+        {
+            return [];
+        }
+
         var path = ConfiguredSharePath;
         if (SharePathMissing)
         {

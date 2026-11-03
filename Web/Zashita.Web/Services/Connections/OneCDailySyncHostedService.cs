@@ -51,6 +51,17 @@ public sealed class OneCDailySyncHostedService : BackgroundService
         }
 
         _lastProcessedWriteUtc = LoadStampWriteUtc();
+
+        using (var bootScope = _services.CreateScope())
+        {
+            var bootSync = bootScope.ServiceProvider.GetRequiredService<OneCEmployeeSyncService>();
+            if (!bootSync.IsEnabled)
+            {
+                _logger.LogInformation("1C auto-sync disabled (OneC:Enabled=false). Demo uses App_Data only.");
+                return;
+            }
+        }
+
         _logger.LogInformation(
             "1C auto-sync armed: SharedPath check every 5 min, daily 04:00 Asia/Yekaterinburg, stampUtc={Stamp:u}",
             _lastProcessedWriteUtc == DateTime.MinValue ? null : _lastProcessedWriteUtc);
