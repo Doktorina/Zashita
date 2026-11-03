@@ -71,7 +71,7 @@ public sealed class AccidentInvestigationStore
         {
             Id = "inv1", Posted = true, DocumentDate = new DateTime(2024, 7, 20), Number = "000000031",
             SourceAccidentNumber = "ОТ-00000035", AccidentDateTime = new DateTime(2024, 7, 20, 14, 10, 25),
-            Victims = "Крылов П.А.", Department = "Участок упаковки", Organization = "ООО «ИНВИКТУС»",
+            Victims = "Крылов П.А.", Department = "Участок упаковки", Organization = "ООО «Демо Строй»",
             Circumstances = "Травма при работе на линии упаковки."
         },
         new()

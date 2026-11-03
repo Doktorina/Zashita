@@ -70,14 +70,14 @@ public sealed class MicrotraumaStore
         new()
         {
             Id = "mt1", Posted = true, DocumentDate = new DateTime(2025, 3, 5), Number = "МТ-00000001",
-            Victims = "Соколов А.В.", Department = "Склад", Organization = "ООО «ИНВИКТУС»",
+            Victims = "Смирнов А.П.", Department = "Склад", Organization = "ООО «Демо Строй»",
             Place = "Склад №1", Description = "Ушиб пальца при погрузке.",
             EventDateTime = new DateTime(2025, 3, 5, 11, 15, 0)
         },
         new()
         {
             Id = "mt2", Posted = true, DocumentDate = new DateTime(2025, 4, 12), Number = "МТ-00000002",
-            Victims = "Кузнецова Л.П.", Department = "Офис", Organization = "ИП Васильев А.В.",
+            Victims = "Козлова М.С.", Department = "Офис", Organization = "ООО «Северные Технологии»",
             Description = "Порез при работе с канцелярией.",
             EventDateTime = new DateTime(2025, 4, 12, 15, 40, 0)
         }

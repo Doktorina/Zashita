@@ -72,7 +72,7 @@ public sealed class MicrotraumaInvestigationStore
             Id = "mti1", Posted = true, DocumentDate = new DateTime(2025, 3, 6), Number = "000000101",
             SourceMicrotraumaId = "mt1", SourceMicrotraumaNumber = "МТ-00000001",
             EventDateTime = new DateTime(2025, 3, 5, 11, 15, 0), Victims = "Соколов А.В.",
-            Department = "Склад", Organization = "ООО «ИНВИКТУС»",
+            Department = "Склад", Organization = "ООО «Демо Строй»",
             Circumstances = "Ушиб при перемещении тары без СИЗ рук.",
             Conclusion = "Провести внеплановый инструктаж."
         }

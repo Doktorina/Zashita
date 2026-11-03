@@ -72,7 +72,7 @@ public sealed class WorkplaceAccidentStore
             Id = "wa1", Posted = true, DocumentDate = new DateTime(2025, 1, 20), Number = "ОТ-00000008",
             IncidentType = "Несчастный случай", Victims = "Иванов И.И.",
             Place = "г. Москва, ул. Ленина, д. 1", Department = "Администрация",
-            Organization = "ООО «ИНВИКТУС»", IncidentDateTime = new DateTime(2025, 1, 20, 10, 30, 0)
+            Organization = "ООО «Демо Строй»", IncidentDateTime = new DateTime(2025, 1, 20, 10, 30, 0)
         },
         new()
         {

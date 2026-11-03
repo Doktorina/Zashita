@@ -20,30 +20,9 @@ public static class OrganizationLegalEntitySplit
     };
 
     public static IReadOnlyList<string> PreservedOrganizations { get; } =
-        OrganizationCanonicalRegistry.CanonicalNames
-            .Concat(
-            [
-                // Исторические полные ФИО / доп. ключи (xlsx — инициалы).
-                "ИП Вахитов Александр Сергеевич",
-                "ИП Вахитов Сергей Захарович",
-                "ИП Черепонянц Оксана Сергеевна",
-                "ИП Черепонянц Сергей Андреевич",
-                "ИП Кузнецов"
-            ])
-            .Distinct(StringComparer.OrdinalIgnoreCase)
-            .ToList();
+        OrganizationCanonicalRegistry.CanonicalNames;
 
-    private static readonly (string Left, string Right)[] KnownDistinctPairs =
-    [
-        (KskOrganization, StroyKarkasOrganization),
-        ("ИП Вахитов А.С.", "ИП Вахитов С.З."),
-        ("ИП Вахитов Александр Сергеевич", "ИП Вахитов Сергей Захарович"),
-        ("ИП Вахитов А.С.", "ИП Вахитов Сергей Захарович"),
-        ("ИП Черепонянц О.С.", "ИП Черепонянц С.А."),
-        ("ИП Черепонянц Оксана Сергеевна", "ИП Черепонянц Сергей Андреевич"),
-        ("ИП Шварц А.С.", "ИП Шварц Б.Э."),
-        ("ИП Черкасова М.В.", "ИП Черкасов С.А.")
-    ];
+    private static readonly (string Left, string Right)[] KnownDistinctPairs = [];
 
     /// <summary>
     /// Явно разные юрлица — никогда не склеивать.
